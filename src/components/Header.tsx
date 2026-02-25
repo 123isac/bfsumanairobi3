@@ -1,9 +1,9 @@
-import { ShoppingCart, Menu, X, User, LogOut, Sun, Moon } from "lucide-react";
+import { ShoppingCart, Menu, X, Sun, Moon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
-import { useAuth } from "@/contexts/AuthContext";
+
 import { useTheme } from "next-themes";
 
 
@@ -12,16 +12,13 @@ const Header = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { totalItems } = useCart();
-  const { user, signOut } = useAuth();
+
   const { theme, setTheme } = useTheme();
 
 
   const isActive = (path: string) => location.pathname === path;
 
-  const handleSignOut = async () => {
-    await signOut();
-    navigate("/");
-  };
+
 
   return (
     <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border shadow-soft">
@@ -82,24 +79,7 @@ const Header = () => {
             >
               {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
             </Button>
-            {user ? (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleSignOut}
-                className="hidden sm:flex items-center gap-2"
-              >
-                <LogOut className="h-4 w-4" />
-                <span className="hidden lg:inline">Sign Out</span>
-              </Button>
-            ) : (
-              <Link to="/auth" className="hidden sm:block">
-                <Button variant="ghost" size="sm" className="flex items-center gap-2">
-                  <User className="h-4 w-4" />
-                  <span className="hidden lg:inline">Login</span>
-                </Button>
-              </Link>
-            )}
+
 
             <Link to="/cart">
               <Button variant="ghost" size="icon" className="relative hover:bg-secondary">
@@ -160,26 +140,7 @@ const Header = () => {
               Contact
             </Link>
 
-            {user ? (
-              <Button
-                variant="outline"
-                onClick={() => {
-                  handleSignOut();
-                  setMobileMenuOpen(false);
-                }}
-                className="w-full flex items-center gap-2 justify-center"
-              >
-                <LogOut className="h-4 w-4" />
-                Sign Out
-              </Button>
-            ) : (
-              <Link to="/auth" className="block" onClick={() => setMobileMenuOpen(false)}>
-                <Button variant="outline" className="w-full flex items-center gap-2 justify-center">
-                  <User className="h-4 w-4" />
-                  Login / Sign Up
-                </Button>
-              </Link>
-            )}
+
           </nav>
         )}
       </div>
