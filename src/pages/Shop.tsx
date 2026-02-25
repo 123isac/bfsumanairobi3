@@ -1,0 +1,206 @@
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
+import ProductCard from "@/components/ProductCard";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Search, SlidersHorizontal } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useSearchParams } from "react-router-dom";
+import { useState } from "react";
+
+const PAGE_SIZE = 12;
+
+type SortOption = "newest" | "price_asc" | "price_desc" | "rating";
+
+const Shop = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState<SortOption>("newest");
+  const [page, setPage] = useState(1);
+  const selectedCategory = searchParams.get("category");
+
+  const { data: categories = [] } = useQuery({
+    queryKey: ["categories"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("categories").select("*").order("name");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: allProducts = [], isLoading } = useQuery({
+    queryKey: ["products", selectedCategory, searchQuery, sortBy],
+    queryFn: async () => {
+      let query = supabase.from("products").select("*, categories(name)").eq("is_active", true);
+
+      if (selectedCategory) {
+        const category = categories.find((c) => c.slug === selectedCategory);
+        if (category) query = query.eq("category_id", category.id);
+      }
+
+      if (searchQuery) query = query.ilike("name", `%${searchQuery}%`);
+
+      switch (sortBy) {
+        case "price_asc":
+          query = query.order("price", { ascending: true });
+          break;
+        case "price_desc":
+          query = query.order("price", { ascending: false });
+          break;
+        case "rating":
+          query = query.order("rating", { ascending: false });
+          break;
+        default:
+          query = query.order("created_at", { ascending: false });
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return data;
+    },
+    enabled: categories.length > 0,
+  });
+
+  const handleCategoryClick = (slug: string | null) => {
+    setPage(1);
+    if (slug) setSearchParams({ category: slug });
+    else setSearchParams({});
+  };
+
+  const handleSearch = (value: string) => {
+    setSearchQuery(value);
+    setPage(1);
+  };
+
+  const handleSort = (value: SortOption) => {
+    setSortBy(value);
+    setPage(1);
+  };
+
+  // Client-side paginate
+  const products = allProducts.slice(0, page * PAGE_SIZE);
+  const hasMore = products.length < allProducts.length;
+
+  return (
+    <div className="min-h-screen flex flex-col">
+      <Header />
+
+      <section className="bg-gradient-primary text-primary-foreground py-10 sm:py-12 md:py-16 lg:py-20">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-3xl">
+            <h1 className="font-display font-bold text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl mb-3 md:mb-4 tracking-tight leading-tight">
+              Premium Wellness Collection
+            </h1>
+            <p className="text-sm sm:text-base md:text-lg opacity-90">
+              Explore our complete range of authentic BF Suma products designed to transform your health and beauty
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section className="py-8 md:py-12 bg-background flex-1 animated-bg animated-bg-secondary">
+        <div className="container mx-auto px-4 md:px-6 lg:px-8 relative z-10">
+          {/* Filters & Search */}
+          <div className="mb-6 md:mb-8 space-y-3 md:space-y-4">
+            <div className="flex flex-col md:flex-row gap-3 md:gap-4">
+              {/* Search */}
+              <div className="relative flex-1">
+                <Search className="absolute left-3 md:left-4 top-1/2 -translate-y-1/2 h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
+                <Input
+                  placeholder="Search products..."
+                  value={searchQuery}
+                  onChange={(e) => handleSearch(e.target.value)}
+                  className="pl-10 md:pl-12 h-11 md:h-12 rounded-full border-border text-sm md:text-base"
+                />
+              </div>
+              {/* Sort */}
+              <Select value={sortBy} onValueChange={(v) => handleSort(v as SortOption)}>
+                <SelectTrigger className="w-full md:w-52 h-11 md:h-12 rounded-full">
+                  <SlidersHorizontal className="h-4 w-4 mr-2 text-muted-foreground" />
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="newest">Newest First</SelectItem>
+                  <SelectItem value="price_asc">Price: Low → High</SelectItem>
+                  <SelectItem value="price_desc">Price: High → Low</SelectItem>
+                  <SelectItem value="rating">Top Rated</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Category Pills */}
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant={!selectedCategory ? "default" : "outline"}
+                className={!selectedCategory ? "gradient-primary rounded-full text-sm md:text-base h-9 md:h-10" : "rounded-full text-sm md:text-base h-9 md:h-10"}
+                onClick={() => handleCategoryClick(null)}
+              >
+                All Products
+              </Button>
+              {categories.map((category) => (
+                <Button
+                  key={category.id}
+                  variant={selectedCategory === category.slug ? "default" : "outline"}
+                  className={selectedCategory === category.slug ? "gradient-primary rounded-full text-sm md:text-base h-9 md:h-10" : "rounded-full text-sm md:text-base h-9 md:h-10"}
+                  onClick={() => handleCategoryClick(category.slug)}
+                >
+                  {category.name}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          {/* Products Grid */}
+          {isLoading ? (
+            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6 mb-8 md:mb-12">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="rounded-2xl bg-muted animate-pulse h-72" />
+              ))}
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6 mb-8 md:mb-12">
+                {products.length === 0 ? (
+                  <div className="col-span-full text-center py-12">
+                    <p className="text-muted-foreground text-base sm:text-lg">No products found</p>
+                  </div>
+                ) : (
+                  products.map((product) => (
+                    <ProductCard
+                      key={product.id}
+                      id={product.id}
+                      name={product.name}
+                      price={Number(product.price)}
+                      rating={Number(product.rating) || 5}
+                      image={product.image_url || "/placeholder.svg"}
+                      category={product.categories?.name || ""}
+                    />
+                  ))
+                )}
+              </div>
+
+              {hasMore && (
+                <div className="text-center mb-8">
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="rounded-full px-10"
+                    onClick={() => setPage((p) => p + 1)}
+                  >
+                    Load More ({allProducts.length - products.length} remaining)
+                  </Button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </section>
+
+      <Footer />
+    </div>
+  );
+};
+
+export default Shop;

@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#059669;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#047857;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="leafGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#34d399;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#10b981;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <!-- Background circle -->
+  <circle cx="32" cy="32" r="30" fill="url(#bgGrad)"/>
+  <!-- B letter -->
+  <text x="14" y="44" font-family="Arial Black, sans-serif" font-size="32" font-weight="900" fill="#ffffff">B</text>
+  <!-- F letter -->
+  <text x="34" y="44" font-family="Arial Black, sans-serif" font-size="32" font-weight="900" fill="#ffffff">F</text>
+  <!-- Leaf accent -->
+  <path d="M52 12 C52 12 58 18 54 26 C50 34 44 32 44 32 C44 32 46 24 52 12 Z" fill="url(#leafGrad)" opacity="0.9"/>
+</svg>

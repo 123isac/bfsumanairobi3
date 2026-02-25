@@ -1,0 +1,176 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    /* Premium Wellness Design System */
+    --background: 30 20% 99%;
+    --foreground: 160 30% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 160 30% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 160 30% 15%;
+
+    /* Deep Emerald Green - Primary Wellness Color */
+    --primary: 160 70% 25%;
+    --primary-foreground: 0 0% 100%;
+    
+    /* Warm Gold - Luxury Accent */
+    --accent: 43 100% 50%;
+    --accent-foreground: 160 30% 15%;
+
+    /* Soft Cream - Secondary */
+    --secondary: 30 25% 95%;
+    --secondary-foreground: 160 30% 15%;
+
+    --muted: 30 20% 96%;
+    --muted-foreground: 160 15% 45%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 30 20% 90%;
+    --input: 30 20% 90%;
+    --ring: 160 70% 25%;
+
+    --radius: 0.75rem;
+
+    /* Premium Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(160 70% 25%) 0%, hsl(160 65% 35%) 100%);
+    --gradient-gold: linear-gradient(135deg, hsl(43 100% 50%) 0%, hsl(38 100% 55%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(160 70% 25% / 0.95) 0%, hsl(160 65% 35% / 0.9) 100%);
+    
+    /* Premium Shadows */
+    --shadow-soft: 0 2px 20px hsl(160 70% 25% / 0.08);
+    --shadow-medium: 0 4px 30px hsl(160 70% 25% / 0.12);
+    --shadow-luxury: 0 10px 40px hsl(160 70% 25% / 0.15);
+    --shadow-gold: 0 4px 20px hsl(43 100% 50% / 0.2);
+
+    /* Transitions */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  }
+
+  .dark {
+    --background: 160 30% 10%;
+    --foreground: 30 20% 95%;
+
+    --card: 160 25% 12%;
+    --card-foreground: 30 20% 95%;
+
+    --popover: 160 25% 12%;
+    --popover-foreground: 30 20% 95%;
+
+    --primary: 160 70% 40%;
+    --primary-foreground: 0 0% 100%;
+
+    --accent: 43 100% 55%;
+    --accent-foreground: 160 30% 10%;
+
+    --secondary: 160 20% 18%;
+    --secondary-foreground: 30 20% 95%;
+
+    --muted: 160 20% 18%;
+    --muted-foreground: 160 15% 65%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 30 20% 95%;
+
+    --border: 160 20% 20%;
+    --input: 160 20% 20%;
+    --ring: 160 70% 40%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-body antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display;
+  }
+}
+
+@layer utilities {
+  .gradient-primary {
+    background: var(--gradient-primary);
+  }
+  
+  .gradient-gold {
+    background: var(--gradient-gold);
+  }
+  
+  .gradient-hero {
+    background: var(--gradient-hero);
+  }
+  
+  .shadow-luxury {
+    box-shadow: var(--shadow-luxury);
+  }
+  
+  .shadow-gold {
+    box-shadow: var(--shadow-gold);
+  }
+  
+  .transition-smooth {
+    transition: var(--transition-smooth);
+  }
+
+  /* Animated Background Styles */
+  .animated-bg {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .animated-bg::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle at 30% 50%, hsl(160 70% 40% / 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 70% 80%, hsl(43 100% 60% / 0.12) 0%, transparent 50%),
+                radial-gradient(circle at 50% 30%, hsl(160 60% 50% / 0.08) 0%, transparent 60%);
+    animation: float 20s ease-in-out infinite;
+    pointer-events: none;
+  }
+  
+  .animated-bg-secondary::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle at 70% 50%, hsl(160 65% 45% / 0.12) 0%, transparent 50%),
+                radial-gradient(circle at 30% 80%, hsl(43 100% 65% / 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 60% 60%, hsl(160 80% 35% / 0.08) 0%, transparent 60%);
+    animation: float 25s ease-in-out infinite reverse;
+    pointer-events: none;
+  }
+
+  @keyframes float {
+    0%, 100% {
+      transform: translate(0, 0) rotate(0deg);
+    }
+    33% {
+      transform: translate(30px, -30px) rotate(120deg);
+    }
+    66% {
+      transform: translate(-20px, 20px) rotate(240deg);
+    }
+  }
+}
