@@ -118,36 +118,108 @@ const Index = () => {
       <Header />
 
       {/* Hero Section */}
-      <section className="relative min-h-[85vh] md:h-[90vh] flex items-center justify-center overflow-hidden">
+      <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0">
           <img
             src={heroBanner}
             alt="Premium Wellness"
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover scale-105 animate-[float_20s_ease-in-out_infinite] origin-center"
           />
-          <div className="absolute inset-0 gradient-hero" />
+          <div className="absolute inset-0 bg-primary/80 mix-blend-multiply" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-black/40 to-transparent" />
         </div>
 
-        <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 text-center text-primary-foreground py-8 md:py-0">
-          <div className="max-w-3xl mx-auto space-y-5 sm:space-y-6 md:space-y-8 animate-fade-in">
-            <h1 className="font-display font-bold text-3xl sm:text-4xl md:text-6xl lg:text-7xl leading-[1.1] tracking-tight">
+        <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center justify-center pt-20 pb-10">
+
+          <div className="w-full max-w-5xl mx-auto space-y-10 sm:space-y-12 animate-fade-in text-center">
+
+            {/* BF SUMA Interactive Meaning */}
+            <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-4 md:gap-6 lg:gap-8 bg-black/20 backdrop-blur-md p-6 rounded-3xl border border-white/10 shadow-2xl max-w-4xl mx-auto mb-10 transform hover:scale-[1.02] transition-transform duration-500">
+              {[
+                { l: "B", w: "Bright", c: "text-yellow-400" },
+                { l: "F", w: "Future", c: "text-blue-400" },
+                { l: "S", w: "Superior", c: "text-purple-400" },
+                { l: "U", w: "Unique", c: "text-rose-400" },
+                { l: "M", w: "Manufacturer", c: "text-emerald-400" },
+                { l: "A", w: "America", c: "text-indigo-400" }
+              ].map((item, i) => (
+                <div key={i} className="flex flex-col items-center group cursor-default">
+                  <span className={`text-3xl md:text-5xl lg:text-6xl font-display font-bold text-white mb-2 drop-shadow-md group-hover:-translate-y-2 transition-transform duration-300`}>
+                    {item.l}
+                  </span>
+                  <span className={`text-[10px] md:text-xs lg:text-sm font-medium tracking-widest uppercase opacity-0 group-hover:opacity-100 ${item.c} transition-all duration-300 absolute -bottom-6`}>
+                    {item.w}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            <h1 className="font-display font-bold text-4xl sm:text-5xl md:text-7xl lg:text-8xl leading-[1.1] tracking-tight text-white drop-shadow-lg">
               Discover Your
-              <span className="block text-accent mt-2">Natural Beauty</span>
+              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-accent via-yellow-300 to-accent mt-2 pb-2">Natural Beauty</span>
             </h1>
-            <p className="text-sm sm:text-base md:text-lg lg:text-xl opacity-90 leading-relaxed max-w-2xl mx-auto px-2 sm:px-4">
-              Premium BF Suma wellness products crafted to enhance your health and radiance. Experience authentic quality that transforms lives.
+
+            <p className="text-base sm:text-lg md:text-2xl text-white/90 font-light leading-relaxed max-w-3xl mx-auto px-2 sm:px-4 drop-shadow-md">
+              Premium wellness products crafted to enhance your health and radiance. Experience authentic <strong className="font-semibold text-accent">American technology</strong> that transforms lives.
             </p>
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center pt-4 sm:pt-6 px-2 sm:px-4 max-w-md sm:max-w-none mx-auto">
+
+            <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center pt-8 px-2 sm:px-4 max-w-md sm:max-w-none mx-auto">
               <Link to="/shop" className="w-full sm:w-auto">
-                <Button size="lg" className="gradient-gold hover:shadow-gold text-accent-foreground font-semibold w-full sm:w-auto px-8 py-6 text-base rounded-full shadow-luxury">
-                  Shop Now <ArrowRight className="ml-2 h-5 w-5" />
+                <Button size="lg" className="gradient-gold hover:shadow-[0_0_30px_rgba(255,180,0,0.5)] text-accent-foreground font-bold w-full sm:w-auto px-10 py-7 text-lg rounded-full shadow-2xl transition-all duration-300 hover:scale-105">
+                  Shop Now <ArrowRight className="ml-2 h-6 w-6" />
                 </Button>
               </Link>
               <Link to="/about" className="w-full sm:w-auto">
-                <Button size="lg" variant="outline" className="bg-primary-foreground/10 backdrop-blur-sm border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/20 w-full sm:w-auto px-8 py-6 text-base rounded-full">
+                <Button size="lg" variant="outline" className="bg-white/10 backdrop-blur-md border-white/20 text-white hover:bg-white/20 w-full sm:w-auto px-10 py-7 text-lg rounded-full transition-all duration-300">
                   Learn More
                 </Button>
               </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Promotional Offers & New Arrivals */}
+      <section className="py-8 bg-transparent relative z-20 -mt-10 sm:-mt-16">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Promo Card 1 */}
+            <div className="bg-gradient-primary rounded-3xl p-8 text-white shadow-luxury relative overflow-hidden group">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition-all duration-500"></div>
+              <div className="relative z-10">
+                <span className="inline-block px-3 py-1 bg-white/20 rounded-full text-[10px] font-bold tracking-wider mb-4 border border-white/30 backdrop-blur-sm">NEW ARRIVAL</span>
+                <h3 className="font-display font-bold text-2xl mb-2">Youth Essence Supreme</h3>
+                <p className="text-white/80 text-sm mb-6 max-w-[200px]">Experience the next generation of anti-aging skincare.</p>
+                <Link to="/shop?category=beauty-antiaging" className="inline-flex items-center text-sm font-bold hover:translate-x-2 transition-transform">
+                  Shop Now <ArrowRight className="ml-2 w-4 h-4" />
+                </Link>
+              </div>
+            </div>
+
+            {/* Promo Card 2 */}
+            <div className="gradient-gold rounded-3xl p-8 text-primary shadow-luxury relative overflow-hidden group">
+              <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-white/30 rounded-full blur-2xl group-hover:scale-150 transition-all duration-500"></div>
+              <div className="relative z-10">
+                <span className="inline-block px-3 py-1 bg-primary/10 rounded-full text-[10px] font-bold tracking-wider mb-4 border border-primary/20 backdrop-blur-sm text-primary">SPECIAL OFFER</span>
+                <h3 className="font-display font-bold text-2xl mb-2">20% Off Immune Boosters</h3>
+                <p className="text-primary/80 text-sm mb-6 max-w-[200px]">Strengthen your body's natural defenses this season.</p>
+                <Link to="/shop?category=immune-boosters" className="inline-flex items-center text-sm font-bold hover:translate-x-2 transition-transform text-primary">
+                  Claim Offer <ArrowRight className="ml-2 w-4 h-4" />
+                </Link>
+              </div>
+            </div>
+
+            {/* Promo Card 3 */}
+            <div className="bg-card rounded-3xl p-8 text-foreground shadow-luxury relative overflow-hidden group hidden lg:block border border-border">
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-primary/5 rounded-full blur-3xl group-hover:scale-125 transition-all duration-700"></div>
+              <div className="relative z-10">
+                <span className="inline-block px-3 py-1 bg-primary/5 rounded-full text-[10px] font-bold tracking-wider mb-4 border border-primary/10 text-primary">BEST SELLER</span>
+                <h3 className="font-display font-bold text-2xl mb-2">Bone & Joint Care</h3>
+                <p className="text-muted-foreground text-sm mb-6 max-w-[200px]">Our #1 rated supplement for active lifestyles.</p>
+                <Link to="/shop?category=bone-joint-care" className="inline-flex items-center text-sm font-bold hover:translate-x-2 transition-transform text-primary">
+                  Explore <ArrowRight className="ml-2 w-4 h-4" />
+                </Link>
+              </div>
             </div>
           </div>
         </div>
@@ -165,7 +237,7 @@ const Index = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5 md:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 max-w-6xl mx-auto">
             {categories.map((category, index) => (
               <div key={category.id} className="animate-scale-in" style={{ animationDelay: `${index * 100}ms` }}>
                 <CategoryCard

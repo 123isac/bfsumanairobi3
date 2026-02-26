@@ -55,21 +55,31 @@ const About = () => {
       <Header />
 
       {/* Hero Section */}
-      <section className="bg-gradient-primary text-primary-foreground py-16 md:py-28 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10 pointer-events-none"></div>
-        <div className="container mx-auto px-6 lg:px-8 relative z-10">
-          <div className="max-w-4xl mx-auto text-center space-y-6 animate-fade-in">
-            <div className="inline-block py-1 px-4 rounded-full bg-white/20 text-white text-sm font-semibold mb-2 backdrop-blur-md">
+      <section className="relative overflow-hidden flex items-center justify-center min-h-[60vh] py-20 md:py-32">
+        <div className="absolute inset-0 z-0">
+          <img
+            src={aboutImage}
+            alt="BF Suma Background"
+            className="w-full h-full object-cover rounded-none"
+          />
+          <div className="absolute inset-0 bg-primary/95 md:bg-primary/90 mix-blend-multiply"></div>
+          <div className="absolute inset-0 bg-black/50"></div>
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent opacity-90"></div>
+        </div>
+
+        <div className="container mx-auto px-6 lg:px-8 relative z-10 pt-10">
+          <div className="max-w-4xl mx-auto text-center space-y-6 animate-fade-in drop-shadow-lg">
+            <div className="inline-block py-1.5 px-5 rounded-full bg-white/10 text-white text-sm font-semibold mb-2 backdrop-blur-md border border-white/20 shadow-xl">
               Established in the United States
             </div>
-            <h1 className="font-display font-bold text-4xl md:text-6xl lg:text-7xl leading-tight">
+            <h1 className="font-display font-bold text-4xl md:text-6xl lg:text-7xl leading-tight text-white">
               BF Suma is a Health Product Company
             </h1>
-            <p className="text-lg md:text-2xl opacity-90 leading-relaxed font-light mt-6">
+            <p className="text-lg md:text-2xl text-white/90 leading-relaxed font-light mt-6 max-w-3xl mx-auto shadow-black/10">
               Dedicated to research & development, manufacturing & distribution, and consistently providing natural yet high quality products to benefit the health and well-being of people.
             </p>
-            <div className="pt-8">
-              <a href="#mission" className="bg-white text-primary font-bold text-lg px-8 py-4 rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300">
+            <div className="pt-10">
+              <a href="#mission" className="inline-block bg-white text-primary font-bold text-lg px-10 py-4 rounded-full shadow-[0_0_30px_rgba(255,255,255,0.3)] hover:shadow-[0_0_40px_rgba(255,255,255,0.5)] hover:scale-105 transition-all duration-300">
                 Discover Our Mission
               </a>
             </div>

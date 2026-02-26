@@ -130,25 +130,25 @@ const Shop = () => {
               </Select>
             </div>
 
-            {/* Category Pills */}
-            <div className="flex flex-wrap gap-2">
-              <Button
-                variant={!selectedCategory ? "default" : "outline"}
-                className={!selectedCategory ? "gradient-primary rounded-full text-sm md:text-base h-9 md:h-10" : "rounded-full text-sm md:text-base h-9 md:h-10"}
-                onClick={() => handleCategoryClick(null)}
-              >
-                All Products
-              </Button>
-              {categories.map((category) => (
-                <Button
-                  key={category.id}
-                  variant={selectedCategory === category.slug ? "default" : "outline"}
-                  className={selectedCategory === category.slug ? "gradient-primary rounded-full text-sm md:text-base h-9 md:h-10" : "rounded-full text-sm md:text-base h-9 md:h-10"}
-                  onClick={() => handleCategoryClick(category.slug)}
+            {/* Category Navigation */}
+            <div className="w-full overflow-x-auto pb-4 scrollbar-none rounded-2xl bg-secondary/30 p-2 sm:p-3 border border-border/50 shadow-soft">
+              <div className="flex gap-2 sm:gap-3 min-w-max">
+                <button
+                  className={`px-6 py-3 rounded-xl font-medium text-sm md:text-base border transition-all duration-300 ${!selectedCategory ? "bg-primary text-white border-primary shadow-lg shadow-primary/20 scale-105" : "bg-card text-muted-foreground border-border hover:bg-primary/5 hover:border-primary/30"}`}
+                  onClick={() => handleCategoryClick(null)}
                 >
-                  {category.name}
-                </Button>
-              ))}
+                  All Collection
+                </button>
+                {categories.map((category) => (
+                  <button
+                    key={category.id}
+                    className={`px-6 py-3 rounded-xl font-medium text-sm md:text-base border transition-all duration-300 ${selectedCategory === category.slug ? "bg-primary text-white border-primary shadow-lg shadow-primary/20 scale-105" : "bg-card text-muted-foreground border-border hover:bg-primary/5 hover:border-primary/30"}`}
+                    onClick={() => handleCategoryClick(category.slug)}
+                  >
+                    {category.name}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
