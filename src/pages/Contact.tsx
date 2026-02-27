@@ -1,9 +1,10 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import StoreMap from "@/components/StoreMap";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Mail, Phone, MessageCircle, Send } from "lucide-react";
+import { Mail, MapPin, Phone, MessageCircle, Send } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -46,7 +47,7 @@ const Contact = () => {
       if (error) throw error;
 
       toast.success("Message sent successfully! We'll get back to you soon.");
-      
+
       // Reset form
       setFormData({
         name: "",
@@ -133,9 +134,9 @@ const Contact = () => {
                     onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                   />
                 </div>
-                <Button 
-                  type="submit" 
-                  size="lg" 
+                <Button
+                  type="submit"
+                  size="lg"
                   className="gradient-primary hover:shadow-luxury w-full h-12 text-lg rounded-full"
                   disabled={isSubmitting}
                 >
@@ -222,6 +223,24 @@ const Contact = () => {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Store Location Map */}
+      <section className="py-8 md:py-12 bg-secondary/30">
+        <div className="container mx-auto px-4 md:px-6 lg:px-8">
+          <div className="max-w-4xl mx-auto">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-full gradient-primary flex items-center justify-center shrink-0">
+                <MapPin className="h-5 w-5 text-primary-foreground" />
+              </div>
+              <div>
+                <h2 className="font-display font-bold text-2xl text-foreground">Find Us</h2>
+                <p className="text-muted-foreground text-sm">Visit us at our Nairobi store</p>
+              </div>
+            </div>
+            <StoreMap />
           </div>
         </div>
       </section>

@@ -2,6 +2,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import AddressPicker, { AddressResult } from "@/components/AddressPicker";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { CreditCard, Smartphone, Loader2, CheckCircle2, XCircle } from "lucide-react";
@@ -29,6 +30,8 @@ const Checkout = () => {
   const [address, setAddress] = useState("");
   const [city, setCity] = useState("");
   const [postalCode, setPostalCode] = useState("");
+  const [deliveryLat, setDeliveryLat] = useState<number | null>(null);
+  const [deliveryLng, setDeliveryLng] = useState<number | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -145,6 +148,10 @@ const Checkout = () => {
         payment_method: paymentMethod,
         total_amount: totalPrice,
         referral_code: referralCode,
+        ...(deliveryLat !== null && deliveryLng !== null && {
+          delivery_lat: deliveryLat,
+          delivery_lng: deliveryLng,
+        }),
       };
 
       const { data: order, error: orderError } = await supabase
@@ -270,8 +277,16 @@ const Checkout = () => {
                   <h2 className="font-display font-bold text-xl md:text-2xl text-foreground mb-4 md:mb-6">Shipping Address</h2>
                   <div className="space-y-4">
                     <div>
-                      <label className="text-sm font-medium text-foreground">Street Address</label>
-                      <Input required className="mt-2 h-12 rounded-xl" placeholder="123 Main Street" value={address} onChange={(e) => setAddress(e.target.value)} />
+                      <label className="text-sm font-medium text-foreground">Delivery Address</label>
+                      <p className="text-xs text-muted-foreground mb-2 mt-1">Search or tap the map to set your exact delivery location</p>
+                      <AddressPicker
+                        value={address}
+                        onChange={(result: AddressResult) => {
+                          setAddress(result.address);
+                          if (result.lat !== 0) setDeliveryLat(result.lat);
+                          if (result.lng !== 0) setDeliveryLng(result.lng);
+                        }}
+                      />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
