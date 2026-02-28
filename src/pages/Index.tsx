@@ -79,7 +79,7 @@ const Index = () => {
         .select("*, categories(name)")
         .eq("is_active", true)
         .order("rating", { ascending: false })
-        .limit(4);
+        .limit(8);
       if (error) throw error;
       return data;
     },
@@ -277,19 +277,23 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Featured Products */}
-      <section className="py-12 sm:py-16 md:py-24 bg-secondary/20">
+      {/* Customer Favorites / Best Sellers */}
+      <section className="py-12 sm:py-16 md:py-24" style={{ background: "#FAF7F2" }}>
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Section header */}
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10 sm:mb-14">
             <div>
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent/10 border border-accent/20 text-accent text-xs font-semibold tracking-widest uppercase mb-5">
-                <span className="w-1.5 h-1.5 rounded-full bg-accent" />
-                Top Sellers
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-600 text-xs font-semibold tracking-widest uppercase mb-5">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                🔥 Best Sellers
               </div>
               <h2 className="font-display font-bold text-3xl sm:text-4xl md:text-5xl text-foreground tracking-tight">
-                Featured Products
+                Customer Favorites
               </h2>
-              <div className="w-16 h-1 bg-accent rounded-full mt-3" />
+              <div className="w-16 h-1 bg-amber-400 rounded-full mt-3 mb-3" />
+              <p className="text-muted-foreground text-base max-w-lg">
+                Discover the products everyone is adding to their routine.
+              </p>
             </div>
             <Link to="/shop">
               <Button variant="outline" className="rounded-full border-primary/30 text-primary hover:bg-primary hover:text-white transition-all duration-300">
@@ -298,24 +302,50 @@ const Index = () => {
             </Link>
           </div>
 
+          {/* Product grid */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6 mb-10">
-            {featuredProducts.map((product) => (
-              <ProductCard
-                key={product.id}
-                id={product.id}
-                name={product.name}
-                price={Number(product.price)}
-                rating={Number(product.rating) || 5}
-                image={product.image_url || "/placeholder.svg"}
-                category={product.categories?.name || ""}
-              />
-            ))}
+            {featuredProducts.map((product, index) => {
+              const badges = ["BEST SELLER", "BEST SELLER", "HOT", "TRENDING"];
+              const badge = index < 4 ? badges[index] : undefined;
+              return (
+                <ProductCard
+                  key={product.id}
+                  id={product.id}
+                  name={product.name}
+                  price={Number(product.price)}
+                  comparePrice={product.compare_price ? Number(product.compare_price) : undefined}
+                  rating={Number(product.rating) || 5}
+                  image={product.image_url || "/placeholder.svg"}
+                  category={product.categories?.name || ""}
+                  badge={badge}
+                />
+              );
+            })}
           </div>
 
-          <div className="text-center">
+          {/* Social proof strip */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-10 py-6 px-6 bg-white rounded-2xl border border-amber-100 shadow-sm">
+            <div className="flex items-center gap-2">
+              <div className="flex -space-x-1.5">
+                {["🟢", "🟡", "🟣", "🔵"].map((c, i) => (
+                  <div key={i} className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 border-2 border-white flex items-center justify-center text-sm">{c}</div>
+                ))}
+              </div>
+              <p className="text-sm font-semibold text-foreground">2,000+ happy customers nationwide</p>
+            </div>
+            <div className="hidden sm:block w-px h-8 bg-border" />
+            <div className="flex items-center gap-1.5">
+              {[...Array(5)].map((_, i) => (
+                <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />
+              ))}
+              <span className="text-sm font-semibold text-foreground ml-1">Rated 4.8/5 by verified buyers</span>
+            </div>
+          </div>
+
+          <div className="text-center mt-10">
             <Link to="/shop">
               <Button size="lg" className="gradient-primary hover:shadow-lg hover:shadow-primary/30 px-10 py-6 text-base sm:text-lg rounded-full shadow-medium transition-all duration-300 hover:scale-105">
-                View All Products <ArrowRight className="ml-2 h-5 w-5" />
+                Shop All Products <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
           </div>
