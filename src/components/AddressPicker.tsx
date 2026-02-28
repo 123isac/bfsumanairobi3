@@ -2,27 +2,19 @@ import { useEffect, useRef, useState } from "react";
 import { MapPin, Search, X } from "lucide-react";
 import L from "leaflet";
 
-// Fix broken default icon paths
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-    iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
-    iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-    shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-});
-
 const DEFAULT_LAT = -1.2833;
 const DEFAULT_LNG = 36.8172; // Nairobi centre
 
+// Inline SVG pin — no external fetch needed
 const purpleIcon = L.divIcon({
     className: "",
-    html: `<div style="
-    width:30px;height:30px;border-radius:50% 50% 50% 0;
-    background:#7c3aed;border:3px solid #fff;
-    box-shadow:0 2px 8px rgba(124,58,237,0.45);
-    transform:rotate(-45deg);
-  "></div>`,
-    iconSize: [30, 30],
-    iconAnchor: [15, 30],
+    html: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 34" width="28" height="40">
+    <path d="M12 0C5.373 0 0 5.373 0 12c0 9 12 22 12 22S24 21 24 12C24 5.373 18.627 0 12 0z"
+          fill="#7c3aed" stroke="#fff" stroke-width="1.5"/>
+    <circle cx="12" cy="12" r="4.5" fill="#fff" opacity="0.9"/>
+  </svg>`,
+    iconSize: [28, 40],
+    iconAnchor: [14, 40],
 });
 
 export interface AddressResult {
@@ -66,6 +58,8 @@ const AddressPicker = ({ value, onChange, placeholder = "Search your delivery ad
     const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [searching, setSearching] = useState(false);
+    const [geocoding, setGeocoding] = useState(false);
+    const pickedRef = useRef(false); // true if user picked from map/suggestions
     const debounce = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     // Build map once
@@ -76,11 +70,15 @@ const AddressPicker = ({ value, onChange, placeholder = "Search your delivery ad
             center: [DEFAULT_LAT, DEFAULT_LNG],
             zoom: 13,
             scrollWheelZoom: true,
+            preferCanvas: true,  // smoother tile rendering
         });
 
-        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-            attribution: '© <a href="https://openstreetmap.org/copyright">OpenStreetMap</a>',
-            maxZoom: 19,
+        // CartoDB Positron — faster CDN, cleaner look
+        L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
+            attribution:
+                '&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            subdomains: "abcd",
+            maxZoom: 20,
         }).addTo(map);
 
         const marker = L.marker([DEFAULT_LAT, DEFAULT_LNG], {
@@ -91,6 +89,7 @@ const AddressPicker = ({ value, onChange, placeholder = "Search your delivery ad
         marker.on("dragend", async () => {
             const { lat, lng } = marker.getLatLng();
             const addr = await reverseGeocode(lat, lng);
+            pickedRef.current = true;
             setInputValue(addr);
             onChange({ address: addr, lat, lng });
         });
@@ -99,6 +98,7 @@ const AddressPicker = ({ value, onChange, placeholder = "Search your delivery ad
             const { lat, lng } = e.latlng;
             marker.setLatLng([lat, lng]);
             const addr = await reverseGeocode(lat, lng);
+            pickedRef.current = true;
             setInputValue(addr);
             onChange({ address: addr, lat, lng });
         });
@@ -116,12 +116,14 @@ const AddressPicker = ({ value, onChange, placeholder = "Search your delivery ad
     const moveTo = (lat: number, lng: number, addr: string) => {
         mapRef.current?.setView([lat, lng], 16);
         markerRef.current?.setLatLng([lat, lng]);
+        pickedRef.current = true;
         setInputValue(addr);
         onChange({ address: addr, lat, lng });
     };
 
     const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
         const v = e.target.value;
+        pickedRef.current = false; // user is typing — coords not yet confirmed
         setInputValue(v);
         if (debounce.current) clearTimeout(debounce.current);
         if (!v.trim()) { setSuggestions([]); setShowSuggestions(false); return; }
@@ -141,6 +143,25 @@ const AddressPicker = ({ value, onChange, placeholder = "Search your delivery ad
         }, 400);
     };
 
+    // Auto-geocode if user typed an address but never picked from suggestions/map
+    const handleBlur = async () => {
+        setTimeout(() => setShowSuggestions(false), 150);
+        if (pickedRef.current || !inputValue.trim()) return;
+        setGeocoding(true);
+        try {
+            const res = await fetch(
+                `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(inputValue)}&countrycodes=ke&limit=1`,
+                { headers: { "Accept-Language": "en" } }
+            );
+            const data: Suggestion[] = await res.json();
+            if (data.length > 0) {
+                const s = data[0];
+                moveTo(parseFloat(s.lat), parseFloat(s.lon), s.display_name);
+            }
+        } catch { /* keep typed text as-is */ }
+        finally { setGeocoding(false); }
+    };
+
     const pick = (s: Suggestion) => {
         setShowSuggestions(false);
         moveTo(parseFloat(s.lat), parseFloat(s.lon), s.display_name);
@@ -151,10 +172,10 @@ const AddressPicker = ({ value, onChange, placeholder = "Search your delivery ad
             {/* Search input */}
             <div className="relative">
                 <Search className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground pointer-events-none" />
-                {searching
+                {(searching || geocoding)
                     ? <div className="absolute right-3 top-3.5 w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                     : inputValue && (
-                        <button type="button" onClick={() => { setInputValue(""); setSuggestions([]); setShowSuggestions(false); }}
+                        <button type="button" onClick={() => { pickedRef.current = false; setInputValue(""); setSuggestions([]); setShowSuggestions(false); }}
                             className="absolute right-3 top-3.5 text-muted-foreground hover:text-foreground transition">
                             <X className="h-4 w-4" />
                         </button>
@@ -163,7 +184,7 @@ const AddressPicker = ({ value, onChange, placeholder = "Search your delivery ad
                 <input
                     value={inputValue}
                     onChange={handleInput}
-                    onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+                    onBlur={handleBlur}
                     onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
                     placeholder={placeholder}
                     className="w-full pl-9 pr-9 h-12 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring transition"

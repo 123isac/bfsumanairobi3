@@ -2,7 +2,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import AddressPicker, { AddressResult } from "@/components/AddressPicker";
+import KenyaAddressForm, { KenyaAddress } from "@/components/KenyaAddressForm";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { CreditCard, Smartphone, Loader2, CheckCircle2, XCircle } from "lucide-react";
@@ -27,11 +27,13 @@ const Checkout = () => {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
-  const [address, setAddress] = useState("");
-  const [city, setCity] = useState("");
-  const [postalCode, setPostalCode] = useState("");
-  const [deliveryLat, setDeliveryLat] = useState<number | null>(null);
-  const [deliveryLng, setDeliveryLng] = useState<number | null>(null);
+  const [kenyaAddress, setKenyaAddress] = useState<KenyaAddress>({
+    county: "",
+    area: "",
+    street: "",
+    building: "",
+    landmark: "",
+  });
 
   useEffect(() => {
     if (user) {
@@ -127,7 +129,22 @@ const Checkout = () => {
     setIsSubmitting(true);
 
     try {
-      const validationResult = checkoutSchema.safeParse({ fullName, email, phone, address, city, postalCode });
+      // Validate Kenya address fields
+      if (!kenyaAddress.county || !kenyaAddress.area || !kenyaAddress.street || !kenyaAddress.building) {
+        toast.error("Please fill in all required delivery address fields (County, Area, Street, Building).");
+        setIsSubmitting(false);
+        return;
+      }
+
+      const validationResult = checkoutSchema.safeParse({
+
+        fullName,
+        email,
+        phone,
+        address: [kenyaAddress.street, kenyaAddress.area].filter(Boolean).join(", ") || ".",
+        city: kenyaAddress.county || ".",
+        postalCode: undefined,
+      });
       if (!validationResult.success) {
         toast.error(validationResult.error.errors[0].message);
         setIsSubmitting(false);
@@ -142,16 +159,15 @@ const Checkout = () => {
         customer_name: fullName,
         customer_email: email,
         customer_phone: phone,
-        shipping_address: address,
-        shipping_city: city,
-        shipping_postal_code: postalCode || null,
+        shipping_address: [kenyaAddress.street, kenyaAddress.building].filter(Boolean).join(", "),
+        shipping_city: kenyaAddress.county,
+        shipping_postal_code: null,
+        shipping_area: kenyaAddress.area,
+        shipping_building: kenyaAddress.building,
+        shipping_landmark: kenyaAddress.landmark || null,
         payment_method: paymentMethod,
         total_amount: totalPrice,
         referral_code: referralCode,
-        ...(deliveryLat !== null && deliveryLng !== null && {
-          delivery_lat: deliveryLat,
-          delivery_lng: deliveryLng,
-        }),
       };
 
       const { data: order, error: orderError } = await supabase
@@ -278,25 +294,8 @@ const Checkout = () => {
                   <div className="space-y-4">
                     <div>
                       <label className="text-sm font-medium text-foreground">Delivery Address</label>
-                      <p className="text-xs text-muted-foreground mb-2 mt-1">Search or tap the map to set your exact delivery location</p>
-                      <AddressPicker
-                        value={address}
-                        onChange={(result: AddressResult) => {
-                          setAddress(result.address);
-                          if (result.lat !== 0) setDeliveryLat(result.lat);
-                          if (result.lng !== 0) setDeliveryLng(result.lng);
-                        }}
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-sm font-medium text-foreground">City</label>
-                        <Input required className="mt-2 h-12 rounded-xl" placeholder="Nairobi" value={city} onChange={(e) => setCity(e.target.value)} />
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium text-foreground">Postal Code</label>
-                        <Input className="mt-2 h-12 rounded-xl" placeholder="00100" value={postalCode} onChange={(e) => setPostalCode(e.target.value)} />
-                      </div>
+                      <p className="text-xs text-muted-foreground mb-3 mt-1">Fill in your full delivery details so our rider can find you easily</p>
+                      <KenyaAddressForm value={kenyaAddress} onChange={setKenyaAddress} />
                     </div>
                   </div>
                 </div>

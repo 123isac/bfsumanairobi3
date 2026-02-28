@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { z } from "zod";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Github } from "lucide-react";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address").max(255),
@@ -25,13 +25,13 @@ const signupSchema = loginSchema.extend({
 
 const Auth = () => {
   const navigate = useNavigate();
-  const { signIn, signUp, user } = useAuth();
+  const { signIn, signUp, signInWithGitHub, user } = useAuth();
   const [loading, setLoading] = useState(false);
-  
+
   // Login state
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
-  
+
   // Signup state
   const [signupEmail, setSignupEmail] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
@@ -51,14 +51,14 @@ const Auth = () => {
 
     try {
       const result = loginSchema.safeParse({ email: loginEmail, password: loginPassword });
-      
+
       if (!result.success) {
         toast.error(result.error.errors[0].message);
         return;
       }
 
       const { error } = await signIn(loginEmail, loginPassword);
-      
+
       if (error) {
         if (error.message.includes("Invalid login credentials")) {
           toast.error("Invalid email or password");
@@ -90,14 +90,14 @@ const Auth = () => {
         confirmPassword,
         fullName,
       });
-      
+
       if (!result.success) {
         toast.error(result.error.errors[0].message);
         return;
       }
 
       const { error } = await signUp(signupEmail, signupPassword, fullName);
-      
+
       if (error) {
         if (error.message.includes("already registered")) {
           toast.error("This email is already registered. Please log in instead.");
@@ -140,7 +140,7 @@ const Auth = () => {
             <TabsTrigger value="login">Login</TabsTrigger>
             <TabsTrigger value="signup">Sign Up</TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="login">
             <Card>
               <CardHeader>
@@ -175,12 +175,28 @@ const Auth = () => {
                   </div>
                 </CardContent>
                 <CardFooter className="flex flex-col gap-3">
-                  <Button 
-                    type="submit" 
-                    className="w-full gradient-primary" 
+                  <Button
+                    type="submit"
+                    className="w-full gradient-primary"
                     disabled={loading}
                   >
                     {loading ? "Logging in..." : "Log In"}
+                  </Button>
+                  <div className="relative w-full">
+                    <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-border" /></div>
+                    <div className="relative flex justify-center text-xs uppercase"><span className="bg-card px-2 text-muted-foreground">or</span></div>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full gap-2"
+                    onClick={async () => {
+                      const { error } = await signInWithGitHub();
+                      if (error) toast.error(error.message);
+                    }}
+                  >
+                    <Github className="h-4 w-4" />
+                    Continue with GitHub
                   </Button>
                   <Link to="/" className="w-full">
                     <Button type="button" variant="outline" className="w-full">
@@ -191,7 +207,7 @@ const Auth = () => {
               </form>
             </Card>
           </TabsContent>
-          
+
           <TabsContent value="signup">
             <Card>
               <CardHeader>
@@ -248,12 +264,28 @@ const Auth = () => {
                   </div>
                 </CardContent>
                 <CardFooter className="flex flex-col gap-3">
-                  <Button 
-                    type="submit" 
-                    className="w-full gradient-primary" 
+                  <Button
+                    type="submit"
+                    className="w-full gradient-primary"
                     disabled={loading}
                   >
                     {loading ? "Creating account..." : "Sign Up"}
+                  </Button>
+                  <div className="relative w-full">
+                    <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-border" /></div>
+                    <div className="relative flex justify-center text-xs uppercase"><span className="bg-card px-2 text-muted-foreground">or</span></div>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full gap-2"
+                    onClick={async () => {
+                      const { error } = await signInWithGitHub();
+                      if (error) toast.error(error.message);
+                    }}
+                  >
+                    <Github className="h-4 w-4" />
+                    Continue with GitHub
                   </Button>
                   <Link to="/" className="w-full">
                     <Button type="button" variant="outline" className="w-full">
