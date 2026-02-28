@@ -89,8 +89,9 @@ serve(async (req) => {
     const password = btoa(`${shortcode}${passkey}${timestamp}`);
     const formattedPhone = formatPhoneNumber(phone);
 
-    // Use the project's callback URL
-    const callbackUrl = `https://cwjbdpxolhxbcyhkapmy.supabase.co/functions/v1/mpesa-callback`;
+    // Use the project's callback URL (env var preferred, fallback to correct project ID)
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') || 'https://vjhjnbefyyfxfsyncdrr.supabase.co';
+    const callbackUrl = `${supabaseUrl}/functions/v1/mpesa-callback`;
 
     const stkPushPayload = {
       BusinessShortCode: shortcode,
