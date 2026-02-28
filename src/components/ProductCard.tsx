@@ -1,7 +1,9 @@
-import { ShoppingCart, Star } from "lucide-react";
+import { ShoppingCart, Star, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
+import { useState } from "react";
+import { toast } from "sonner";
 
 interface ProductCardProps {
   id: string;
@@ -14,69 +16,90 @@ interface ProductCardProps {
 
 const ProductCard = ({ id, name, price, rating, image, category }: ProductCardProps) => {
   const { addItem } = useCart();
+  const [added, setAdded] = useState(false);
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     addItem({ id, name, price, image, category });
+    setAdded(true);
+    setTimeout(() => setAdded(false), 1500);
   };
+
   return (
-    <div className="group relative bg-card rounded-xl sm:rounded-2xl overflow-hidden shadow-soft hover:shadow-luxury transition-smooth border border-border">
+    <div className="group relative bg-card rounded-2xl overflow-hidden border border-border hover:border-primary/30 shadow-sm hover:shadow-xl transition-all duration-400 flex flex-col">
       <Link to={`/product/${id}`} className="block">
-        {/* Image Container */}
-        <div className="relative aspect-square overflow-hidden bg-secondary">
+        {/* Image */}
+        <div className="relative aspect-square overflow-hidden bg-secondary/50">
           <img
             src={image}
             alt={name}
-            className="w-full h-full object-cover group-hover:scale-105 sm:group-hover:scale-110 transition-smooth duration-500"
+            className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-600 ease-out"
           />
 
-          {/* Category Badge */}
-          <div className="absolute top-2 sm:top-3 md:top-4 left-2 sm:left-3 md:left-4">
-            <span className="px-2 sm:px-3 py-1 bg-primary text-primary-foreground text-[10px] sm:text-xs font-medium rounded-full shadow-medium">
+          {/* Gradient overlay on hover */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+          {/* Category pill */}
+          <div className="absolute top-3 left-3">
+            <span className="px-2.5 py-1 bg-white/90 backdrop-blur-sm text-primary text-[10px] font-semibold rounded-full shadow-sm uppercase tracking-wider">
               {category}
             </span>
           </div>
 
-          {/* Quick View Overlay - Hidden on mobile */}
-          <div className="hidden sm:flex absolute inset-0 bg-gradient-hero opacity-0 group-hover:opacity-100 transition-smooth items-center justify-center">
-            <span className="text-primary-foreground font-medium text-sm">Quick View</span>
+          {/* Quick View button — appears on hover */}
+          <div className="absolute inset-x-0 bottom-3 flex justify-center opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-300">
+            <span className="flex items-center gap-1.5 px-4 py-2 bg-white/95 backdrop-blur-sm text-primary text-xs font-semibold rounded-full shadow-lg">
+              <Eye className="h-3.5 w-3.5" />
+              View Details
+            </span>
           </div>
         </div>
       </Link>
 
       {/* Content */}
-      <div className="p-3 sm:p-4 md:p-5">
-        <Link to={`/product/${id}`}>
-          <h3 className="font-display font-semibold text-sm sm:text-base md:text-lg mb-1 sm:mb-2 text-foreground group-hover:text-primary transition-smooth line-clamp-2 leading-tight">
+      <div className="p-4 flex flex-col flex-1">
+        {/* Stars */}
+        <div className="flex items-center gap-0.5 mb-2">
+          {[...Array(5)].map((_, i) => (
+            <Star
+              key={i}
+              className={`h-3.5 w-3.5 ${i < rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30"}`}
+            />
+          ))}
+          <span className="text-[10px] text-muted-foreground ml-1">{rating}.0</span>
+        </div>
+
+        {/* Name */}
+        <Link to={`/product/${id}`} className="flex-1">
+          <h3 className="font-semibold text-sm md:text-base text-foreground group-hover:text-primary transition-colors duration-200 line-clamp-2 leading-snug mb-3">
             {name}
           </h3>
         </Link>
 
-        {/* Rating - Hidden on smallest mobile */}
-        <div className="hidden xs:flex items-center space-x-1 mb-2 sm:mb-3">
-          {[...Array(5)].map((_, i) => (
-            <Star
-              key={i}
-              className={`h-3 sm:h-4 w-3 sm:w-4 ${i < rating ? "fill-accent text-accent" : "text-muted"
-                }`}
-            />
-          ))}
-        </div>
-
-        {/* Price & Cart */}
-        <div className="flex items-center justify-between mt-2 sm:mt-3">
-          <div className="flex flex-col">
-            <span className="font-display font-bold text-base sm:text-lg md:text-xl lg:text-2xl text-primary leading-tight">
+        {/* Price + Add to Cart */}
+        <div className="flex items-center justify-between gap-2 mt-auto">
+          <div>
+            <span className="font-bold text-lg md:text-xl text-primary leading-none">
               KSH {price.toLocaleString()}
             </span>
           </div>
 
           <Button
-            size="icon"
-            className="gradient-primary hover:shadow-gold transition-smooth rounded-full h-9 w-9 sm:h-10 sm:w-10 shrink-0"
+            size="sm"
+            className={`rounded-full h-9 px-4 text-xs font-semibold transition-all duration-300 shrink-0 ${added
+                ? "bg-green-500 hover:bg-green-500 text-white shadow-green-200 shadow-md"
+                : "gradient-primary hover:shadow-md hover:shadow-primary/30"
+              }`}
             onClick={handleAddToCart}
           >
-            <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5" />
+            {added ? (
+              "Added ✓"
+            ) : (
+              <>
+                <ShoppingCart className="h-3.5 w-3.5 mr-1.5" />
+                Add
+              </>
+            )}
           </Button>
         </div>
       </div>

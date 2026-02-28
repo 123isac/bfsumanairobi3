@@ -246,14 +246,19 @@ const Index = () => {
       </section>
 
       {/* Categories Section */}
-      <section className="py-10 sm:py-14 md:py-20 bg-background animated-bg">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="text-center mb-8 sm:mb-10 md:mb-12">
-            <h2 className="font-display font-bold text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-foreground mb-3 md:mb-4 tracking-tight">
+      <section className="py-12 sm:py-16 md:py-24 bg-background">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-10 sm:mb-14">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/8 border border-primary/15 text-primary text-xs font-semibold tracking-widest uppercase mb-5">
+              <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+              What We Offer
+            </div>
+            <h2 className="font-display font-bold text-3xl sm:text-4xl md:text-5xl text-foreground mb-4 tracking-tight">
               Wellness Categories
             </h2>
-            <p className="text-muted-foreground text-sm sm:text-base md:text-lg max-w-2xl mx-auto px-2 sm:px-4">
-              Explore our premium collection of wellness products designed for your unique needs
+            <div className="w-16 h-1 bg-accent rounded-full mx-auto mb-4" />
+            <p className="text-muted-foreground text-base md:text-lg max-w-2xl mx-auto">
+              Nine science-backed health categories designed for your unique wellness goals
             </p>
           </div>
 
@@ -273,18 +278,27 @@ const Index = () => {
       </section>
 
       {/* Featured Products */}
-      <section className="py-10 sm:py-14 md:py-20 bg-secondary/30 animated-bg animated-bg-secondary">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="text-center mb-8 sm:mb-10 md:mb-12">
-            <h2 className="font-display font-bold text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-foreground mb-3 sm:mb-4 tracking-tight">
-              Featured Products
-            </h2>
-            <p className="text-muted-foreground text-sm sm:text-base md:text-lg max-w-2xl mx-auto px-2 sm:px-4">
-              Discover our best-selling wellness solutions trusted by thousands
-            </p>
+      <section className="py-12 sm:py-16 md:py-24 bg-secondary/20">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10 sm:mb-14">
+            <div>
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent/10 border border-accent/20 text-accent text-xs font-semibold tracking-widest uppercase mb-5">
+                <span className="w-1.5 h-1.5 rounded-full bg-accent" />
+                Top Sellers
+              </div>
+              <h2 className="font-display font-bold text-3xl sm:text-4xl md:text-5xl text-foreground tracking-tight">
+                Featured Products
+              </h2>
+              <div className="w-16 h-1 bg-accent rounded-full mt-3" />
+            </div>
+            <Link to="/shop">
+              <Button variant="outline" className="rounded-full border-primary/30 text-primary hover:bg-primary hover:text-white transition-all duration-300">
+                View All <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
           </div>
 
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6 mb-8 sm:mb-10 md:mb-12">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6 mb-10">
             {featuredProducts.map((product) => (
               <ProductCard
                 key={product.id}
@@ -298,12 +312,31 @@ const Index = () => {
             ))}
           </div>
 
-          <div className="text-center px-4">
-            <Link to="/shop" className="block sm:inline-block">
-              <Button size="lg" className="gradient-primary hover:shadow-luxury px-8 py-6 text-base sm:text-lg rounded-full w-full sm:w-auto shadow-medium">
+          <div className="text-center">
+            <Link to="/shop">
+              <Button size="lg" className="gradient-primary hover:shadow-lg hover:shadow-primary/30 px-10 py-6 text-base sm:text-lg rounded-full shadow-medium transition-all duration-300 hover:scale-105">
                 View All Products <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Stats Ribbon */}
+      <section className="bg-primary text-primary-foreground py-10">
+        <div className="container mx-auto px-4 lg:px-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+            {[
+              { value: "10,000+", label: "Happy Customers" },
+              { value: "50+", label: "Wellness Products" },
+              { value: "10+", label: "Years of Science" },
+              { value: "47", label: "Counties Delivered" },
+            ].map((stat) => (
+              <div key={stat.label} className="flex flex-col items-center gap-1">
+                <span className="font-display font-bold text-3xl sm:text-4xl text-accent">{stat.value}</span>
+                <span className="text-sm opacity-80 font-medium">{stat.label}</span>
+              </div>
+            ))}
           </div>
         </div>
       </section>
