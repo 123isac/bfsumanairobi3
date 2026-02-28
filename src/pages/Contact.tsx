@@ -1,6 +1,7 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import StoreMap from "@/components/StoreMap";
+import SEOHead from "@/components/SEOHead";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -67,6 +68,10 @@ const Contact = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <SEOHead
+        title="Contact Us"
+        description="Get in touch with BF Suma Nairobi. Visit our store, call us, email us, or chat on WhatsApp. We're here to help with your wellness journey."
+      />
       <Header />
 
       {/* Hero Section */}

@@ -1,5 +1,6 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import SEOHead from "@/components/SEOHead";
 import { Shield, Award, Heart, Sun, Rocket, Star, Fingerprint, Factory, Globe, Cpu, Zap, Droplets, Filter, Layers, CheckCircle, Target, Microscope, MapPin, Check } from "lucide-react";
 import aboutImage from "@/assets/about-image.jpg";
 
@@ -52,6 +53,10 @@ const About = () => {
 
   return (
     <div className="min-h-screen flex flex-col pt-20">
+      <SEOHead
+        title="About Us"
+        description="BF Suma is a science-led health product company established in the USA. Learn about our mission, patented technologies, GMP certification, and our presence across Kenya and Africa."
+      />
       <Header />
 
       {/* Hero Section */}

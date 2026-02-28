@@ -113,7 +113,7 @@ const Index = () => {
     <div className="min-h-screen flex flex-col">
       <SEOHead
         title="Home"
-        description="Discover authentic BF Suma wellness, health & beauty products. Shop online with fast delivery across Kenya."
+        description="Authentic BF Suma wellness products in Nairobi — immune support, digestive health, bone care, cardiovascular & more. Science-led nutrition, fast delivery across Kenya."
       />
       <Header />
 
@@ -155,12 +155,12 @@ const Index = () => {
             </div>
 
             <h1 className="font-display font-bold text-4xl sm:text-5xl md:text-7xl lg:text-8xl leading-[1.1] tracking-tight text-white drop-shadow-lg">
-              Discover Your
-              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-accent via-yellow-300 to-accent mt-2 pb-2">Natural Beauty</span>
+              Achieve Your
+              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-accent via-yellow-300 to-accent mt-2 pb-2">Optimal Wellness</span>
             </h1>
 
             <p className="text-base sm:text-lg md:text-2xl text-white/90 font-light leading-relaxed max-w-3xl mx-auto px-2 sm:px-4 drop-shadow-md">
-              Premium wellness products crafted to enhance your health and radiance. Experience authentic <strong className="font-semibold text-accent">American technology</strong> that transforms lives.
+              Science-led wellness products for immunity, gut health, energy, and longevity. Experience authentic <strong className="font-semibold text-accent">American technology</strong> trusted by thousands across Kenya.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center pt-8 px-2 sm:px-4 max-w-md sm:max-w-none mx-auto">
@@ -179,6 +179,26 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Trust Strip */}
+      <section className="bg-background border-b border-border py-4 relative z-20">
+        <div className="container mx-auto px-4 lg:px-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+            {[
+              { icon: "✅", label: "100% Authentic", sub: "Certified BF Suma products" },
+              { icon: "🚚", label: "Kenya-Wide Delivery", sub: "Fast shipping nationwide" },
+              { icon: "🔒", label: "Secure Checkout", sub: "M-Pesa & card accepted" },
+              { icon: "🌿", label: "10+ Years Trusted", sub: "Science-led formulations" },
+            ].map((item) => (
+              <div key={item.label} className="flex flex-col items-center gap-1 py-2">
+                <span className="text-2xl">{item.icon}</span>
+                <span className="font-semibold text-sm text-foreground">{item.label}</span>
+                <span className="text-xs text-muted-foreground">{item.sub}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Promotional Offers & New Arrivals */}
       <section className="py-8 bg-transparent relative z-20 -mt-10 sm:-mt-16">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -187,10 +207,10 @@ const Index = () => {
             <div className="bg-gradient-primary rounded-3xl p-8 text-white shadow-luxury relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition-all duration-500"></div>
               <div className="relative z-10">
-                <span className="inline-block px-3 py-1 bg-white/20 rounded-full text-[10px] font-bold tracking-wider mb-4 border border-white/30 backdrop-blur-sm">NEW ARRIVAL</span>
-                <h3 className="font-display font-bold text-2xl mb-2">Youth Essence Supreme</h3>
-                <p className="text-white/80 text-sm mb-6 max-w-[200px]">Experience the next generation of anti-aging skincare.</p>
-                <Link to="/shop?category=beauty-antiaging" className="inline-flex items-center text-sm font-bold hover:translate-x-2 transition-transform">
+                <span className="inline-block px-3 py-1 bg-white/20 rounded-full text-[10px] font-bold tracking-wider mb-4 border border-white/30 backdrop-blur-sm">BEST SELLER</span>
+                <h3 className="font-display font-bold text-2xl mb-2">Immune Booster Bundle</h3>
+                <p className="text-white/80 text-sm mb-6 max-w-[200px]">Strengthen your body's natural defences with our #1 immunity protocol.</p>
+                <Link to="/shop?category=immune-boosters" className="inline-flex items-center text-sm font-bold hover:translate-x-2 transition-transform">
                   Shop Now <ArrowRight className="ml-2 w-4 h-4" />
                 </Link>
               </div>
@@ -201,9 +221,9 @@ const Index = () => {
               <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-white/30 rounded-full blur-2xl group-hover:scale-150 transition-all duration-500"></div>
               <div className="relative z-10">
                 <span className="inline-block px-3 py-1 bg-primary/10 rounded-full text-[10px] font-bold tracking-wider mb-4 border border-primary/20 backdrop-blur-sm text-primary">SPECIAL OFFER</span>
-                <h3 className="font-display font-bold text-2xl mb-2">20% Off Immune Boosters</h3>
-                <p className="text-primary/80 text-sm mb-6 max-w-[200px]">Strengthen your body's natural defenses this season.</p>
-                <Link to="/shop?category=immune-boosters" className="inline-flex items-center text-sm font-bold hover:translate-x-2 transition-transform text-primary">
+                <h3 className="font-display font-bold text-2xl mb-2">20% Off Digestive Health</h3>
+                <p className="text-primary/80 text-sm mb-6 max-w-[200px]">Support your gut — the foundation of overall health and immunity.</p>
+                <Link to="/shop?category=digestive-health" className="inline-flex items-center text-sm font-bold hover:translate-x-2 transition-transform text-primary">
                   Claim Offer <ArrowRight className="ml-2 w-4 h-4" />
                 </Link>
               </div>

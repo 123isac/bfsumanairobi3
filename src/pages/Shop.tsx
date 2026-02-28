@@ -9,6 +9,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSearchParams } from "react-router-dom";
 import { useState } from "react";
+import SEOHead from "@/components/SEOHead";
 
 const PAGE_SIZE = 12;
 
@@ -85,6 +86,10 @@ const Shop = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <SEOHead
+        title="Shop"
+        description="Browse our full range of authentic BF Suma wellness products — immune boosters, digestive health, bone care, cardiovascular support & more. Fast delivery across Kenya."
+      />
       <Header />
 
       <section className="bg-gradient-primary text-primary-foreground py-10 sm:py-12 md:py-16 lg:py-20">
@@ -123,7 +128,7 @@ const Shop = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="newest">Newest First</SelectItem>
-                  <SelectItem value="price_asc">Price: Low → High</SelectItem>
+                  <SelectItem value="price_asc">Price: Low &rarr; High</SelectItem>
                   <SelectItem value="price_desc">Price: High → Low</SelectItem>
                   <SelectItem value="rating">Top Rated</SelectItem>
                 </SelectContent>

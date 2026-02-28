@@ -1,4 +1,4 @@
-import { Facebook, Instagram, Mail, Phone, Twitter } from "lucide-react";
+import { Facebook, Instagram, Mail, Phone, Youtube } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const Footer = () => {
@@ -18,17 +18,50 @@ const Footer = () => {
               </div>
             </div>
             <p className="text-base opacity-90 leading-relaxed max-w-lg mx-auto">
-              Authentic wellness products for a healthier, more beautiful you. Experience premium quality that transforms lives.
+              Science-led wellness products for immunity, gut health, energy and longevity.
+              Authentic BF Suma &#8212; trusted by thousands across Kenya.
             </p>
             <div className="flex space-x-4 pt-4">
-              <a href="#" className="w-12 h-12 rounded-full bg-primary-foreground/10 hover:bg-accent flex items-center justify-center transition-smooth hover:scale-110">
+              <a
+                href="https://www.facebook.com/bfsumanairobi"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Facebook"
+                className="w-12 h-12 rounded-full bg-primary-foreground/10 hover:bg-accent flex items-center justify-center transition-all duration-300 hover:scale-110"
+              >
                 <Facebook className="h-5 w-5" />
               </a>
-              <a href="#" className="w-12 h-12 rounded-full bg-primary-foreground/10 hover:bg-accent flex items-center justify-center transition-smooth hover:scale-110">
+              <a
+                href="https://www.instagram.com/bfsumanairobi"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Instagram"
+                className="w-12 h-12 rounded-full bg-primary-foreground/10 hover:bg-accent flex items-center justify-center transition-all duration-300 hover:scale-110"
+              >
                 <Instagram className="h-5 w-5" />
               </a>
-              <a href="#" className="w-12 h-12 rounded-full bg-primary-foreground/10 hover:bg-accent flex items-center justify-center transition-smooth hover:scale-110">
-                <Twitter className="h-5 w-5" />
+              <a
+                href="https://www.youtube.com/@bfsumanairobi"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="YouTube"
+                className="w-12 h-12 rounded-full bg-primary-foreground/10 hover:bg-accent flex items-center justify-center transition-all duration-300 hover:scale-110"
+              >
+                <Youtube className="h-5 w-5" />
+              </a>
+              <a
+                href="mailto:info@bfsumanairobi.com"
+                aria-label="Email us"
+                className="w-12 h-12 rounded-full bg-primary-foreground/10 hover:bg-accent flex items-center justify-center transition-all duration-300 hover:scale-110"
+              >
+                <Mail className="h-5 w-5" />
+              </a>
+              <a
+                href="tel:+254700000000"
+                aria-label="Call us"
+                className="w-12 h-12 rounded-full bg-primary-foreground/10 hover:bg-accent flex items-center justify-center transition-all duration-300 hover:scale-110"
+              >
+                <Phone className="h-5 w-5" />
               </a>
             </div>
           </div>
@@ -37,13 +70,16 @@ const Footer = () => {
         {/* Bottom Bar */}
         <div className="border-t border-primary-foreground/10 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
           <p className="text-sm opacity-80">
-            © {new Date().getFullYear()} BF Suma. All rights reserved.
+            &copy; {new Date().getFullYear()} BF Suma Nairobi. All rights reserved.
           </p>
           <div className="flex space-x-6">
-            <a href="#" className="text-sm opacity-80 hover:opacity-100 hover:text-accent transition-smooth">
+            <Link to="/contact" className="text-sm opacity-80 hover:opacity-100 hover:text-accent transition-all duration-300">
+              Contact Us
+            </Link>
+            <a href="mailto:info@bfsumanairobi.com" className="text-sm opacity-80 hover:opacity-100 hover:text-accent transition-all duration-300">
               Privacy Policy
             </a>
-            <a href="#" className="text-sm opacity-80 hover:opacity-100 hover:text-accent transition-smooth">
+            <a href="mailto:info@bfsumanairobi.com" className="text-sm opacity-80 hover:opacity-100 hover:text-accent transition-all duration-300">
               Terms of Service
             </a>
           </div>
