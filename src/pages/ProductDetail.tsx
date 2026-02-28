@@ -110,8 +110,11 @@ const ProductDetail = () => {
   const youtubeVideoId = getYouTubeVideoId(product.youtube_url || "");
   const hasVideo = !!youtubeVideoId;
 
+  // Cast to access extended DB columns not yet in auto-generated Supabase types
+  const p = product as any;
+
   const price = Number(product.price);
-  const comparePrice = product.compare_price ? Number(product.compare_price) : null;
+  const comparePrice = p.compare_price ? Number(p.compare_price) : null;
   const savings = comparePrice && comparePrice > price ? comparePrice - price : null;
   const discountPct = savings && comparePrice ? Math.round((savings / comparePrice) * 100) : null;
   const stock = product.stock_quantity ?? 0;
@@ -119,7 +122,7 @@ const ProductDetail = () => {
   const rating = Number(product.rating || 5);
 
   // Parse benefits as bullet lines
-  const benefitLines = (product.benefits || product.description || "")
+  const benefitLines = (p.benefits || product.description || "")
     .split("\n")
     .filter((l: string) => l.trim().length > 0);
 
@@ -280,8 +283,8 @@ const ProductDetail = () => {
                   <Button
                     size="lg"
                     className={`flex-1 h-14 text-base font-bold rounded-full transition-all duration-300 ${added
-                        ? "bg-green-500 hover:bg-green-500 text-white"
-                        : "gradient-primary hover:shadow-luxury hover:scale-[1.02]"
+                      ? "bg-green-500 hover:bg-green-500 text-white"
+                      : "gradient-primary hover:shadow-luxury hover:scale-[1.02]"
                       }`}
                     onClick={handleAddToCart}
                     disabled={stock < 1}
@@ -371,10 +374,10 @@ const ProductDetail = () => {
               {/* Ingredients */}
               <TabsContent value="ingredients" className="mt-8">
                 <div className="max-w-3xl space-y-3">
-                  {(product.ingredients || "").split("\n").filter((l: string) => l.trim()).map((line: string, i: number) => (
+                  {(p.ingredients || "").split("\n").filter((l: string) => l.trim()).map((line: string, i: number) => (
                     <p key={i} className="text-base md:text-lg text-foreground leading-relaxed">{line}</p>
                   ))}
-                  {!product.ingredients && (
+                  {!p.ingredients && (
                     <p className="text-muted-foreground text-lg">
                       Premium natural ingredients carefully selected for quality and effectiveness.
                     </p>
@@ -431,7 +434,7 @@ const ProductDetail = () => {
                     id={rp.id}
                     name={rp.name}
                     price={Number(rp.price)}
-                    comparePrice={rp.compare_price ? Number(rp.compare_price) : undefined}
+                    comparePrice={(rp as any).compare_price ? Number((rp as any).compare_price) : undefined}
                     rating={Number(rp.rating) || 5}
                     image={rp.image_url || "/placeholder.svg"}
                     category={rp.categories?.name || ""}
