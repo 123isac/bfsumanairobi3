@@ -24,7 +24,15 @@ import AdminProducts from "./pages/AdminProducts";
 import AdminAuth from "./pages/AdminAuth";
 import { AdminRoute } from "./components/AdminRoute";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      gcTime: 1000 * 60 * 10, // 10 minutes
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();

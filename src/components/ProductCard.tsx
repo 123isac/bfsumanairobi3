@@ -46,7 +46,9 @@ const ProductCard = ({ id, name, price, comparePrice, rating, image, category, b
           <img
             src={image}
             alt={name}
-            className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-600 ease-out"
+            loading="lazy"
+            decoding="async"
+            className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-600 ease-out bg-secondary/20"
           />
 
           {/* Gradient overlay on hover */}
@@ -120,8 +122,8 @@ const ProductCard = ({ id, name, price, comparePrice, rating, image, category, b
           <Button
             size="sm"
             className={`rounded-full h-9 px-4 text-xs font-semibold transition-all duration-300 shrink-0 ${added
-                ? "bg-green-500 hover:bg-green-500 text-white shadow-green-200 shadow-md"
-                : "gradient-primary hover:shadow-md hover:shadow-primary/30"
+              ? "bg-green-500 hover:bg-green-500 text-white shadow-green-200 shadow-md"
+              : "gradient-primary hover:shadow-md hover:shadow-primary/30"
               }`}
             onClick={handleAddToCart}
           >

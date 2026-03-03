@@ -1,0 +1,1 @@
+id, name, description, price, category_id, image_url, stock_quantity, is_active, rating, created_at, updated_at, youtube_url, benefits, ingredients

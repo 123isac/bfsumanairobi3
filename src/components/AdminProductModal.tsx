@@ -102,7 +102,7 @@ export function AdminProductModal({ isOpen, onClose, product, onSaved }: AdminPr
 
         const { error: uploadError } = await supabase.storage
             .from('products')
-            .upload(filePath, file, { upsert: true });
+            .upload(filePath, file);
 
         if (uploadError) throw uploadError;
 
@@ -139,11 +139,8 @@ export function AdminProductModal({ isOpen, onClose, product, onSaved }: AdminPr
                 stock_quantity: 100, // Default for now
                 image_url: finalImageUrl,
                 is_active: isActive,
-                // Extended attributes stored as JSONB or raw columns if they exist
-                compare_price: comparePrice ? Number(comparePrice) : null,
                 benefits,
                 ingredients,
-                badge: badge === "none" ? null : badge,
                 updated_at: new Date().toISOString()
             };
 

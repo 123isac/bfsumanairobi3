@@ -113,7 +113,9 @@ const AdminProducts = () => {
                                             <img
                                                 src={product.image_url}
                                                 alt={product.name}
-                                                className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 ${!product.is_active && 'grayscale'}`}
+                                                loading="lazy"
+                                                decoding="async"
+                                                className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 bg-secondary/20 ${!product.is_active && 'grayscale'}`}
                                             />
                                         ) : (
                                             <div className="flex flex-col items-center text-muted-foreground">
