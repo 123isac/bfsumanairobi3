@@ -44,31 +44,53 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     let mounted = true;
 
-    async function getInitialSession() {
+    const initializeAuth = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session }, error } = await supabase.auth.getSession();
+
+        if (error) throw error;
+
         if (mounted) {
           setSession(session);
           setUser(session?.user ?? null);
-          await checkAdminStatus(session?.user?.id);
-          setLoading(false);
+
+          if (session?.user?.id) {
+            await checkAdminStatus(session.user.id);
+          } else {
+            setIsAdmin(false);
+          }
         }
       } catch (error) {
-        console.error("Error getting session:", error);
-        if (mounted) setLoading(false);
+        console.error("Error during auth initialization:", error);
+        if (mounted) {
+          setSession(null);
+          setUser(null);
+          setIsAdmin(false);
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
       }
-    }
+    };
 
-    getInitialSession();
+    initializeAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
-        if (mounted) {
-          setSession(session);
-          setUser(session?.user ?? null);
-          await checkAdminStatus(session?.user?.id);
-          setLoading(false);
+        if (!mounted) return;
+
+        setSession(session);
+        setUser(session?.user ?? null);
+
+        if (session?.user?.id) {
+          await checkAdminStatus(session.user.id);
+        } else {
+          setIsAdmin(false);
         }
+
+        // Ensure loading is false after state change
+        setLoading(false);
       }
     );
 
