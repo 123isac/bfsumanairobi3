@@ -13,7 +13,7 @@ import { AdminProductModal } from "@/components/AdminProductModal";
 const AdminProducts = () => {
     const { session, isAdmin, loading: authLoading } = useAuth();
     const [products, setProducts] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [isFetchingProducts, setIsFetchingProducts] = useState(false);
     const [search, setSearch] = useState("");
 
     // Modal State
@@ -21,16 +21,13 @@ const AdminProducts = () => {
     const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
 
     useEffect(() => {
-        if (!authLoading) {
-            if (isAdmin) {
-                fetchProducts();
-            } else {
-                setLoading(false);
-            }
+        if (!authLoading && session && isAdmin) {
+            fetchProducts();
         }
-    }, [isAdmin, authLoading]);
+    }, [isAdmin, authLoading, session]);
 
     const fetchProducts = async () => {
+        setIsFetchingProducts(true);
         try {
             const { data, error } = await supabase
                 .from("products")
@@ -42,7 +39,7 @@ const AdminProducts = () => {
         } catch (error: any) {
             toast.error("Failed to load products: " + error.message);
         } finally {
-            setLoading(false);
+            setIsFetchingProducts(false);
         }
     };
 
@@ -56,7 +53,7 @@ const AdminProducts = () => {
         setIsModalOpen(true);
     };
 
-    if (loading || authLoading) {
+    if (authLoading || (isAdmin && isFetchingProducts && products.length === 0)) {
         return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
     }
 
