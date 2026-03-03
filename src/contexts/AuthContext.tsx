@@ -28,12 +28,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
     try {
-      const { data, error } = await supabase
+      const fetchRolePromise = supabase
         .from('user_roles')
         .select('role')
         .eq('user_id', userId)
         .maybeSingle();
 
+      const timeoutPromise = new Promise<any>((_, reject) =>
+        setTimeout(() => reject(new Error("Admin check timeout")), 3000)
+      );
+
+      const { data, error } = await Promise.race([
+        fetchRolePromise,
+        timeoutPromise
+      ]);
+
+      if (error) throw error;
       setIsAdmin(data?.role === 'admin');
     } catch (err) {
       console.error('Error checking admin status:', err);
@@ -46,7 +56,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const initializeAuth = async () => {
       try {
-        const { data: { session }, error } = await supabase.auth.getSession();
+        const fetchSessionPromise = supabase.auth.getSession();
+        const timeoutPromise = new Promise<any>((_, reject) =>
+          setTimeout(() => reject(new Error("Supabase auth session timeout")), 3000)
+        );
+
+        const { data: { session }, error } = await Promise.race([
+          fetchSessionPromise,
+          timeoutPromise
+        ]);
 
         if (error) throw error;
 
