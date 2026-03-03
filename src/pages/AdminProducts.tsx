@@ -11,7 +11,7 @@ import { Check, X, Image as ImageIcon, Plus, Edit2, LayoutGrid, List } from "luc
 import { AdminProductModal } from "@/components/AdminProductModal";
 
 const AdminProducts = () => {
-    const { session, isAdmin } = useAuth();
+    const { session, isAdmin, loading: authLoading } = useAuth();
     const [products, setProducts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
@@ -21,12 +21,14 @@ const AdminProducts = () => {
     const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
 
     useEffect(() => {
-        if (isAdmin) {
-            fetchProducts();
-        } else {
-            setLoading(false);
+        if (!authLoading) {
+            if (isAdmin) {
+                fetchProducts();
+            } else {
+                setLoading(false);
+            }
         }
-    }, [isAdmin]);
+    }, [isAdmin, authLoading]);
 
     const fetchProducts = async () => {
         try {
@@ -54,13 +56,32 @@ const AdminProducts = () => {
         setIsModalOpen(true);
     };
 
-    if (loading) {
+    if (loading || authLoading) {
         return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
     }
 
-    // Security check: Only admins can view this page
-    if (!session || !isAdmin) {
+    // Security check: Require login
+    if (!session) {
         return <Navigate to="/auth" replace />;
+    }
+
+    // Security check: Only admins can view this page
+    if (!isAdmin) {
+        return (
+            <div className="min-h-screen flex items-center justify-center p-4 bg-muted/20">
+                <div className="bg-white p-8 rounded-xl shadow-sm border border-border text-center max-w-md">
+                    <h2 className="text-2xl font-bold font-display text-destructive mb-2">Access Denied</h2>
+                    <p className="text-muted-foreground mb-6">Your current account does not have administrator privileges required to view or manage products.</p>
+                    <div className="flex flex-col gap-3">
+                        <Button onClick={() => window.location.href = "/"}>Return to Store</Button>
+                        <Button variant="outline" onClick={async () => {
+                            await supabase.auth.signOut();
+                            window.location.href = "/auth";
+                        }}>Sign Out & Try Another Account</Button>
+                    </div>
+                </div>
+            </div>
+        );
     }
 
     const filteredProducts = products.filter(p =>

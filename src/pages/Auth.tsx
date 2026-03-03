@@ -25,7 +25,7 @@ const signupSchema = loginSchema.extend({
 
 const Auth = () => {
   const navigate = useNavigate();
-  const { signIn, signUp, signInWithGitHub, user } = useAuth();
+  const { signIn, signUp, signInWithGitHub, user, isAdmin, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(false);
 
   // Login state
@@ -40,10 +40,14 @@ const Auth = () => {
 
   // Redirect if already logged in
   useEffect(() => {
-    if (user) {
-      navigate("/");
+    if (user && !authLoading) {
+      if (isAdmin) {
+        navigate("/admin/products");
+      } else {
+        navigate("/");
+      }
     }
-  }, [user, navigate]);
+  }, [user, isAdmin, authLoading, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,7 +71,7 @@ const Auth = () => {
         }
       } else {
         toast.success("Welcome back!");
-        navigate("/");
+        // The useEffect will handle navigating based on role
       }
     } catch (error: any) {
       toast.error("An unexpected error occurred");
