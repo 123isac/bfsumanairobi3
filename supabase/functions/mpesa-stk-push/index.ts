@@ -14,43 +14,11 @@ interface STKPushRequest {
   accountReference?: string;
 }
 
-const getAccessToken = async (): Promise<string> => {
-  const consumerKey = Deno.env.get('MPESA_CONSUMER_KEY');
-  const consumerSecret = Deno.env.get('MPESA_CONSUMER_SECRET');
-
-  if (!consumerKey || !consumerSecret) {
-    throw new Error('M-PESA credentials not configured');
-  }
-
-  const auth = btoa(`${consumerKey}:${consumerSecret}`);
-
-  const response = await fetch(
-    'https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials',
-    {
-      method: 'GET',
-      headers: {
-        'Authorization': `Basic ${auth}`,
-      },
-    }
-  );
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error('OAuth error:', errorText);
-    throw new Error('Failed to get access token');
-  }
-
-  const data = await response.json();
-  return data.access_token;
-};
-
 const formatPhoneNumber = (phone: string): string => {
-  // Remove any spaces, dashes, or special characters
   let cleaned = phone.replace(/[\s\-\(\)]/g, '');
 
-  // Handle different formats
   if (cleaned.startsWith('+254')) {
-    cleaned = cleaned.substring(1); // Remove +
+    cleaned = cleaned.substring(1);
   } else if (cleaned.startsWith('0')) {
     cleaned = '254' + cleaned.substring(1);
   } else if (cleaned.startsWith('7') || cleaned.startsWith('1')) {
@@ -61,15 +29,13 @@ const formatPhoneNumber = (phone: string): string => {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
     const { phone, amount, orderId, accountReference }: STKPushRequest = await req.json();
-
-    console.log('STK Push request:', { phone, amount, orderId });
+    console.log('Mobile Money request:', { phone, amount, orderId });
 
     if (!phone || !amount || !orderId) {
       return new Response(
@@ -78,80 +44,71 @@ serve(async (req) => {
       );
     }
 
-    const accessToken = await getAccessToken();
-    const shortcode = Deno.env.get('MPESA_SHORTCODE');
-    const passkey = Deno.env.get('MPESA_PASSKEY');
+    const publishableKey = Deno.env.get('INTASEND_PUBLISHABLE_KEY');
+    const secretKey = Deno.env.get('INTASEND_SECRET_KEY');
 
-    if (!shortcode || !passkey) {
-      throw new Error('M-PESA shortcode or passkey not configured');
+    if (!publishableKey || !secretKey) {
+      throw new Error('IntaSend keys not configured');
     }
 
-    const timestamp = new Date().toISOString().replace(/[-:T.Z]/g, '').substring(0, 14);
-    const password = btoa(`${shortcode}${passkey}${timestamp}`);
     const formattedPhone = formatPhoneNumber(phone);
 
-    // Use the project's callback URL (env var preferred, fallback to correct project ID)
-    const supabaseUrl = Deno.env.get('SUPABASE_URL') || 'https://vjhjnbefyyfxfsyncdrr.supabase.co';
-    const callbackUrl = `${supabaseUrl}/functions/v1/mpesa-callback`;
-
-    const stkPushPayload = {
-      BusinessShortCode: shortcode,
-      Password: password,
-      Timestamp: timestamp,
-      TransactionType: 'CustomerBuyGoodsOnline', // Till number transaction type
-      Amount: Math.round(amount),
-      PartyA: formattedPhone,
-      PartyB: shortcode,
-      PhoneNumber: formattedPhone,
-      CallBackURL: callbackUrl,
-      AccountReference: accountReference || `Order-${orderId.substring(0, 8)}`,
-      TransactionDesc: `Payment for order ${orderId.substring(0, 8)}`,
+    // IntaSend allows "BUSINESS-PAYS" or "CUSTOMER-PAYS" for M-Pesa fees. 
+    // Usually CUSTOMER-PAYS is expected for normal checkouts.
+    const payload = {
+      amount: Math.round(amount),
+      phone_number: formattedPhone,
+      api_ref: orderId, // We use this in webhook to match the DB record
+      mobile_tarrif: "CUSTOMER-PAYS"
     };
 
-    console.log('STK Push payload:', JSON.stringify(stkPushPayload, null, 2));
+    console.log('IntaSend payload:', JSON.stringify(payload, null, 2));
 
-    const stkResponse = await fetch(
-      'https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest',
+    // Notice we're hitting the main IntaSend STK push endpoint
+    const intasendResponse = await fetch(
+      'https://payment.intasend.com/api/v1/payment/mpesa-stk-push/',
       {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${accessToken}`,
+          'Authorization': `Bearer ${secretKey}`,
+          'X-IntaSend-Public-API-Key': publishableKey,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(stkPushPayload),
+        body: JSON.stringify(payload),
       }
     );
 
-    const stkResult = await stkResponse.json();
-    console.log('STK Push response:', JSON.stringify(stkResult, null, 2));
+    const intasendResult = await intasendResponse.json();
+    console.log('IntaSend response:', JSON.stringify(intasendResult, null, 2));
 
-    if (stkResult.ResponseCode === '0') {
-      // Save CheckoutRequestID to the order so the callback can match and update payment status
+    if (intasendResponse.ok && intasendResult.invoice) {
+      // Create supabase client to save invoice_id
       const supabase = createClient(
         Deno.env.get('SUPABASE_URL')!,
         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
       );
+
+      // Save IntaSend's invoice_id to the order so webhook can match it
       await supabase
         .from('orders')
-        .update({ payment_reference: stkResult.CheckoutRequestID })
+        .update({ payment_reference: intasendResult.invoice.invoice_id })
         .eq('id', orderId);
 
       return new Response(
         JSON.stringify({
           success: true,
-          checkoutRequestId: stkResult.CheckoutRequestID,
-          merchantRequestId: stkResult.MerchantRequestID,
-          message: 'STK push sent successfully. Please check your phone.',
+          checkoutRequestId: intasendResult.invoice.invoice_id,
+          message: 'M-PESA prompt sent successfully. Please check your phone.',
         }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
 
     } else {
-      console.error('STK Push failed:', stkResult);
+      console.error('IntaSend charge failed:', intasendResult);
       return new Response(
         JSON.stringify({
           success: false,
-          error: stkResult.errorMessage || stkResult.ResponseDescription || 'STK push failed',
+          error: intasendResult.errors ? JSON.stringify(intasendResult.errors) : 'Payment initiation failed',
         }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );

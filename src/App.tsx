@@ -20,6 +20,7 @@ import MyOrders from "./pages/MyOrders";
 import OrderConfirmation from "./pages/OrderConfirmation";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
+import AdminImageUpload from "./pages/AdminImageUpload";
 
 const queryClient = new QueryClient();
 
@@ -48,6 +49,7 @@ const App = () => (
             <Route path="/my-orders" element={<MyOrders />} />
             <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/admin/images" element={<AdminImageUpload />} />
 
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

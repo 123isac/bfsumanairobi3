@@ -14,71 +14,65 @@ serve(async (req) => {
 
   try {
     const callback = await req.json();
-    console.log('M-PESA Callback received:', JSON.stringify(callback, null, 2));
+    console.log('IntaSend Webhook received:', JSON.stringify(callback, null, 2));
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
-    const stkCallback = callback.Body?.stkCallback;
+    // IntaSend webhook payload contains `invoice_id`, `state` (e.g. COMPLETED, FAILED), 
+    // and `api_ref` which we set to our orderId.
+    const { invoice_id, state, api_ref } = callback;
+    console.log('Callback details:', { invoice_id, state, api_ref });
 
-    if (!stkCallback) {
-      console.error('Invalid callback format');
-      return new Response(JSON.stringify({ ResultCode: 0, ResultDesc: 'Accepted' }), {
+    if (!invoice_id || !state) {
+      console.error('Invalid IntaSend payload');
+      return new Response(JSON.stringify({ status: 200, message: 'Invalid payload ignored' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    const { CheckoutRequestID, ResultCode, ResultDesc } = stkCallback;
-    console.log('Callback details:', { CheckoutRequestID, ResultCode, ResultDesc });
+    // We used api_ref as orderId when creating the STK push, but we also saved 
+    // the invoice_id into `orders.payment_reference` for safety.
+    // Let's match by `payment_reference` just to be certain.
 
-    if (ResultCode === 0) {
-      // Payment successful — extract metadata
-      const callbackMetadata = stkCallback.CallbackMetadata?.Item || [];
+    if (state === 'COMPLETED') {
+      console.log('Payment successful. Updating order with invoice:', invoice_id);
 
-      const getMetadataValue = (name: string) => {
-        const item = callbackMetadata.find((i: any) => i.Name === name);
-        return item?.Value;
-      };
-
-      const mpesaReceiptNumber = getMetadataValue('MpesaReceiptNumber');
-      const transactionDate = getMetadataValue('TransactionDate');
-      console.log('Payment successful:', { mpesaReceiptNumber, transactionDate });
-
-      // Match order by CheckoutRequestID stored in payment_reference during STK push
       const { error } = await supabase
         .from('orders')
         .update({
           payment_status: 'paid',
-          payment_reference: mpesaReceiptNumber, // replace temp CheckoutRequestID with real receipt
         })
-        .eq('payment_reference', CheckoutRequestID);
+        .eq('payment_reference', invoice_id);
 
       if (error) {
         console.error('Failed to update order:', error);
       } else {
-        console.log('Order payment_status updated to paid for CheckoutRequestID:', CheckoutRequestID);
+        console.log('Order payment_status updated to paid for invoice_id:', invoice_id);
       }
-    } else {
-      // Payment failed or cancelled
-      console.log('Payment failed/cancelled:', ResultDesc);
+    } else if (state === 'FAILED' || state === 'EXPIRED') {
+      console.log('Payment failed or expired:', invoice_id);
 
       await supabase
         .from('orders')
         .update({ payment_status: 'failed' })
-        .eq('payment_reference', CheckoutRequestID);
+        .eq('payment_reference', invoice_id);
+    } else {
+      console.log('Payment pending/processing, ignoring state:', state);
     }
 
-    // M-PESA always expects this exact response
+    // Acknowledge receipt to IntaSend (status 200 tells them to stop retrying)
     return new Response(
-      JSON.stringify({ ResultCode: 0, ResultDesc: 'Accepted' }),
+      JSON.stringify({ status: 'success' }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error: any) {
-    console.error('Error in mpesa-callback:', error);
+    console.error('Error in intasend-webhook:', error);
+    // Return 200 to prevent Webhook retries if it's our DB's fault or payload structure
     return new Response(
-      JSON.stringify({ ResultCode: 0, ResultDesc: 'Accepted' }),
+      JSON.stringify({ status: 'error', message: error.message }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
