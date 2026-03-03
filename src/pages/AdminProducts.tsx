@@ -11,9 +11,8 @@ import { Check, X, Image as ImageIcon, Plus, Edit2, LayoutGrid, List } from "luc
 import { AdminProductModal } from "@/components/AdminProductModal";
 
 const AdminProducts = () => {
-    const { session, isAdmin, loading: authLoading } = useAuth();
     const [products, setProducts] = useState<any[]>([]);
-    const [isFetchingProducts, setIsFetchingProducts] = useState(false);
+    const [loadingProducts, setLoadingProducts] = useState(true);
     const [search, setSearch] = useState("");
 
     // Modal State
@@ -21,13 +20,11 @@ const AdminProducts = () => {
     const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
 
     useEffect(() => {
-        if (!authLoading && session && isAdmin) {
-            fetchProducts();
-        }
-    }, [isAdmin, authLoading, session]);
+        fetchProducts();
+    }, []);
 
     const fetchProducts = async () => {
-        setIsFetchingProducts(true);
+        setLoadingProducts(true);
         try {
             const { data, error } = await supabase
                 .from("products")
@@ -39,7 +36,7 @@ const AdminProducts = () => {
         } catch (error: any) {
             toast.error("Failed to load products: " + error.message);
         } finally {
-            setIsFetchingProducts(false);
+            setLoadingProducts(false);
         }
     };
 
@@ -53,29 +50,12 @@ const AdminProducts = () => {
         setIsModalOpen(true);
     };
 
-    if (authLoading || (isAdmin && isFetchingProducts && products.length === 0)) {
-        return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
-    }
-
-    // Security check: Require login
-    if (!session) {
-        return <Navigate to="/auth" replace />;
-    }
-
-    // Security check: Only admins can view this page
-    if (!isAdmin) {
+    if (loadingProducts) {
         return (
-            <div className="min-h-screen flex items-center justify-center p-4 bg-muted/20">
-                <div className="bg-white p-8 rounded-xl shadow-sm border border-border text-center max-w-md">
-                    <h2 className="text-2xl font-bold font-display text-destructive mb-2">Access Denied</h2>
-                    <p className="text-muted-foreground mb-6">Your current account does not have administrator privileges required to view or manage products.</p>
-                    <div className="flex flex-col gap-3">
-                        <Button onClick={() => window.location.href = "/"}>Return to Store</Button>
-                        <Button variant="outline" onClick={async () => {
-                            await supabase.auth.signOut();
-                            window.location.href = "/auth";
-                        }}>Sign Out & Try Another Account</Button>
-                    </div>
+            <div className="min-h-screen flex items-center justify-center bg-muted/20">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    <p className="text-muted-foreground animate-pulse">Loading Products...</p>
                 </div>
             </div>
         );
