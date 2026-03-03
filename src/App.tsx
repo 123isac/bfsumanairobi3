@@ -21,6 +21,7 @@ import OrderConfirmation from "./pages/OrderConfirmation";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import AdminProducts from "./pages/AdminProducts";
+import AdminAuth from "./pages/AdminAuth";
 import { AdminRoute } from "./components/AdminRoute";
 
 const queryClient = new QueryClient();
@@ -50,6 +51,7 @@ const App = () => (
             <Route path="/my-orders" element={<MyOrders />} />
             <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/admin/login" element={<AdminAuth />} />
             <Route path="/admin" element={<Navigate to="/admin/products" replace />} />
             <Route path="/admin/products" element={
               <AdminRoute>
