@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { supabase } from "@/integrations/supabase/client";
+import type { User } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -49,13 +50,9 @@ const MyOrders = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
 
-  useEffect(() => {
-    checkAuth();
-  }, []);
-
-  const checkAuth = async () => {
+  const checkAuth = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       navigate("/auth");
@@ -63,7 +60,11 @@ const MyOrders = () => {
     }
     setUser(user);
     loadOrders(user.id);
-  };
+  }, [navigate]);
+
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
 
   const loadOrders = async (userId: string) => {
     try {
@@ -93,7 +94,8 @@ const MyOrders = () => {
       );
 
       setOrders(ordersWithItems);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      if (import.meta.env.DEV) console.error('Load orders error:', error);
       toast.error("Failed to load orders");
     } finally {
       setLoading(false);
@@ -159,7 +161,7 @@ const MyOrders = () => {
               {orders.map((order) => {
                 const statusConfig = getStatusConfig(order.status);
                 const StatusIcon = statusConfig.icon;
-                
+
                 return (
                   <Card key={order.id} className="overflow-hidden hover:shadow-md transition-shadow">
                     <CardContent className="p-0">

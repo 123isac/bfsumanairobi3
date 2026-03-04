@@ -48,8 +48,8 @@ const Cart = () => {
         toast.success("Account created! Check your email to confirm, then proceed to checkout.");
         setShowLogin(false);
       }
-    } catch (err: any) {
-      toast.error(err.message || "Authentication failed");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Authentication failed");
     } finally {
       setAuthLoading(false);
     }

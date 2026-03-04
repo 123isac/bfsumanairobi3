@@ -78,8 +78,8 @@ const AdminAuth = () => {
                     toast.error("Access Denied: You do not have administrator privileges.");
                 }
             }
-        } catch (error: any) {
-            let message = error.message;
+        } catch (error: unknown) {
+            let message = error instanceof Error ? error.message : 'Login failed';
             if (message.includes("Invalid login credentials")) {
                 message = "Invalid email or password.";
             }

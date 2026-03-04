@@ -120,9 +120,9 @@ const Checkout = () => {
       } else {
         throw new Error(data.error || 'Failed to initiate payment');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       setMpesaStatus('error');
-      toast.error(error.message || 'Failed to initiate M-PESA payment');
+      toast.error(error instanceof Error ? error.message : 'Failed to initiate M-PESA payment');
       return false;
     }
   };
@@ -203,7 +203,7 @@ const Checkout = () => {
         toast.success('Order placed! Pay on delivery.');
         navigate(`/order-confirmation/${order.id}`);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (import.meta.env.DEV) console.error('Checkout error:', error);
       toast.error('Unable to process order. Please try again.');
     } finally {

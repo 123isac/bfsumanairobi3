@@ -73,7 +73,7 @@ const Auth = () => {
         toast.success("Welcome back!");
         // The useEffect will handle navigating based on role
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error("An unexpected error occurred");
       if (import.meta.env.DEV) {
         console.error("Login error:", error);
@@ -114,7 +114,7 @@ const Auth = () => {
         const loginTab = document.querySelector('[value="login"]') as HTMLElement;
         loginTab?.click();
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error("An unexpected error occurred");
       if (import.meta.env.DEV) {
         console.error("Signup error:", error);

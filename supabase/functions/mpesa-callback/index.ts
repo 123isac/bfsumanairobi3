@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -68,11 +67,12 @@ serve(async (req) => {
       JSON.stringify({ status: 'success' }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
     console.error('Error in intasend-webhook:', error);
     // Return 200 to prevent Webhook retries if it's our DB's fault or payload structure
     return new Response(
-      JSON.stringify({ status: 'error', message: error.message }),
+      JSON.stringify({ status: 'error', message }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

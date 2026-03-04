@@ -36,8 +36,8 @@ const StarRating = ({
                 <Star
                     key={star}
                     className={`h-5 w-5 transition-colors ${star <= (readonly ? value : hovered || value)
-                            ? "fill-yellow-400 text-yellow-400"
-                            : "text-muted-foreground"
+                        ? "fill-yellow-400 text-yellow-400"
+                        : "text-muted-foreground"
                         } ${!readonly ? "cursor-pointer" : ""}`}
                     onMouseEnter={() => !readonly && setHovered(star)}
                     onMouseLeave={() => !readonly && setHovered(0)}
@@ -86,8 +86,8 @@ const ProductReviews = ({ productId }: ProductReviewsProps) => {
             setRating(5);
             queryClient.invalidateQueries({ queryKey: ["reviews", productId] });
         },
-        onError: (err: any) => {
-            toast.error(err.message || "Failed to submit review");
+        onError: (err: unknown) => {
+            toast.error(err instanceof Error ? err.message : "Failed to submit review");
         },
     });
 

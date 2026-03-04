@@ -111,7 +111,12 @@ const ProductDetail = () => {
   const hasVideo = !!youtubeVideoId;
 
   // Cast to access extended DB columns not yet in auto-generated Supabase types
-  const p = product as any;
+  type ExtendedProduct = typeof product & {
+    compare_price?: number | null;
+    benefits?: string | null;
+    ingredients?: string | null;
+  };
+  const p = product as ExtendedProduct;
 
   const price = Number(product.price);
   const comparePrice = p.compare_price ? Number(p.compare_price) : null;
@@ -436,7 +441,7 @@ const ProductDetail = () => {
                     id={rp.id}
                     name={rp.name}
                     price={Number(rp.price)}
-                    comparePrice={(rp as any).compare_price ? Number((rp as any).compare_price) : undefined}
+                    comparePrice={(rp as ExtendedProduct).compare_price ? Number((rp as ExtendedProduct).compare_price) : undefined}
                     rating={Number(rp.rating) || 5}
                     image={rp.image_url || "/placeholder.svg"}
                     category={rp.categories?.name || ""}

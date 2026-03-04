@@ -57,7 +57,7 @@ const Contact = () => {
         phone: "",
         message: "",
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (import.meta.env.DEV) {
         console.error('Contact form error:', error);
       }

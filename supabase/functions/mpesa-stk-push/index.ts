@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -15,7 +14,7 @@ interface STKPushRequest {
 }
 
 const formatPhoneNumber = (phone: string): string => {
-  let cleaned = phone.replace(/[\s\-\(\)]/g, '');
+  let cleaned = phone.replace(/[\s\-()']/g, '').replace(/'/g, '');
 
   if (cleaned.startsWith('+254')) {
     cleaned = cleaned.substring(1);
@@ -113,10 +112,11 @@ serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Internal server error';
     console.error('Error in mpesa-stk-push:', error);
     return new Response(
-      JSON.stringify({ error: error.message || 'Internal server error' }),
+      JSON.stringify({ error: message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

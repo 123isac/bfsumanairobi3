@@ -10,16 +10,35 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Upload, X, Loader2 } from "lucide-react";
 
+interface Category {
+    id: string;
+    name: string;
+}
+
+interface ProductData {
+    id?: string;
+    name?: string;
+    category_id?: string;
+    description?: string;
+    benefits?: string;
+    ingredients?: string;
+    price?: number | string;
+    compare_price?: number | string | null;
+    badge?: string | null;
+    image_url?: string | null;
+    is_active?: boolean;
+}
+
 interface AdminProductModalProps {
     isOpen: boolean;
     onClose: () => void;
-    product?: any; // If null, it's "Create" mode
+    product?: ProductData; // If null, it's "Create" mode
     onSaved: () => void;
 }
 
 export function AdminProductModal({ isOpen, onClose, product, onSaved }: AdminProductModalProps) {
     const [loading, setLoading] = useState(false);
-    const [categories, setCategories] = useState<any[]>([]);
+    const [categories, setCategories] = useState<Category[]>([]);
 
     // Form State
     const [name, setName] = useState("");
@@ -162,9 +181,9 @@ export function AdminProductModal({ isOpen, onClose, product, onSaved }: AdminPr
 
             onSaved();
             onClose();
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("Save error:", error);
-            toast.error("Failed to save product: " + error.message);
+            toast.error("Failed to save product: " + (error instanceof Error ? error.message : 'Unknown error'));
         } finally {
             setLoading(false);
         }

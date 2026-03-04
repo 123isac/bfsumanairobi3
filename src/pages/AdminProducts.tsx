@@ -9,15 +9,27 @@ import { Link } from "react-router-dom";
 import { Image as ImageIcon, Plus, Edit2, LayoutGrid, Bell } from "lucide-react";
 import { AdminProductModal } from "@/components/AdminProductModal";
 
+interface Product {
+    id: string;
+    name: string;
+    price: number | string;
+    image_url: string | null;
+    is_active: boolean;
+    badge?: string | null;
+    stock_quantity?: number | null;
+    categories?: { name: string } | null;
+    [key: string]: unknown;
+}
+
 const AdminProducts = () => {
-    const [products, setProducts] = useState<any[]>([]);
+    const [products, setProducts] = useState<Product[]>([]);
     const [loadingProducts, setLoadingProducts] = useState(true);
     const [search, setSearch] = useState("");
     const [pendingApplications, setPendingApplications] = useState(0);
 
     // Modal State
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
+    const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
     useEffect(() => {
         fetchProducts();
@@ -34,8 +46,8 @@ const AdminProducts = () => {
 
             if (error) throw error;
             setProducts(data || []);
-        } catch (error: any) {
-            toast.error("Failed to load products: " + error.message);
+        } catch (error: unknown) {
+            toast.error("Failed to load products: " + (error instanceof Error ? error.message : 'Unknown error'));
         } finally {
             setLoadingProducts(false);
         }
@@ -55,7 +67,7 @@ const AdminProducts = () => {
         setIsModalOpen(true);
     };
 
-    const handleEdit = (product: any) => {
+    const handleEdit = (product: Product) => {
         setSelectedProduct(product);
         setIsModalOpen(true);
     };

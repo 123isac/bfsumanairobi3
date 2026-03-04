@@ -73,7 +73,12 @@ const OrderConfirmation = () => {
       // Transform the data to match our interface
       const transformedOrder: Order = {
         ...data,
-        order_items: data.order_items.map((item: any) => ({
+        order_items: (data.order_items as Array<{
+          id: string;
+          quantity: number;
+          price: number;
+          product: { name: string; image_url: string | null } | null;
+        }>).map((item) => ({
           ...item,
           product: item.product
         }))
@@ -112,7 +117,7 @@ const OrderConfirmation = () => {
     minDate.setDate(minDate.getDate() + minDays);
     const maxDate = new Date(orderDate);
     maxDate.setDate(maxDate.getDate() + maxDays);
-    
+
     return `${minDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${maxDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
   };
 
@@ -156,7 +161,7 @@ const OrderConfirmation = () => {
       <section className="py-8 md:py-12 flex-1">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto space-y-6">
-            
+
             {/* Order ID & Status Card */}
             <div className="bg-card rounded-2xl p-6 md:p-8 shadow-soft border border-border">
               <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -176,7 +181,7 @@ const OrderConfirmation = () => {
                   <p className="font-medium text-foreground">{formatDate(order.created_at)}</p>
                 </div>
               </div>
-              
+
               {/* Order Progress */}
               <div className="mt-8 pt-6 border-t border-border">
                 <div className="flex items-center justify-between mb-4">
@@ -188,12 +193,11 @@ const OrderConfirmation = () => {
                     {['Confirmed', 'Processing', 'Shipped', 'Delivered'].map((step, index) => {
                       const isCompleted = index === 0 || (order.status === 'processing' && index <= 1) || (order.status === 'shipped' && index <= 2) || (order.status === 'delivered' && index <= 3);
                       const isCurrent = (order.status === 'pending' && index === 0) || (order.status === 'processing' && index === 1) || (order.status === 'shipped' && index === 2) || (order.status === 'delivered' && index === 3);
-                      
+
                       return (
                         <div key={step} className="flex flex-col items-center z-10">
-                          <div className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center ${
-                            isCompleted ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
-                          } ${isCurrent ? 'ring-4 ring-primary/20' : ''}`}>
+                          <div className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center ${isCompleted ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+                            } ${isCurrent ? 'ring-4 ring-primary/20' : ''}`}>
                             {isCompleted ? (
                               <CheckCircle className="w-4 h-4 md:w-5 md:h-5" />
                             ) : (
@@ -208,11 +212,10 @@ const OrderConfirmation = () => {
                     })}
                   </div>
                   <div className="absolute top-4 md:top-5 left-0 right-0 h-0.5 bg-muted -z-0">
-                    <div className={`h-full bg-primary transition-all ${
-                      order.status === 'pending' ? 'w-0' : 
-                      order.status === 'processing' ? 'w-1/3' : 
-                      order.status === 'shipped' ? 'w-2/3' : 'w-full'
-                    }`} />
+                    <div className={`h-full bg-primary transition-all ${order.status === 'pending' ? 'w-0' :
+                        order.status === 'processing' ? 'w-1/3' :
+                          order.status === 'shipped' ? 'w-2/3' : 'w-full'
+                      }`} />
                   </div>
                 </div>
               </div>
@@ -227,15 +230,15 @@ const OrderConfirmation = () => {
                   </div>
                   <h2 className="font-display font-bold text-xl text-foreground">Order Items</h2>
                 </div>
-                
+
                 <div className="space-y-4">
                   {order.order_items.map((item) => (
                     <div key={item.id} className="flex gap-4 p-3 bg-muted/50 rounded-xl">
                       <div className="w-16 h-16 md:w-20 md:h-20 rounded-lg overflow-hidden bg-muted flex-shrink-0">
                         {item.product?.image_url ? (
-                          <img 
-                            src={item.product.image_url} 
-                            alt={item.product?.name || 'Product'} 
+                          <img
+                            src={item.product.image_url}
+                            alt={item.product?.name || 'Product'}
                             className="w-full h-full object-cover"
                           />
                         ) : (
@@ -281,7 +284,7 @@ const OrderConfirmation = () => {
                     </div>
                     <h2 className="font-display font-bold text-lg text-foreground">Delivery Details</h2>
                   </div>
-                  
+
                   <div className="space-y-3">
                     <div className="flex items-start gap-3">
                       <MapPin className="w-4 h-4 text-muted-foreground mt-0.5" />
@@ -312,7 +315,7 @@ const OrderConfirmation = () => {
                     </div>
                     <h2 className="font-display font-bold text-lg text-foreground">Payment Info</h2>
                   </div>
-                  
+
                   <div className="space-y-3">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Method</span>
@@ -320,11 +323,10 @@ const OrderConfirmation = () => {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Status</span>
-                      <span className={`font-medium px-2 py-0.5 rounded-full text-xs ${
-                        order.payment_status === 'paid' 
-                          ? 'bg-primary/10 text-primary' 
+                      <span className={`font-medium px-2 py-0.5 rounded-full text-xs ${order.payment_status === 'paid'
+                          ? 'bg-primary/10 text-primary'
                           : 'bg-warning/10 text-warning'
-                      }`}>
+                        }`}>
                         {order.payment_status === 'paid' ? 'Paid' : 'Pending'}
                       </span>
                     </div>
@@ -332,7 +334,7 @@ const OrderConfirmation = () => {
                       <div className="mt-4 p-4 bg-warning/5 border border-warning/20 rounded-xl">
                         <p className="text-sm text-foreground font-medium mb-1">Payment Instructions</p>
                         <p className="text-xs text-muted-foreground">
-                          {order.payment_method === 'mpesa' 
+                          {order.payment_method === 'mpesa'
                             ? 'You will receive an M-PESA payment prompt on your phone shortly. Alternatively, pay via Lipa na M-PESA: Till Number 123456'
                             : 'Our team will contact you for card payment processing.'}
                         </p>
