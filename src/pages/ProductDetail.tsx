@@ -132,6 +132,19 @@ const ProductDetail = () => {
     .split("\n")
     .filter((l: string) => l.trim().length > 0);
 
+  // Short description: first 1-2 sentences, max 160 chars, plain English
+  const fullDesc = product.description || "";
+  const shortDesc = (() => {
+    // Split on sentence boundaries
+    const sentences = fullDesc.match(/[^.!?]+[.!?]+/g) || [];
+    if (sentences.length === 0) return fullDesc.slice(0, 140);
+    // Take first sentence; if it's very short, grab second too
+    let out = sentences[0].trim();
+    if (out.length < 60 && sentences[1]) out += " " + sentences[1].trim();
+    // Cap at 160 chars
+    return out.length > 160 ? out.slice(0, 157) + "…" : out;
+  })();
+
   return (
     <div className="min-h-screen flex flex-col">
       <SEOHead
@@ -270,10 +283,21 @@ const ProductDetail = () => {
                 </div>
               )}
 
-              {/* Description */}
-              <p className="text-muted-foreground text-base md:text-lg leading-relaxed">
-                {product.description || "Premium quality wellness product from BF Suma."}
-              </p>
+              {/* Description — short, simple, premium */}
+              <div className="rounded-2xl bg-primary/5 border border-primary/10 px-4 py-4 space-y-1.5">
+                <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-primary/70">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  What It Does
+                </span>
+                <p className="text-foreground text-base md:text-lg leading-relaxed font-medium">
+                  {shortDesc || "Premium quality wellness product from BF Suma."}
+                </p>
+                {benefitLines.length > 0 && (
+                  <p className="text-xs text-muted-foreground pt-0.5">
+                    ✓ See full benefits &amp; ingredients below ↓
+                  </p>
+                )}
+              </div>
 
               {/* Quantity + Add to Cart */}
               <div className="space-y-3">
@@ -358,18 +382,21 @@ const ProductDetail = () => {
 
               {/* Benefits — visual checkmarks */}
               <TabsContent value="benefits" className="mt-8">
-                <div className="max-w-3xl">
+                <div className="max-w-3xl space-y-5">
                   {benefitLines.length > 0 ? (
-                    <ul className="space-y-3">
-                      {benefitLines.map((line: string, i: number) => (
-                        <li key={i} className="flex items-start gap-3">
-                          <span className="mt-0.5 flex-shrink-0 w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center">
-                            <CheckCircle2 className="h-4 w-4 text-primary" />
-                          </span>
-                          <span className="text-base md:text-lg text-foreground leading-relaxed">{line}</span>
-                        </li>
-                      ))}
-                    </ul>
+                    <>
+                      <p className="text-sm text-muted-foreground font-medium">Here is what this product helps you with:</p>
+                      <ul className="space-y-2.5">
+                        {benefitLines.map((line: string, i: number) => (
+                          <li key={i} className="flex items-start gap-3 rounded-xl hover:bg-primary/4 transition-colors px-2 py-1.5">
+                            <span className="mt-0.5 flex-shrink-0 w-5 h-5 rounded-full bg-emerald-500/15 flex items-center justify-center">
+                              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                            </span>
+                            <span className="text-base text-foreground leading-relaxed">{line}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </>
                   ) : (
                     <p className="text-muted-foreground text-lg">
                       Premium quality wellness product from BF Suma — backed by science and nature.
@@ -380,11 +407,24 @@ const ProductDetail = () => {
 
               {/* Ingredients */}
               <TabsContent value="ingredients" className="mt-8">
-                <div className="max-w-3xl space-y-3">
-                  {(p.ingredients || "").split("\n").filter((l: string) => l.trim()).map((line: string, i: number) => (
-                    <p key={i} className="text-base md:text-lg text-foreground leading-relaxed">{line}</p>
-                  ))}
-                  {!p.ingredients && (
+                <div className="max-w-3xl space-y-5">
+                  {p.ingredients ? (
+                    <>
+                      <p className="text-sm text-muted-foreground font-medium">Key active ingredients in this product:</p>
+                      <div className="flex flex-wrap gap-2.5">
+                        {(p.ingredients).split("\n").filter((l: string) => l.trim()).map((line: string, i: number) => (
+                          <span
+                            key={i}
+                            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm font-medium bg-primary/8 text-primary border border-primary/15 hover:bg-primary/14 transition-colors"
+                          >
+                            <Leaf className="h-3 w-3 shrink-0" />
+                            {line.trim()}
+                          </span>
+                        ))}
+                      </div>
+                      <p className="text-xs text-muted-foreground pt-1">All ingredients are naturally sourced and carefully selected for safety and effectiveness.</p>
+                    </>
+                  ) : (
                     <p className="text-muted-foreground text-lg">
                       Premium natural ingredients carefully selected for quality and effectiveness.
                     </p>
