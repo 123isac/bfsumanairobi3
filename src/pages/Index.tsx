@@ -123,7 +123,7 @@ const Index = () => {
           <img
             src={heroBanner}
             alt="Premium Wellness"
-            className="w-full h-full object-cover scale-105 animate-[float_20s_ease-in-out_infinite] origin-center"
+            className="w-full h-full object-cover scale-105 hero-float origin-center"
           />
           <div className="absolute inset-0 bg-primary/80 mix-blend-multiply" />
           <div className="absolute inset-0 bg-gradient-to-t from-background via-black/40 to-transparent" />
@@ -371,7 +371,7 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Spa Partner Section */}
+      {/* Partner Section */}
       <section className="py-12 sm:py-16 md:py-20 bg-gradient-to-br from-accent/10 via-primary/5 to-secondary/10 animated-bg">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto">
@@ -384,7 +384,7 @@ const Index = () => {
                   Become a BF Suma Partner
                 </h2>
                 <p className="text-sm sm:text-base md:text-lg text-muted-foreground max-w-2xl mx-auto px-2">
-                  Join our exclusive referral program and earn commissions on every sale. Perfect for spas, wellness centers, and health practitioners.
+                  Join our partner network and grow with BF Suma. Share wellness products with your audience and earn commission on successful referrals.
                 </p>
                 <div className="grid sm:grid-cols-3 gap-4 sm:gap-6 pt-6 max-w-2xl mx-auto">
                   <div className="space-y-2">
@@ -401,7 +401,7 @@ const Index = () => {
                   </div>
                 </div>
                 <div className="pt-4">
-                  <Link to="/spa/register">
+                  <Link to="/partner/apply">
                     <Button size="lg" className="gradient-primary hover:shadow-luxury px-8 py-6 text-base sm:text-lg rounded-full shadow-medium">
                       Apply to Become a Partner <ArrowRight className="ml-2 h-5 w-5" />
                     </Button>
@@ -450,3 +450,5 @@ const Index = () => {
 };
 
 export default Index;
+
+

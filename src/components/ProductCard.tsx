@@ -37,6 +37,7 @@ const ProductCard = ({ id, name, price, comparePrice, rating, image, category, b
 
   const savings = comparePrice && comparePrice > price ? comparePrice - price : null;
   const discountPct = savings && comparePrice ? Math.round((savings / comparePrice) * 100) : null;
+  const filledStars = Math.max(0, Math.min(5, Math.round(rating)));
 
   return (
     <div className="group relative bg-card rounded-2xl overflow-hidden border border-border hover:border-primary/30 shadow-sm hover:shadow-xl transition-all duration-400 flex flex-col">
@@ -93,10 +94,10 @@ const ProductCard = ({ id, name, price, comparePrice, rating, image, category, b
           {[...Array(5)].map((_, i) => (
             <Star
               key={i}
-              className={`h-3.5 w-3.5 ${i < rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30"}`}
+              className={`h-3.5 w-3.5 ${i < filledStars ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30"}`}
             />
           ))}
-          <span className="text-[10px] text-muted-foreground ml-1">{rating}.0</span>
+          <span className="text-[10px] text-muted-foreground ml-1">{rating.toFixed(1)}</span>
         </div>
 
         {/* Name */}
@@ -150,3 +151,4 @@ const ProductCard = ({ id, name, price, comparePrice, rating, image, category, b
 };
 
 export default ProductCard;
+

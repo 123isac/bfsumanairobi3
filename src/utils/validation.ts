@@ -1,4 +1,6 @@
-import { z } from 'zod';
+import { z } from "zod";
+
+const nameRegex = /^[a-zA-Z\s'.-]+$/;
 
 // Checkout form validation schema
 export const checkoutSchema = z.object({
@@ -6,7 +8,7 @@ export const checkoutSchema = z.object({
     .trim()
     .min(2, "Name must be at least 2 characters")
     .max(100, "Name must be less than 100 characters")
-    .regex(/^[a-zA-Z\s]+$/, "Name must contain only letters and spaces"),
+    .regex(nameRegex, "Name contains unsupported characters"),
   email: z.string()
     .trim()
     .email("Invalid email address")
@@ -47,5 +49,26 @@ export const contactSchema = z.object({
     .max(1000, "Message must be less than 1000 characters"),
 });
 
+// Partner application form schema
+export const partnerApplicationSchema = z.object({
+  fullName: z.string()
+    .trim()
+    .min(2, "Full name must be at least 2 characters")
+    .max(100, "Full name must be less than 100 characters")
+    .regex(nameRegex, "Full name contains unsupported characters"),
+  email: z.string()
+    .trim()
+    .email("Invalid email address")
+    .max(255, "Email must be less than 255 characters"),
+  phone: z.string()
+    .trim()
+    .regex(/^\+254[0-9]{9}$/, "Phone must be in format +254700000000"),
+  background: z.string()
+    .trim()
+    .min(10, "Please share at least 10 characters")
+    .max(1000, "Background must be less than 1000 characters"),
+});
+
 export type CheckoutFormData = z.infer<typeof checkoutSchema>;
 export type ContactFormData = z.infer<typeof contactSchema>;
+export type PartnerApplicationFormData = z.infer<typeof partnerApplicationSchema>;

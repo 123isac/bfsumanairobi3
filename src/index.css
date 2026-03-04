@@ -177,3 +177,26 @@ All colors MUST be HSL.
     }
   }
 }
+
+@layer utilities {
+  .hero-float {
+    animation: float 20s ease-in-out infinite;
+  }
+}
+
+@media (max-width: 768px) {
+  .hero-float,
+  .animated-bg::before,
+  .animated-bg-secondary::after {
+    animation: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-float,
+  .animated-bg::before,
+  .animated-bg-secondary::after {
+    animation: none !important;
+    transform: none !important;
+  }
+}

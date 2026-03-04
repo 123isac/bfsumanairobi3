@@ -10,6 +10,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { contactSchema } from "@/utils/validation";
+import { SUPPORT_EMAIL, SUPPORT_PHONE_DISPLAY, SUPPORT_WHATSAPP_NUMBER } from "@/config/site";
 
 const Contact = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -170,7 +171,7 @@ const Contact = () => {
                   </div>
                   <div>
                     <h3 className="font-semibold text-lg text-foreground mb-1">Phone</h3>
-                    <p className="text-muted-foreground">+254 700 000 000</p>
+                    <p className="text-muted-foreground">{SUPPORT_PHONE_DISPLAY}</p>
                     <p className="text-sm text-muted-foreground mt-1">Mon - Fri: 9AM - 6PM</p>
                   </div>
                 </div>
@@ -182,7 +183,7 @@ const Contact = () => {
                   </div>
                   <div>
                     <h3 className="font-semibold text-lg text-foreground mb-1">Email</h3>
-                    <p className="text-muted-foreground">info@bfsuma.com</p>
+                    <p className="text-muted-foreground">{SUPPORT_EMAIL}</p>
                     <p className="text-sm text-muted-foreground mt-1">We reply within 24 hours</p>
                   </div>
                 </div>
@@ -194,9 +195,9 @@ const Contact = () => {
                   </div>
                   <div>
                     <h3 className="font-semibold text-lg text-foreground mb-1">WhatsApp</h3>
-                    <p className="text-muted-foreground">+254 700 000 000</p>
+                    <p className="text-muted-foreground">{SUPPORT_PHONE_DISPLAY}</p>
                     <a
-                      href="https://wa.me/254700000000"
+                      href={"https://wa.me/" + SUPPORT_WHATSAPP_NUMBER}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-block mt-2"
@@ -256,3 +257,5 @@ const Contact = () => {
 };
 
 export default Contact;
+
+

@@ -8,7 +8,7 @@ import { Search, SlidersHorizontal } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSearchParams } from "react-router-dom";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import SEOHead from "@/components/SEOHead";
 
 const PAGE_SIZE = 12;
@@ -17,10 +17,20 @@ type SortOption = "newest" | "price_asc" | "price_desc" | "rating";
 
 const Shop = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const [searchInput, setSearchInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("newest");
   const [page, setPage] = useState(1);
   const selectedCategory = searchParams.get("category");
+
+  useEffect(() => {
+    const debounce = setTimeout(() => {
+      setPage(1);
+      setSearchQuery(searchInput.trim());
+    }, 300);
+
+    return () => clearTimeout(debounce);
+  }, [searchInput]);
 
   const { data: categories = [] } = useQuery({
     queryKey: ["categories"],
@@ -68,11 +78,6 @@ const Shop = () => {
     setPage(1);
     if (slug) setSearchParams({ category: slug });
     else setSearchParams({});
-  };
-
-  const handleSearch = (value: string) => {
-    setSearchQuery(value);
-    setPage(1);
   };
 
   const handleSort = (value: SortOption) => {
@@ -136,8 +141,8 @@ const Shop = () => {
                 <Search className="absolute left-3 md:left-4 top-1/2 -translate-y-1/2 h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
                 <Input
                   placeholder="Search products..."
-                  value={searchQuery}
-                  onChange={(e) => handleSearch(e.target.value)}
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
                   className="pl-10 md:pl-12 h-11 md:h-12 rounded-full border-border text-sm md:text-base"
                 />
               </div>
@@ -230,3 +235,7 @@ const Shop = () => {
 };
 
 export default Shop;
+
+
+
+

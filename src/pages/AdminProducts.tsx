@@ -5,15 +5,15 @@ import { Input } from "@/components/ui/input";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { toast } from "sonner";
-import { useAuth } from "@/contexts/AuthContext";
-import { Navigate } from "react-router-dom";
-import { Check, X, Image as ImageIcon, Plus, Edit2, LayoutGrid, List } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Image as ImageIcon, Plus, Edit2, LayoutGrid, Bell } from "lucide-react";
 import { AdminProductModal } from "@/components/AdminProductModal";
 
 const AdminProducts = () => {
     const [products, setProducts] = useState<any[]>([]);
     const [loadingProducts, setLoadingProducts] = useState(true);
     const [search, setSearch] = useState("");
+    const [pendingApplications, setPendingApplications] = useState(0);
 
     // Modal State
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -21,6 +21,7 @@ const AdminProducts = () => {
 
     useEffect(() => {
         fetchProducts();
+        fetchPendingApplications();
     }, []);
 
     const fetchProducts = async () => {
@@ -37,6 +38,15 @@ const AdminProducts = () => {
             toast.error("Failed to load products: " + error.message);
         } finally {
             setLoadingProducts(false);
+        }
+    };
+
+    const fetchPendingApplications = async () => {
+        try {
+            const { count } = await supabase.from("spas").select("id", { count: "exact", head: true }).eq("application_status", "pending");
+            setPendingApplications(count || 0);
+        } catch {
+            setPendingApplications(0);
         }
     };
 
@@ -96,6 +106,12 @@ const AdminProducts = () => {
                                 <Plus className="h-4 w-4 mr-2" />
                                 Add Product
                             </Button>
+                            <Link to="/admin/partners">
+                                <Button variant="outline" className="whitespace-nowrap">
+                                    <Bell className="h-4 w-4 mr-2" />
+                                    Partner Applications ({pendingApplications})
+                                </Button>
+                            </Link>
                         </div>
                     </div>
 
@@ -194,3 +210,8 @@ const AdminProducts = () => {
 };
 
 export default AdminProducts;
+
+
+
+
+

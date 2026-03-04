@@ -120,6 +120,7 @@ const ProductDetail = () => {
   const stock = product.stock_quantity ?? 0;
   const lowStock = stock > 0 && stock <= 5;
   const rating = Number(product.rating || 5);
+  const filledStars = Math.max(0, Math.min(5, Math.round(rating)));
 
   // Parse benefits as bullet lines
   const benefitLines = (p.benefits || product.description || "")
@@ -215,10 +216,10 @@ const ProductDetail = () => {
                 <div className="flex items-center gap-3 flex-wrap">
                   <div className="flex items-center gap-0.5">
                     {[...Array(5)].map((_, i) => (
-                      <Star key={i} className={`h-5 w-5 ${i < rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30"}`} />
+                      <Star key={i} className={`h-5 w-5 ${i < filledStars ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30"}`} />
                     ))}
                   </div>
-                  <span className="text-sm font-semibold text-foreground">{rating}.0</span>
+                  <span className="text-sm font-semibold text-foreground">{rating.toFixed(1)}</span>
                   <span className="text-sm text-muted-foreground">· 247 verified buyers</span>
                 </div>
               </div>
@@ -475,3 +476,4 @@ const ProductDetail = () => {
 };
 
 export default ProductDetail;
+

@@ -7,7 +7,7 @@ import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { CreditCard, Smartphone, Loader2, CheckCircle2, XCircle } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Navigate } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { getReferralCode } from "@/utils/referral";
@@ -90,11 +90,14 @@ const Checkout = () => {
     return () => {
       if (pollingRef.current) clearInterval(pollingRef.current);
     };
-  }, [pollingOrderId]);
+  }, [pollingOrderId, clearCart, navigate]);
 
   if (items.length === 0) {
-    navigate('/cart');
-    return null;
+    return <Navigate to="/cart" replace />;
+  }
+
+  if (!user) {
+    return <Navigate to="/auth" replace />;
   }
 
   const initiateSTKPush = async (orderId: string) => {
@@ -151,11 +154,10 @@ const Checkout = () => {
         return;
       }
 
-      const { data: { user } } = await supabase.auth.getUser();
       const referralCode = getReferralCode();
 
       const orderData = {
-        user_id: user?.id || '00000000-0000-0000-0000-000000000000',
+        user_id: user.id,
         customer_name: fullName,
         customer_email: email,
         customer_phone: phone,
@@ -384,3 +386,5 @@ const Checkout = () => {
 };
 
 export default Checkout;
+
+
