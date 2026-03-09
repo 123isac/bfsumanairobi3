@@ -6,7 +6,7 @@ import CategoryCard from "@/components/CategoryCard";
 import ProductCard from "@/components/ProductCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Sparkles, Heart, Shield, Leaf, Bone, ArrowRight, Activity, Sun, Baby, Home } from "lucide-react";
+import { Sparkles, Heart, Shield, Leaf, Bone, ArrowRight, Activity, Sun, Baby, Home, Star } from "lucide-react";
 import { Link } from "react-router-dom";
 import heroBanner from "@/assets/hero-banner.jpg";
 import { useQuery } from "@tanstack/react-query";
