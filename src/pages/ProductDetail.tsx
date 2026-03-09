@@ -5,10 +5,10 @@ import ProductReviews from "@/components/ProductReviews";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Star, ShoppingCart, Heart, Shield, Leaf, Sparkles, Play,
+  Star, ShoppingCart, Heart, Shield, Leaf, Sparkles,
   Truck, RotateCcw, CheckCircle2, Flame, Clock, ArrowRight,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
 import { useQuery } from "@tanstack/react-query";
@@ -58,6 +58,64 @@ const ProductDetail = () => {
     },
     enabled: !!product?.category_id,
   });
+
+  // Dynamic review count
+  const { data: reviewCount = 0 } = useQuery({
+    queryKey: ["review-count", id],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("product_reviews")
+        .select("id", { count: "exact", head: true })
+        .eq("product_id", id);
+      if (error) return 0;
+      return count ?? 0;
+    },
+    enabled: !!id,
+  });
+
+  // Inject Schema.org Product structured data
+  useEffect(() => {
+    if (!product) return;
+    const schema = {
+      "@context": "https://schema.org",
+      "@type": "Product",
+      name: product.name,
+      description: product.description || "",
+      image: product.image_url || "",
+      brand: { "@type": "Brand", name: "BF Suma" },
+      offers: {
+        "@type": "Offer",
+        priceCurrency: "KES",
+        price: String(product.price),
+        availability:
+          (product.stock_quantity ?? 0) > 0
+            ? "https://schema.org/InStock"
+            : "https://schema.org/OutOfStock",
+        seller: { "@type": "Organization", name: "BF Suma Nairobi" },
+      },
+      ...(Number(product.rating) > 0
+        ? {
+          aggregateRating: {
+            "@type": "AggregateRating",
+            ratingValue: String(Number(product.rating).toFixed(1)),
+            reviewCount: String(reviewCount > 0 ? reviewCount : 1),
+            bestRating: "5",
+            worstRating: "1",
+          },
+        }
+        : {}),
+    };
+    const scriptId = "product-schema-ld";
+    let existing = document.getElementById(scriptId);
+    if (!existing) {
+      existing = document.createElement("script");
+      existing.id = scriptId;
+      (existing as HTMLScriptElement).type = "application/ld+json";
+      document.head.appendChild(existing);
+    }
+    existing.textContent = JSON.stringify(schema);
+    return () => { existing?.remove(); };
+  }, [product, reviewCount]);
 
   if (isLoading) {
     return (
@@ -238,7 +296,9 @@ const ProductDetail = () => {
                     ))}
                   </div>
                   <span className="text-sm font-semibold text-foreground">{rating.toFixed(1)}</span>
-                  <span className="text-sm text-muted-foreground">· 247 verified buyers</span>
+                  <span className="text-sm text-muted-foreground">
+                    {reviewCount > 0 ? `· ${reviewCount} verified ${reviewCount === 1 ? "review" : "reviews"}` : "· Be the first to review"}
+                  </span>
                 </div>
               </div>
 

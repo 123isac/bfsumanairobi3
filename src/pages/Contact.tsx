@@ -10,7 +10,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { contactSchema } from "@/utils/validation";
-import { SUPPORT_EMAIL, SUPPORT_PHONE_DISPLAY, SUPPORT_WHATSAPP_NUMBER } from "@/config/site";
+import { SUPPORT_EMAIL, SUPPORT_PHONE_DISPLAY, SUPPORT_WHATSAPP_NUMBER, SUPPORT_ADDRESS } from "@/config/site";
 
 const Contact = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -206,6 +206,18 @@ const Contact = () => {
                         Chat Now
                       </Button>
                     </a>
+                  </div>
+                </div>
+
+                {/* Physical Address */}
+                <div className="flex items-start space-x-4 p-6 bg-secondary/50 rounded-2xl hover:shadow-soft transition-smooth">
+                  <div className="w-12 h-12 rounded-full gradient-primary flex items-center justify-center flex-shrink-0">
+                    <MapPin className="h-6 w-6 text-primary-foreground" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-lg text-foreground mb-1">Visit Our Store</h3>
+                    <p className="text-muted-foreground leading-relaxed">{SUPPORT_ADDRESS}</p>
+                    <p className="text-sm text-muted-foreground mt-1">Walk-ins welcome during business hours</p>
                   </div>
                 </div>
               </div>

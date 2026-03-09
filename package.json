@@ -7,6 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "build:dev": "vite build --mode development",
+    "build:prod": "vite build && node generate-sitemap.mjs",
+    "sitemap": "node generate-sitemap.mjs",
     "lint": "eslint .",
     "preview": "vite preview"
   },

@@ -7,6 +7,7 @@ import { Suspense, lazy, useEffect } from "react";
 import { CartProvider } from "@/contexts/CartContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AdminRoute } from "./components/AdminRoute";
+import WhatsAppButton from "./components/WhatsAppButton";
 
 const Index = lazy(() => import("./pages/Index"));
 const Shop = lazy(() => import("./pages/Shop"));
@@ -60,6 +61,7 @@ const App = () => (
           <Toaster />
           <Sonner />
           <ScrollToTop />
+          <WhatsAppButton />
           <Suspense fallback={<RouteLoader />}>
             <Routes>
               <Route path="/" element={<Index />} />
