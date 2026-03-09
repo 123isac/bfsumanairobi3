@@ -67,6 +67,11 @@ export default {
         'luxury': 'var(--shadow-luxury)',
         'gold': 'var(--shadow-gold)',
       },
+      backgroundImage: {
+        'gradient-primary': 'var(--gradient-primary)',
+        'gradient-gold': 'var(--gradient-gold)',
+        'gradient-hero': 'var(--gradient-hero)',
+      },
       keyframes: {
         "accordion-down": {
           from: { height: "0" },

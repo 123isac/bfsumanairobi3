@@ -6,7 +6,7 @@ import CategoryCard from "@/components/CategoryCard";
 import ProductCard from "@/components/ProductCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Sparkles, Heart, Shield, Leaf, Bone, ArrowRight, Activity, Sun, Baby, Home, Star } from "lucide-react";
+import { Sparkles, Heart, Shield, Leaf, Bone, ArrowRight, Activity, Sun, Baby, Home } from "lucide-react";
 import { Link } from "react-router-dom";
 import heroBanner from "@/assets/hero-banner.jpg";
 import { useQuery } from "@tanstack/react-query";
@@ -28,7 +28,7 @@ const Index = () => {
     }
     setSubscribing(true);
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('newsletter_subscribers')
         .insert({ email: newsletterEmail.trim().toLowerCase() });
       if (error) {
@@ -217,14 +217,14 @@ const Index = () => {
             </div>
 
             {/* Promo Card 2 */}
-            <div className="gradient-gold rounded-3xl p-8 text-primary shadow-luxury relative overflow-hidden group">
-              <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-white/30 rounded-full blur-2xl group-hover:scale-150 transition-all duration-500"></div>
+            <div className="bg-card rounded-3xl p-8 text-foreground shadow-luxury relative overflow-hidden group border border-border">
+              <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-primary/10 rounded-full blur-2xl group-hover:scale-150 transition-all duration-500"></div>
               <div className="relative z-10">
-                <span className="inline-block px-3 py-1 bg-primary/10 rounded-full text-[10px] font-bold tracking-wider mb-4 border border-primary/20 backdrop-blur-sm text-primary">SPECIAL OFFER</span>
-                <h3 className="font-display font-bold text-2xl mb-2">20% Off Digestive Health</h3>
-                <p className="text-primary/80 text-sm mb-6 max-w-[200px]">Support your gut — the foundation of overall health and immunity.</p>
+                <span className="inline-block px-3 py-1 bg-primary/10 rounded-full text-[10px] font-bold tracking-wider mb-4 border border-primary/20 text-primary">POPULAR</span>
+                <h3 className="font-display font-bold text-2xl mb-2">Digestive Health</h3>
+                <p className="text-muted-foreground text-sm mb-6 max-w-[200px]">Support your gut — the foundation of overall health and immunity.</p>
                 <Link to="/shop?category=digestive-health" className="inline-flex items-center text-sm font-bold hover:translate-x-2 transition-transform text-primary">
-                  Claim Offer <ArrowRight className="ml-2 w-4 h-4" />
+                  Explore Range <ArrowRight className="ml-2 w-4 h-4" />
                 </Link>
               </div>
             </div>
@@ -304,42 +304,20 @@ const Index = () => {
 
           {/* Product grid */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6 mb-10">
-            {featuredProducts.map((product, index) => {
-              const badges = ["BEST SELLER", "BEST SELLER", "HOT", "TRENDING"];
-              const badge = index < 4 ? badges[index] : undefined;
+            {featuredProducts.map((product) => {
               return (
                 <ProductCard
                   key={product.id}
                   id={product.id}
                   name={product.name}
                   price={Number(product.price)}
-                  comparePrice={product.compare_price ? Number(product.compare_price) : undefined}
+                  comparePrice={(product as any).compare_price ? Number((product as any).compare_price) : undefined}
                   rating={Number(product.rating) || 5}
                   image={product.image_url || "/placeholder.svg"}
                   category={product.categories?.name || ""}
-                  badge={badge}
                 />
               );
             })}
-          </div>
-
-          {/* Social proof strip */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-10 py-6 px-6 bg-white rounded-2xl border border-amber-100 shadow-sm">
-            <div className="flex items-center gap-2">
-              <div className="flex -space-x-1.5">
-                {["🟢", "🟡", "🟣", "🔵"].map((c, i) => (
-                  <div key={i} className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 border-2 border-white flex items-center justify-center text-sm">{c}</div>
-                ))}
-              </div>
-              <p className="text-sm font-semibold text-foreground">2,000+ happy customers nationwide</p>
-            </div>
-            <div className="hidden sm:block w-px h-8 bg-border" />
-            <div className="flex items-center gap-1.5">
-              {[...Array(5)].map((_, i) => (
-                <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />
-              ))}
-              <span className="text-sm font-semibold text-foreground ml-1">Rated 4.8/5 by verified buyers</span>
-            </div>
           </div>
 
           <div className="text-center mt-10">
@@ -352,24 +330,7 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Stats Ribbon */}
-      <section className="bg-primary text-primary-foreground py-10">
-        <div className="container mx-auto px-4 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-            {[
-              { value: "10,000+", label: "Happy Customers" },
-              { value: "50+", label: "Wellness Products" },
-              { value: "10+", label: "Years of Science" },
-              { value: "47", label: "Counties Delivered" },
-            ].map((stat) => (
-              <div key={stat.label} className="flex flex-col items-center gap-1">
-                <span className="font-display font-bold text-3xl sm:text-4xl text-accent">{stat.value}</span>
-                <span className="text-sm opacity-80 font-medium">{stat.label}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+
 
       {/* Partner Section */}
       <section className="py-12 sm:py-16 md:py-20 bg-gradient-to-br from-accent/10 via-primary/5 to-secondary/10 animated-bg">
