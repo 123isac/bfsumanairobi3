@@ -253,6 +253,36 @@ export type Database = {
           },
         ]
       }
+      promo_codes: {
+        Row: {
+          id: string
+          code: string
+          discount_amount: number
+          discount_type: string
+          is_active: boolean
+          created_at: string
+          expires_at: string | null
+        }
+        Insert: {
+          id?: string
+          code: string
+          discount_amount: number
+          discount_type?: string
+          is_active?: boolean
+          created_at?: string
+          expires_at?: string | null
+        }
+        Update: {
+          id?: string
+          code?: string
+          discount_amount?: number
+          discount_type?: string
+          is_active?: boolean
+          created_at?: string
+          expires_at?: string | null
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           category_id: string | null
@@ -381,6 +411,30 @@ export type Database = {
           rejection_reason?: string | null
           total_earnings?: number
           updated_at?: string
+        }
+        Relationships: []
+      }
+      store_settings: {
+        Row: {
+          id: string
+          key: string
+          value: any
+          description: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          key: string
+          value: any
+          description?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          key?: string
+          value?: any
+          description?: string | null
+          updated_at?: string | null
         }
         Relationships: []
       }
