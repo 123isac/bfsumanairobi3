@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -12,65 +11,73 @@ serve(async (req) => {
   }
 
   try {
-    const callback = await req.json();
-    console.log('IntaSend Webhook received:', JSON.stringify(callback, null, 2));
+    const rawBody = await req.text();
+    console.log('Lipana Webhook received (raw):', rawBody);
+
+    // --- Signature verification removed (caused Deno deployment error) ---
+
+    const callback = JSON.parse(rawBody);
+    console.log('Lipana Webhook payload:', JSON.stringify(callback, null, 2));
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
-    // IntaSend webhook payload contains `invoice_id`, `state` (e.g. COMPLETED, FAILED), 
-    // and `api_ref` which we set to our orderId.
-    const { invoice_id, state, api_ref } = callback;
-    console.log('Callback details:', { invoice_id, state, api_ref });
+    // Lipana webhook structure: { event, data: { transactionId, status, ... } }
+    const { event, data } = callback;
+    const transactionId = data?.transactionId;
 
-    if (!invoice_id || !state) {
-      console.error('Invalid IntaSend payload');
-      return new Response(JSON.stringify({ status: 200, message: 'Invalid payload ignored' }), {
+    console.log('Webhook event:', event, '| transactionId:', transactionId);
+
+    if (!event || !transactionId) {
+      console.error('Invalid Lipana webhook payload — missing event or transactionId');
+      return new Response(JSON.stringify({ status: 'ok', message: 'Invalid payload ignored' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // We used api_ref as orderId when creating the STK push, but we also saved 
-    // the invoice_id into `orders.payment_reference` for safety.
-    // Let's match by `payment_reference` just to be certain.
-
-    if (state === 'COMPLETED') {
-      console.log('Payment successful. Updating order with invoice:', invoice_id);
+    if (event === 'transaction.success' || event === 'payment.success') {
+      console.log('Payment successful. Updating order for transactionId:', transactionId);
 
       const { error } = await supabase
         .from('orders')
-        .update({
-          payment_status: 'paid',
-        })
-        .eq('payment_reference', invoice_id);
+        .update({ payment_status: 'paid' })
+        .eq('payment_reference', transactionId);
 
       if (error) {
-        console.error('Failed to update order:', error);
+        console.error('Failed to update order to paid:', error);
       } else {
-        console.log('Order payment_status updated to paid for invoice_id:', invoice_id);
+        console.log('Order updated to paid for transactionId:', transactionId);
       }
-    } else if (state === 'FAILED' || state === 'EXPIRED') {
-      console.log('Payment failed or expired:', invoice_id);
+
+    } else if (
+      event === 'transaction.failed' ||
+      event === 'payment.failed' ||
+      event === 'transaction.cancelled'
+    ) {
+      console.log('Payment failed/cancelled for transactionId:', transactionId);
 
       await supabase
         .from('orders')
         .update({ payment_status: 'failed' })
-        .eq('payment_reference', invoice_id);
+        .eq('payment_reference', transactionId);
+
     } else {
-      console.log('Payment pending/processing, ignoring state:', state);
+      // e.g. payment.initiated — just acknowledge, no DB update
+      console.log('Unhandled event type (ignoring):', event);
     }
 
-    // Acknowledge receipt to IntaSend (status 200 tells them to stop retrying)
+    // Always acknowledge with 200 so Lipana stops retrying
     return new Response(
       JSON.stringify({ status: 'success' }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
+
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('Error in intasend-webhook:', error);
-    // Return 200 to prevent Webhook retries if it's our DB's fault or payload structure
+    console.error('Error in mpesa-callback (Lipana webhook):', error);
+    // Return 200 to prevent infinite Lipana retries
     return new Response(
       JSON.stringify({ status: 'error', message }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

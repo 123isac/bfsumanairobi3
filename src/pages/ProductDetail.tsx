@@ -63,7 +63,9 @@ const ProductDetail = () => {
   const { data: reviewCount = 0 } = useQuery({
     queryKey: ["review-count", id],
     queryFn: async () => {
-      const { count, error } = await supabase
+      // Cast supabase to any to bypass strict type checking for 'product_reviews'
+      // which is missing from the generated database.types.ts
+      const { count, error } = await (supabase as any)
         .from("product_reviews")
         .select("id", { count: "exact", head: true })
         .eq("product_id", id);

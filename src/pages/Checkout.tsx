@@ -24,6 +24,13 @@ const Checkout = () => {
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pollingCountRef = useRef(0);
 
+  // New Promotion and CMS Settings states
+  const [shippingFee, setShippingFee] = useState<number>(0);
+  const [promoCodeInput, setPromoCodeInput] = useState("");
+  const [appliedPromo, setAppliedPromo] = useState<{code: string, amount: number, type: string} | null>(null);
+  const [promoError, setPromoError] = useState("");
+  const [isApplyingPromo, setIsApplyingPromo] = useState(false);
+
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -52,6 +59,62 @@ const Checkout = () => {
       loadProfile();
     }
   }, [user]);
+
+  // Load Shipping Base Fee from CMS
+  useEffect(() => {
+    const fetchShippingFee = async () => {
+      try {
+        const { data } = await supabase
+          .from("store_settings")
+          .select("value")
+          .eq("key", "shipping_base_fee")
+          .single();
+        if (data && data.value) setShippingFee(Number(data.value));
+      } catch (err) {
+        console.error("Failed to fetch shipping fee", err);
+      }
+    };
+    fetchShippingFee();
+  }, []);
+
+  const discountAmount = appliedPromo 
+    ? (appliedPromo.type === 'percentage' 
+       ? (totalPrice * appliedPromo.amount / 100) 
+       : appliedPromo.amount) 
+    : 0;
+
+  const finalTotal = Math.max(0, totalPrice + shippingFee - discountAmount);
+
+  const applyPromoCode = async () => {
+    if (!promoCodeInput.trim()) return;
+    setIsApplyingPromo(true);
+    setPromoError("");
+    
+    try {
+      const { data, error } = await supabase
+        .from('promo_codes')
+        .select('*')
+        .eq('code', promoCodeInput.toUpperCase().trim())
+        .eq('is_active', true)
+        .maybeSingle();
+
+      if (error || !data) {
+        setPromoError("Invalid or expired promo code");
+        setAppliedPromo(null);
+      } else {
+        setAppliedPromo({
+          code: data.code,
+          amount: data.discount_amount,
+          type: data.discount_type
+        });
+        toast.success("Promo code applied!");
+      }
+    } catch (err) {
+      setPromoError("Error verifying promo code");
+    } finally {
+      setIsApplyingPromo(false);
+    }
+  };
 
   // Poll for payment confirmation after STK push
   useEffect(() => {
@@ -106,7 +169,7 @@ const Checkout = () => {
       const { data, error } = await supabase.functions.invoke('mpesa-stk-push', {
         body: {
           phone,
-          amount: totalPrice,
+          amount: finalTotal,
           orderId,
           accountReference: `BFSuma-${orderId.substring(0, 8)}`,
         },
@@ -168,7 +231,7 @@ const Checkout = () => {
         shipping_building: kenyaAddress.building,
         shipping_landmark: kenyaAddress.landmark || null,
         payment_method: paymentMethod,
-        total_amount: totalPrice,
+        total_amount: finalTotal,
         referral_code: referralCode,
       };
 
@@ -347,25 +410,67 @@ const Checkout = () => {
                         <span className="font-semibold text-foreground">KSH {(item.price * item.quantity).toLocaleString()}</span>
                       </div>
                     ))}
-                    <div className="border-t border-border pt-4 space-y-2">
-                      <div className="flex justify-between text-muted-foreground">
+                    <div className="border-y border-border py-4 space-y-2 my-4">
+                      
+                      {/* Promo Code Input */}
+                      <div className="flex gap-2 pb-2">
+                        <Input 
+                          placeholder="Promo Code" 
+                          value={promoCodeInput}
+                          onChange={(e) => setPromoCodeInput(e.target.value)}
+                          disabled={!!appliedPromo}
+                        />
+                        {appliedPromo ? (
+                          <Button 
+                            type="button" 
+                            variant="outline" 
+                            onClick={() => {
+                              setAppliedPromo(null);
+                              setPromoCodeInput("");
+                            }} 
+                            className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                          >
+                            Remove
+                          </Button>
+                        ) : (
+                          <Button 
+                            type="button" 
+                            variant="outline" 
+                            onClick={applyPromoCode} 
+                            disabled={isApplyingPromo}
+                          >
+                            Apply
+                          </Button>
+                        )}
+                      </div>
+                      {promoError && <p className="text-red-500 text-xs">{promoError}</p>}
+
+                      <div className="flex justify-between text-muted-foreground pt-2">
                         <span>Subtotal</span>
                         <span className="font-semibold">KSH {totalPrice.toLocaleString()}</span>
                       </div>
                       <div className="flex justify-between text-muted-foreground">
                         <span>Shipping</span>
-                        <span className="font-semibold">Free</span>
+                        <span className="font-semibold">{shippingFee > 0 ? `KSH ${shippingFee.toLocaleString()}` : 'Free'}</span>
                       </div>
-                      <div className="flex justify-between text-foreground text-xl font-bold pt-2">
+                      {appliedPromo && (
+                        <div className="flex justify-between text-green-600 font-medium">
+                          <span>Discount ({appliedPromo.code})</span>
+                          <span>-KSH {discountAmount.toLocaleString()}</span>
+                        </div>
+                      )}
+                      
+                      <div className="flex justify-between text-foreground text-xl font-bold pt-2 border-t border-border">
                         <span>Total</span>
-                        <span className="text-primary">KSH {totalPrice.toLocaleString()}</span>
+                        <span className="text-primary">KSH {finalTotal.toLocaleString()}</span>
                       </div>
                     </div>
                   </div>
+                  
                   <Button
                     type="submit"
                     size="lg"
-                    className="gradient-primary w-full rounded-full h-12 text-lg"
+                    className="gradient-primary w-full rounded-full h-12 text-lg mt-2"
                     disabled={isSubmitting}
                   >
                     {isSubmitting

@@ -1,6 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -83,9 +81,8 @@ const AdminPartners = () => {
   const pendingCount = applications.filter((item) => item.application_status === "pending").length;
 
   return (
-    <div className="min-h-screen flex flex-col bg-muted/20">
-      <Header />
-      <main className="flex-1 container mx-auto px-4 py-8 max-w-7xl">
+    <div className="flex flex-col">
+      <main className="flex-1 w-full">
         <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-border">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
             <div>
@@ -162,7 +159,6 @@ const AdminPartners = () => {
           )}
         </div>
       </main>
-      <Footer />
     </div>
   );
 };

@@ -7,7 +7,9 @@ import { Suspense, lazy, useEffect } from "react";
 import { CartProvider } from "@/contexts/CartContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AdminRoute } from "./components/AdminRoute";
+import { AdminLayout } from "./components/AdminLayout";
 import WhatsAppButton from "./components/WhatsAppButton";
+import { Outlet } from "react-router-dom";
 
 const Index = lazy(() => import("./pages/Index"));
 const Shop = lazy(() => import("./pages/Shop"));
@@ -26,6 +28,12 @@ const AdminPartners = lazy(() => import("./pages/AdminPartners"));
 const PartnerApply = lazy(() => import("./pages/PartnerApply"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const TermsOfService = lazy(() => import("./pages/TermsOfService"));
+const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
+const AdminOrders = lazy(() => import("./pages/AdminOrders"));
+const AdminCustomers = lazy(() => import("./pages/AdminCustomers"));
+const AdminCategories = lazy(() => import("./pages/AdminCategories"));
+const AdminPromotions = lazy(() => import("./pages/AdminPromotions"));
+const AdminSettings = lazy(() => import("./pages/AdminSettings"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -75,23 +83,18 @@ const App = () => (
               <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/admin/login" element={<AdminAuth />} />
-              <Route path="/admin" element={<Navigate to="/admin/products" replace />} />
-              <Route
-                path="/admin/products"
-                element={(
-                  <AdminRoute>
-                    <AdminProducts />
-                  </AdminRoute>
-                )}
-              />
-              <Route
-                path="/admin/partners"
-                element={(
-                  <AdminRoute>
-                    <AdminPartners />
-                  </AdminRoute>
-                )}
-              />
+              
+              <Route path="/admin" element={<AdminRoute><AdminLayout><Outlet /></AdminLayout></AdminRoute>}>
+                <Route index element={<Navigate to="/admin/dashboard" replace />} />
+                <Route path="dashboard" element={<AdminDashboard />} />
+                <Route path="products" element={<AdminProducts />} />
+                <Route path="partners" element={<AdminPartners />} />
+                <Route path="orders" element={<AdminOrders />} />
+                <Route path="customers" element={<AdminCustomers />} />
+                <Route path="categories" element={<AdminCategories />} />
+                <Route path="promotions" element={<AdminPromotions />} />
+                <Route path="settings" element={<AdminSettings />} />
+              </Route>
               <Route path="/partner/apply" element={<PartnerApply />} />
               <Route path="/privacy-policy" element={<PrivacyPolicy />} />
               <Route path="/terms-of-service" element={<TermsOfService />} />

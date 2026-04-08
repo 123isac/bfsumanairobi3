@@ -16,12 +16,15 @@ interface STKPushRequest {
 const formatPhoneNumber = (phone: string): string => {
   let cleaned = phone.replace(/[\s\-()']/g, '').replace(/'/g, '');
 
+  // Lipana requires international format: +254...
   if (cleaned.startsWith('+254')) {
-    cleaned = cleaned.substring(1);
+    return cleaned;
+  } else if (cleaned.startsWith('254')) {
+    return '+' + cleaned;
   } else if (cleaned.startsWith('0')) {
-    cleaned = '254' + cleaned.substring(1);
+    return '+254' + cleaned.substring(1);
   } else if (cleaned.startsWith('7') || cleaned.startsWith('1')) {
-    cleaned = '254' + cleaned;
+    return '+254' + cleaned;
   }
 
   return cleaned;
@@ -33,8 +36,8 @@ serve(async (req) => {
   }
 
   try {
-    const { phone, amount, orderId, accountReference }: STKPushRequest = await req.json();
-    console.log('Mobile Money request:', { phone, amount, orderId });
+    const { phone, amount, orderId }: STKPushRequest = await req.json();
+    console.log('Lipana STK Push request:', { phone, amount, orderId });
 
     if (!phone || !amount || !orderId) {
       return new Response(
@@ -43,71 +46,64 @@ serve(async (req) => {
       );
     }
 
-    const publishableKey = Deno.env.get('INTASEND_PUBLISHABLE_KEY');
-    const secretKey = Deno.env.get('INTASEND_SECRET_KEY');
-
-    if (!publishableKey || !secretKey) {
-      throw new Error('IntaSend keys not configured');
+    const secretKey = Deno.env.get('LIPANA_SECRET_KEY');
+    if (!secretKey) {
+      throw new Error('LIPANA_SECRET_KEY is not configured');
     }
 
     const formattedPhone = formatPhoneNumber(phone);
+    console.log('Formatted phone for Lipana:', formattedPhone);
 
-    // IntaSend allows "BUSINESS-PAYS" or "CUSTOMER-PAYS" for M-Pesa fees. 
-    // Usually CUSTOMER-PAYS is expected for normal checkouts.
     const payload = {
+      phone: formattedPhone,
       amount: Math.round(amount),
-      phone_number: formattedPhone,
-      api_ref: orderId, // We use this in webhook to match the DB record
-      mobile_tarrif: "CUSTOMER-PAYS"
+      callbackUrl: 'https://vjhjnbefyyfxfsyncdrr.supabase.co/functions/v1/mpesa-callback',
     };
 
-    console.log('IntaSend payload:', JSON.stringify(payload, null, 2));
+    console.log('Lipana payload:', JSON.stringify(payload, null, 2));
 
-    // Notice we're hitting the main IntaSend STK push endpoint
-    const intasendResponse = await fetch(
-      'https://payment.intasend.com/api/v1/payment/mpesa-stk-push/',
+    const lipanaResponse = await fetch(
+      'https://api.lipana.dev/v1/transactions/push-stk',
       {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${secretKey}`,
-          'X-IntaSend-Public-API-Key': publishableKey,
+          'x-api-key': secretKey,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(payload),
       }
     );
 
-    const intasendResult = await intasendResponse.json();
-    console.log('IntaSend response:', JSON.stringify(intasendResult, null, 2));
+    const lipanaResult = await lipanaResponse.json();
+    console.log('Lipana response:', JSON.stringify(lipanaResult, null, 2));
 
-    if (intasendResponse.ok && intasendResult.invoice) {
-      // Create supabase client to save invoice_id
+    if (lipanaResponse.ok && lipanaResult.success && lipanaResult.data?.transactionId) {
       const supabase = createClient(
         Deno.env.get('SUPABASE_URL')!,
         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
       );
 
-      // Save IntaSend's invoice_id to the order so webhook can match it
+      // Save Lipana's transactionId so the webhook can match the order
       await supabase
         .from('orders')
-        .update({ payment_reference: intasendResult.invoice.invoice_id })
+        .update({ payment_reference: lipanaResult.data.transactionId })
         .eq('id', orderId);
 
       return new Response(
         JSON.stringify({
           success: true,
-          checkoutRequestId: intasendResult.invoice.invoice_id,
+          checkoutRequestId: lipanaResult.data.transactionId,
           message: 'M-PESA prompt sent successfully. Please check your phone.',
         }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
 
     } else {
-      console.error('IntaSend charge failed:', intasendResult);
+      console.error('Lipana STK push failed:', lipanaResult);
       return new Response(
         JSON.stringify({
           success: false,
-          error: intasendResult.errors ? JSON.stringify(intasendResult.errors) : 'Payment initiation failed',
+          error: lipanaResult.message || lipanaResult.error || 'Payment initiation failed',
         }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );

@@ -2,8 +2,6 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import { Image as ImageIcon, Plus, Edit2, LayoutGrid, Bell } from "lucide-react";
@@ -89,9 +87,8 @@ const AdminProducts = () => {
     );
 
     return (
-        <div className="min-h-screen flex flex-col bg-muted/20">
-            <Header />
-            <main className="flex-1 container mx-auto px-4 py-8 max-w-7xl">
+        <div className="flex flex-col">
+            <main className="flex-1 w-full">
                 <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-border">
 
                     {/* Header Area */}
@@ -209,7 +206,6 @@ const AdminProducts = () => {
 
                 </div>
             </main>
-            <Footer />
 
             <AdminProductModal
                 isOpen={isModalOpen}
