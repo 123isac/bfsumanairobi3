@@ -28,6 +28,8 @@ const AdminPartners = lazy(() => import("./pages/AdminPartners"));
 const PartnerApply = lazy(() => import("./pages/PartnerApply"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const TermsOfService = lazy(() => import("./pages/TermsOfService"));
+const ReturnPolicy = lazy(() => import("./pages/ReturnPolicy"));
+const ShippingPolicy = lazy(() => import("./pages/ShippingPolicy"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const AdminOrders = lazy(() => import("./pages/AdminOrders"));
 const AdminCustomers = lazy(() => import("./pages/AdminCustomers"));
@@ -98,6 +100,8 @@ const App = () => (
               <Route path="/partner/apply" element={<PartnerApply />} />
               <Route path="/privacy-policy" element={<PrivacyPolicy />} />
               <Route path="/terms-of-service" element={<TermsOfService />} />
+              <Route path="/return-policy" element={<ReturnPolicy />} />
+              <Route path="/shipping-policy" element={<ShippingPolicy />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>

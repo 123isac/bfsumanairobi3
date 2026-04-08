@@ -144,6 +144,12 @@ const Footer = () => {
             <Link to="/contact" className="text-sm opacity-80 hover:opacity-100 hover:text-accent transition-all duration-300">
               Contact Us
             </Link>
+            <Link to="/shipping-policy" className="text-sm opacity-80 hover:opacity-100 hover:text-accent transition-all duration-300">
+              Shipping & Buying Policy
+            </Link>
+            <Link to="/return-policy" className="text-sm opacity-80 hover:opacity-100 hover:text-accent transition-all duration-300">
+              Return Policy
+            </Link>
             <Link to="/privacy-policy" className="text-sm opacity-80 hover:opacity-100 hover:text-accent transition-all duration-300">
               Privacy Policy
             </Link>
