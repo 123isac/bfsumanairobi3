@@ -100,7 +100,7 @@ const Cart = () => {
                       alt={item.name}
                       loading="lazy"
                       decoding="async"
-                      className="w-full sm:w-24 h-48 sm:h-24 object-cover rounded-xl bg-secondary/20"
+                      className="w-full sm:w-24 h-48 sm:h-24 object-contain p-2 rounded-xl bg-white border border-border"
                     />
                     <div className="flex-1 space-y-2">
                       <h3 className="font-display font-semibold text-lg md:text-xl text-foreground">{item.name}</h3>

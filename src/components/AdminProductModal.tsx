@@ -210,7 +210,7 @@ export function AdminProductModal({ isOpen, onClose, product, onSaved }: AdminPr
                             <div className="aspect-square bg-secondary rounded-lg border-2 border-dashed border-border/60 relative flex flex-col items-center justify-center overflow-hidden hover:bg-secondary/80 transition-colors group cursor-pointer">
                                 {imagePreview ? (
                                     <>
-                                        <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                                        <img src={imagePreview} alt="Preview" className="w-full h-full object-contain p-2 bg-white" />
                                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                             <span className="text-white font-medium text-sm flex items-center gap-2">
                                                 <Upload className="h-4 w-4" /> Change

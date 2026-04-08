@@ -140,7 +140,7 @@ const AdminProducts = () => {
                                                 alt={product.name}
                                                 loading="lazy"
                                                 decoding="async"
-                                                className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 bg-secondary/20 ${!product.is_active && 'grayscale'}`}
+                                                className={`w-full h-full object-contain p-2 transition-transform duration-500 group-hover:scale-105 bg-white ${!product.is_active && 'grayscale'}`}
                                             />
                                         ) : (
                                             <div className="flex flex-col items-center text-muted-foreground">

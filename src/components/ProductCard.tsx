@@ -49,7 +49,7 @@ const ProductCard = ({ id, name, price, comparePrice, rating, image, category, b
             alt={name}
             loading="lazy"
             decoding="async"
-            className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-600 ease-out bg-secondary/20"
+            className="w-full h-full object-contain group-hover:scale-108 transition-transform duration-600 ease-out p-4 bg-white"
           />
 
           {/* Gradient overlay on hover */}

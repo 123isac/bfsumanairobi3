@@ -239,7 +239,7 @@ const OrderConfirmation = () => {
                           <img
                             src={item.product.image_url}
                             alt={item.product?.name || 'Product'}
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-contain p-2 bg-white"
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">

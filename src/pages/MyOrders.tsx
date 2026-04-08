@@ -194,7 +194,7 @@ const MyOrders = () => {
                                     <img
                                       src={item.product.image_url}
                                       alt={item.product.name || "Product"}
-                                      className="h-full w-full object-cover"
+                                      className="h-full w-full object-contain p-2 bg-white"
                                     />
                                   ) : (
                                     <div className="h-full w-full flex items-center justify-center">
@@ -284,7 +284,7 @@ const MyOrders = () => {
                         <img
                           src={item.product.image_url}
                           alt={item.product.name || "Product"}
-                          className="h-16 w-16 object-cover rounded-lg"
+                          className="h-16 w-16 object-contain p-1 rounded-lg bg-white border border-border"
                         />
                       ) : (
                         <div className="h-16 w-16 bg-muted rounded-lg flex items-center justify-center">
