@@ -15,7 +15,7 @@ export const checkoutSchema = z.object({
     .max(255, "Email must be less than 255 characters"),
   phone: z.string()
     .trim()
-    .regex(/^\+254[0-9]{9}$/, "Phone must be in format +254700000000"),
+    .regex(/^(?:\+254|0|254)[0-9\s-]{8,12}$/, "Invalid phone format. Use 0700123456 or +254..."),
   address: z.string()
     .trim()
     .min(5, "Address must be at least 5 characters")
@@ -62,7 +62,7 @@ export const partnerApplicationSchema = z.object({
     .max(255, "Email must be less than 255 characters"),
   phone: z.string()
     .trim()
-    .regex(/^\+254[0-9]{9}$/, "Phone must be in format +254700000000"),
+    .regex(/^(?:\+254|0|254)[0-9\s-]{8,12}$/, "Invalid phone format. Use 0700123456 or +254..."),
   background: z.string()
     .trim()
     .min(10, "Please share at least 10 characters")
