@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Package, Search, Clock, CheckCircle, Eye } from "lucide-react";
+import { Package, Search, Clock, CheckCircle, Eye, HandCoins } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 // Define an interface matching the Supabase orders schema
@@ -15,7 +15,8 @@ interface Order {
   customer_phone: string;
   total_amount: number;
   status: string;
-  payment_status: string;
+  payment_method?: string;
+  payment_status?: string;
   created_at: string;
   shipping_address: string;
   shipping_city: string;
@@ -70,6 +71,24 @@ const AdminOrders = () => {
       fetchOrders();
     } catch (error: any) {
       toast.error("Failed to update order: " + error.message);
+    }
+  };
+
+  const handleRetryMpesa = async (orderId: string, phone: string, amount: number) => {
+    if (!confirm(`Are you sure you want to trigger an STK Push to ${phone} for KSh ${amount.toLocaleString()}?`)) return;
+
+    try {
+      const { data, error } = await supabase.functions.invoke('mpesa-stk-push', {
+        body: { phone, amount, orderId },
+      });
+
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || "Failed to initiate M-PESA push");
+
+      toast.success("STK Push successfully fired to the customer's phone!");
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || 'Failed to retry M-PESA push');
     }
   };
 
@@ -158,6 +177,11 @@ const AdminOrders = () => {
                       {order.status === "pending" && (
                         <Button size="sm" onClick={() => updateOrderStatus(order.id, "processing")}>
                           <Clock className="h-4 w-4 mr-2" /> Mark Processing
+                        </Button>
+                      )}
+                      {order.status === "pending" && order.payment_method === "mpesa" && order.payment_status === "pending" && (
+                        <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700" onClick={() => handleRetryMpesa(order.id, order.customer_phone, order.total_amount)}>
+                          <HandCoins className="h-4 w-4 mr-2" /> Retry M-PESA
                         </Button>
                       )}
                       {order.status === "processing" && (

@@ -201,7 +201,7 @@ export type Database = {
           status: string
           total_amount: number
           updated_at: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           commission_amount?: number | null
@@ -221,7 +221,7 @@ export type Database = {
           status?: string
           total_amount: number
           updated_at?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           commission_amount?: number | null
@@ -241,7 +241,7 @@ export type Database = {
           status?: string
           total_amount?: number
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -280,6 +280,27 @@ export type Database = {
           is_active?: boolean
           created_at?: string
           expires_at?: string | null
+        }
+        Relationships: []
+      }
+      page_visits: {
+        Row: {
+          id: string
+          session_id: string
+          path: string
+          visited_at: string
+        }
+        Insert: {
+          id?: string
+          session_id: string
+          path: string
+          visited_at?: string
+        }
+        Update: {
+          id?: string
+          session_id?: string
+          path?: string
+          visited_at?: string
         }
         Relationships: []
       }
@@ -341,6 +362,7 @@ export type Database = {
           created_at: string
           full_name: string | null
           id: string
+          kenya_address: Json | null
           phone: string | null
           updated_at: string
         }
@@ -348,6 +370,7 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           id: string
+          kenya_address?: Json | null
           phone?: string | null
           updated_at?: string
         }
@@ -355,6 +378,7 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           id?: string
+          kenya_address?: Json | null
           phone?: string | null
           updated_at?: string
         }

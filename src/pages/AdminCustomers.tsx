@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Search, Users, ExternalLink } from "lucide-react";
+import { Search, Users, ExternalLink, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -57,6 +57,25 @@ const AdminCustomers = () => {
   useEffect(() => {
     fetchCustomers();
   }, []);
+
+  const handleDeleteUser = async (userId: string, fullName: string) => {
+    if (!confirm(`Are you absolutely sure you want to permanently delete ${fullName || "this user"}? This action cannot be undone.`)) return;
+
+    try {
+      const { data, error } = await supabase.functions.invoke("delete-user", {
+        body: { userIdToDelete: userId }
+      });
+
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || "Failed to delete user");
+
+      toast.success("User securely erased.");
+      fetchCustomers(); // Refresh the grid
+    } catch (error: any) {
+      console.error(error);
+      toast.error(`Error deleting user: ${error.message}`);
+    }
+  };
 
   const filtered = customers.filter(c =>
     (c.full_name || "").toLowerCase().includes(search.toLowerCase()) ||
@@ -115,9 +134,16 @@ const AdminCustomers = () => {
                     <td className="px-6 py-4 font-medium text-primary">
                       {customer.order_count}
                     </td>
-                    <td className="px-6 py-4 text-right">
+                    <td className="px-6 py-4 text-right space-x-2">
                        <Button variant="ghost" size="sm">
                           <ExternalLink className="h-4 w-4 mr-2" /> View Orders
+                       </Button>
+                       <Button 
+                          variant="destructive" 
+                          size="sm"
+                          onClick={() => handleDeleteUser(customer.id, customer.full_name)}
+                       >
+                          <Trash2 className="h-4 w-4 mr-2" /> Delete
                        </Button>
                     </td>
                   </tr>

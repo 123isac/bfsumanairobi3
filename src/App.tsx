@@ -8,8 +8,11 @@ import { CartProvider } from "@/contexts/CartContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AdminRoute } from "./components/AdminRoute";
 import { AdminLayout } from "./components/AdminLayout";
+import { PartnerLayout } from "./components/PartnerLayout";
+import { PartnerRoute } from "./components/PartnerRoute";
 import WhatsAppButton from "./components/WhatsAppButton";
 import { Outlet } from "react-router-dom";
+import { supabase } from "./integrations/supabase/client";
 
 const Index = lazy(() => import("./pages/Index"));
 const Shop = lazy(() => import("./pages/Shop"));
@@ -26,6 +29,7 @@ const AdminProducts = lazy(() => import("./pages/AdminProducts"));
 const AdminAuth = lazy(() => import("./pages/AdminAuth"));
 const AdminPartners = lazy(() => import("./pages/AdminPartners"));
 const PartnerApply = lazy(() => import("./pages/PartnerApply"));
+const PartnerDashboard = lazy(() => import("./pages/PartnerDashboard"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 const ReturnPolicy = lazy(() => import("./pages/ReturnPolicy"));
@@ -63,6 +67,29 @@ const RouteLoader = () => (
   </div>
 );
 
+const AnalyticsTracker = () => {
+  const location = useLocation();
+
+  useEffect(() => {
+    if (!location.pathname.startsWith("/admin")) {
+      const sessionId = sessionStorage.getItem("bfsuma_session") || Math.random().toString(36).substring(2, 15);
+      sessionStorage.setItem("bfsuma_session", sessionId);
+
+      const logVisit = async () => {
+        try {
+          await supabase.from("page_visits").insert({
+            session_id: sessionId,
+            path: location.pathname
+          });
+        } catch (e) {}
+      };
+      logVisit();
+    }
+  }, [location.pathname]);
+
+  return null;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -70,6 +97,7 @@ const App = () => (
         <CartProvider>
           <Toaster />
           <Sonner />
+          <AnalyticsTracker />
           <ScrollToTop />
           <WhatsAppButton />
           <Suspense fallback={<RouteLoader />}>
@@ -97,6 +125,13 @@ const App = () => (
                 <Route path="promotions" element={<AdminPromotions />} />
                 <Route path="settings" element={<AdminSettings />} />
               </Route>
+              
+              {/* Partner Affiliate Portal routing */}
+              <Route path="/partner" element={<PartnerRoute><PartnerLayout><Outlet /></PartnerLayout></PartnerRoute>}>
+                <Route index element={<Navigate to="/partner/dashboard" replace />} />
+                <Route path="dashboard" element={<PartnerDashboard />} />
+              </Route>
+
               <Route path="/partner/apply" element={<PartnerApply />} />
               <Route path="/privacy-policy" element={<PrivacyPolicy />} />
               <Route path="/terms-of-service" element={<TermsOfService />} />

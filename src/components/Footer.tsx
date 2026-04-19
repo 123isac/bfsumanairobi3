@@ -93,6 +93,7 @@ const Footer = () => {
                 { label: "Contact Us", to: "/contact" },
                 { label: "My Orders", to: "/my-orders" },
                 { label: "Become a Partner", to: "/partner/apply" },
+                { label: "Partner Login", to: "/partner/dashboard" },
               ].map(({ label, to }) => (
                 <li key={to}>
                   <Link

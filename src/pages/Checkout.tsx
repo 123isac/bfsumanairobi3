@@ -54,6 +54,18 @@ const Checkout = () => {
         if (profile) {
           setFullName(profile.full_name || "");
           setPhone(profile.phone || "");
+          
+          if (profile.kenya_address) {
+            try {
+              // Ensure we safely map the JSONB back to the strongly typed KenyaAddress
+              const savedAddress = profile.kenya_address as unknown as KenyaAddress;
+              if (savedAddress?.county) {
+                setKenyaAddress(savedAddress);
+              }
+            } catch (err) {
+              console.error("Failed to parse saved address:", err);
+            }
+          }
         }
       };
       loadProfile();
@@ -252,6 +264,15 @@ const Checkout = () => {
 
       const { error: itemsError } = await supabase.from("order_items").insert(orderItems);
       if (itemsError) throw itemsError;
+
+      // ── NEW FEATURE: Auto-Save their latest address gracefully to their profile! ──
+      try {
+        await supabase.from("profiles").update({ 
+          kenya_address: kenyaAddress as any 
+        }).eq("id", user.id);
+      } catch (profileSaveErr) {
+        console.warn("Failed to auto-save address mapping to profile.", profileSaveErr);
+      }
 
       if (paymentMethod === 'mpesa') {
         const stkSuccess = await initiateSTKPush(order.id);
