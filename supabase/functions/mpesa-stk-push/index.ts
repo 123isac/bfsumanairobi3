@@ -14,19 +14,18 @@ interface STKPushRequest {
 }
 
 const formatPhoneNumber = (phone: string): string => {
-  let cleaned = phone.replace(/[\s\-()']/g, '').replace(/'/g, '');
+  let cleaned = phone.replace(/[\s\-()'+]/g, ''); // Strip spaces, hyphens, parenthesis, and strictly drop '+'
 
-  // Lipana requires international format: +254...
-  if (cleaned.startsWith('+254')) {
-    return cleaned;
-  } else if (cleaned.startsWith('254')) {
-    return '+' + cleaned;
-  } else if (cleaned.startsWith('0')) {
-    return '+254' + cleaned.substring(1);
+  // Lipana/Daraja strictly requires the 12-digit format: 254XXXXXXXXX
+  if (cleaned.startsWith('0')) {
+    return '254' + cleaned.substring(1);
   } else if (cleaned.startsWith('7') || cleaned.startsWith('1')) {
-    return '+254' + cleaned;
+    return '254' + cleaned;
+  } else if (cleaned.startsWith('254')) {
+    return cleaned;
   }
 
+  // Fallback, returns cleaned version
   return cleaned;
 };
 
