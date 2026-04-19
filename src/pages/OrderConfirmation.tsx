@@ -1,10 +1,10 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { CheckCircle, Package, MapPin, Phone, Mail, CreditCard, Truck, Copy, ArrowRight, ShoppingBag } from "lucide-react";
+import { CheckCircle, Package, MapPin, Phone, Mail, CreditCard, Truck, Copy, ArrowRight, ShoppingBag, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -39,57 +39,101 @@ const OrderConfirmation = () => {
   const navigate = useNavigate();
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isPolling, setIsPolling] = useState(false);
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pollingCountRef = useRef(0);
 
-  useEffect(() => {
-    const fetchOrder = async () => {
-      if (!orderId) {
-        navigate('/');
-        return;
-      }
+  const fetchOrder = async (silent = false) => {
+    if (!orderId) {
+      navigate('/');
+      return null;
+    }
 
-      const { data, error } = await supabase
-        .from('orders')
-        .select(`
-          *,
-          order_items (
-            id,
-            quantity,
-            price,
-            product:products (
-              name,
-              image_url
-            )
+    const { data, error } = await supabase
+      .from('orders')
+      .select(`
+        *,
+        order_items (
+          id,
+          quantity,
+          price,
+          product:products (
+            name,
+            image_url
           )
-        `)
-        .eq('id', orderId)
-        .single();
+        )
+      `)
+      .eq('id', orderId)
+      .single();
 
-      if (error || !data) {
+    if (error || !data) {
+      if (!silent) {
         toast.error('Order not found');
         navigate('/');
-        return;
       }
+      return null;
+    }
 
-      // Transform the data to match our interface
-      const transformedOrder: Order = {
-        ...data,
-        order_items: (data.order_items as Array<{
-          id: string;
-          quantity: number;
-          price: number;
-          product: { name: string; image_url: string | null } | null;
-        }>).map((item) => ({
-          ...item,
-          product: item.product
-        }))
-      };
-
-      setOrder(transformedOrder);
-      setLoading(false);
+    const transformedOrder: Order = {
+      ...data,
+      order_items: (data.order_items as Array<{
+        id: string;
+        quantity: number;
+        price: number;
+        product: { name: string; image_url: string | null } | null;
+      }>).map((item) => ({
+        ...item,
+        product: item.product
+      }))
     };
 
-    fetchOrder();
-  }, [orderId, navigate]);
+    return transformedOrder;
+  };
+
+  useEffect(() => {
+    const init = async () => {
+      const orderData = await fetchOrder();
+      if (!orderData) return;
+      setOrder(orderData);
+      setLoading(false);
+
+      // Start polling only if payment is still pending and method is mpesa
+      if (orderData.payment_status === 'pending' && orderData.payment_method === 'mpesa') {
+        setIsPolling(true);
+        pollingCountRef.current = 0;
+
+        pollingRef.current = setInterval(async () => {
+          pollingCountRef.current += 1;
+
+          // Poll for max ~3 minutes (45 × 4s)
+          if (pollingCountRef.current >= 45) {
+            clearInterval(pollingRef.current!);
+            setIsPolling(false);
+            return;
+          }
+
+          const updated = await fetchOrder(true);
+          if (!updated) return;
+
+          if (updated.payment_status !== 'pending') {
+            clearInterval(pollingRef.current!);
+            setIsPolling(false);
+            setOrder(updated);
+            if (updated.payment_status === 'paid') {
+              toast.success('Payment confirmed! 🎉');
+            }
+          }
+        }, 4000);
+      }
+    };
+
+    init();
+
+    return () => {
+      if (pollingRef.current) clearInterval(pollingRef.current);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orderId]);
 
   const copyOrderId = () => {
     if (order) {
@@ -321,21 +365,33 @@ const OrderConfirmation = () => {
                       <span className="text-muted-foreground">Method</span>
                       <span className="font-medium text-foreground uppercase">{order.payment_method}</span>
                     </div>
-                    <div className="flex justify-between">
+                    <div className="flex justify-between items-center">
                       <span className="text-muted-foreground">Status</span>
-                      <span className={`font-medium px-2 py-0.5 rounded-full text-xs ${order.payment_status === 'paid'
-                          ? 'bg-primary/10 text-primary'
-                          : 'bg-warning/10 text-warning'
+                      <span className={`font-medium px-2 py-0.5 rounded-full text-xs flex items-center gap-1 ${
+                          order.payment_status === 'paid'
+                            ? 'bg-primary/10 text-primary'
+                            : 'bg-warning/10 text-warning'
                         }`}>
-                        {order.payment_status === 'paid' ? 'Paid' : 'Pending'}
+                        {order.payment_status === 'paid' ? (
+                          'Paid ✓'
+                        ) : (
+                          <>
+                            {isPolling && <Loader2 className="h-3 w-3 animate-spin" />}
+                            Pending
+                          </>
+                        )}
                       </span>
                     </div>
                     {order.payment_status !== 'paid' && (
                       <div className="mt-4 p-4 bg-warning/5 border border-warning/20 rounded-xl">
-                        <p className="text-sm text-foreground font-medium mb-1">Payment Instructions</p>
+                        <p className="text-sm text-foreground font-medium mb-1">
+                          {isPolling ? 'Waiting for M-PESA confirmation...' : 'Payment Instructions'}
+                        </p>
                         <p className="text-xs text-muted-foreground">
                           {order.payment_method === 'mpesa'
-                            ? 'You will receive an M-PESA payment prompt on your phone shortly. Alternatively, pay via Lipa na M-PESA: Till Number 123456'
+                            ? isPolling
+                              ? 'Enter your M-PESA PIN on your phone. This page will update automatically once confirmed.'
+                              : 'If you haven\'t paid yet, please complete payment via the M-PESA prompt on your phone.'
                             : 'Our team will contact you for card payment processing.'}
                         </p>
                       </div>
