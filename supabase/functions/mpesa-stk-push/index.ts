@@ -54,10 +54,10 @@ serve(async (req) => {
     const formattedPhone = formatPhoneNumber(phone);
     console.log('Formatted phone for Lipana:', formattedPhone);
 
+    // NOTE: callbackUrl is configured in the Lipana dashboard, NOT sent per-request.
     const payload = {
       phone: formattedPhone,
       amount: Math.round(amount),
-      callbackUrl: 'https://vjhjnbefyyfxfsyncdrr.supabase.co/functions/v1/mpesa-callback',
     };
 
     console.log('Lipana payload:', JSON.stringify(payload, null, 2));
@@ -75,6 +75,7 @@ serve(async (req) => {
     );
 
     const lipanaResult = await lipanaResponse.json();
+    console.log('Lipana response status:', lipanaResponse.status);
     console.log('Lipana response:', JSON.stringify(lipanaResult, null, 2));
 
     if (lipanaResponse.ok && lipanaResult.success && lipanaResult.data?.transactionId) {
@@ -99,11 +100,12 @@ serve(async (req) => {
       );
 
     } else {
-      console.error('Lipana STK push failed:', lipanaResult);
+      console.error('Lipana STK push failed. Status:', lipanaResponse.status, 'Body:', JSON.stringify(lipanaResult));
       return new Response(
         JSON.stringify({
           success: false,
-          error: lipanaResult.message || lipanaResult.error || 'Payment initiation failed',
+          error: lipanaResult.message || lipanaResult.error || `Payment initiation failed (HTTP ${lipanaResponse.status})`,
+          details: lipanaResult,
         }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
