@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Package, Search, Clock, CheckCircle } from "lucide-react";
+import { Package, Search, Clock, CheckCircle, Eye } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 // Define an interface matching the Supabase orders schema
 interface Order {
@@ -18,6 +19,7 @@ interface Order {
   created_at: string;
   shipping_address: string;
   shipping_city: string;
+  order_items?: any[];
 }
 
 const AdminOrders = () => {
@@ -30,7 +32,17 @@ const AdminOrders = () => {
     try {
       const { data, error } = await supabase
         .from("orders")
-        .select("*")
+        .select(`
+          *,
+          order_items (
+            quantity,
+            price,
+            products (
+              name,
+              image_url
+            )
+          )
+        `)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -65,6 +77,8 @@ const AdminOrders = () => {
     o.customer_name.toLowerCase().includes(search.toLowerCase()) ||
     o.id.toLowerCase().includes(search.toLowerCase())
   );
+
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
   return (
     <div className="space-y-6">
@@ -137,7 +151,10 @@ const AdminOrders = () => {
                         {order.status}
                       </Badge>
                     </td>
-                    <td className="px-6 py-4 text-right">
+                    <td className="px-6 py-4 text-right flex items-center justify-end gap-2">
+                      <Button size="sm" variant="secondary" onClick={() => setSelectedOrder(order)}>
+                         <Eye className="h-4 w-4 mr-2" /> View
+                      </Button>
                       {order.status === "pending" && (
                         <Button size="sm" onClick={() => updateOrderStatus(order.id, "processing")}>
                           <Clock className="h-4 w-4 mr-2" /> Mark Processing
@@ -161,6 +178,57 @@ const AdminOrders = () => {
           </div>
         )}
       </div>
+
+      {/* Order Details Modal */}
+      <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Order Details</DialogTitle>
+            <DialogDescription>
+              Order #{selectedOrder?.id.slice(0, 8)} - {selectedOrder?.customer_name}
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedOrder && (
+            <div className="space-y-6 mt-4">
+              {/* Order Items */}
+              <div>
+                <h3 className="font-semibold mb-3">Items Ordered</h3>
+                <div className="space-y-3">
+                  {selectedOrder.order_items?.map((item: any, idx: number) => (
+                    <div key={idx} className="flex items-center gap-4 bg-secondary/30 rounded-lg p-3">
+                      {item.products?.image_url ? (
+                        <img
+                          src={item.products.image_url}
+                          alt={item.products.name || "Product"}
+                          className="h-16 w-16 object-contain p-1 rounded-lg bg-white border border-border"
+                        />
+                      ) : (
+                        <div className="h-16 w-16 bg-muted rounded-lg flex items-center justify-center">
+                          <Package className="h-8 w-8 text-muted-foreground" />
+                        </div>
+                      )}
+                      <div className="flex-1">
+                        <p className="font-medium">{item.products?.name || "Product"}</p>
+                        <p className="text-sm text-muted-foreground">Quantity: {item.quantity}</p>
+                      </div>
+                      <p className="font-semibold">KSH {Number(item.price).toLocaleString()}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Summary info */}
+              <div className="border-t pt-4">
+                <div className="flex justify-between font-bold text-lg pt-2">
+                  <span>Total Amount</span>
+                  <span>KSH {Number(selectedOrder.total_amount).toLocaleString()}</span>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
