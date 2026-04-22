@@ -97,18 +97,55 @@ const OrderConfirmation = () => {
       setOrder(orderData);
       setLoading(false);
 
-      // Start polling only if payment is still pending and method is mpesa
+      // Start polling & Realtime subscription only if payment is still pending and method is mpesa
       if (orderData.payment_status === 'pending' && orderData.payment_method === 'mpesa') {
         setIsPolling(true);
-        pollingCountRef.current = 0;
 
+        // 1. Setup Realtime Subscription for instant updates
+        const channel = supabase
+          .channel(`order-status-${orderId}`)
+          .on(
+            'postgres_changes',
+            {
+              event: 'UPDATE',
+              schema: 'public',
+              table: 'orders',
+              filter: `id=eq.${orderId}`,
+            },
+            (payload) => {
+              console.log('Realtime payment update received:', payload);
+              const updatedStatus = (payload.new as any).payment_status;
+              
+              if (updatedStatus !== 'pending') {
+                // If the status changed to paid, refresh the whole order once to ensure UI is in sync
+                fetchOrder(true).then(updated => {
+                  if (updated) {
+                    setOrder(updated);
+                    setIsPolling(false);
+                    if (updated.payment_status === 'paid') {
+                      toast.success('Payment confirmed! 🎉');
+                    }
+                  }
+                });
+                
+                // Cleanup
+                if (pollingRef.current) clearInterval(pollingRef.current);
+                supabase.removeChannel(channel);
+              }
+            }
+          )
+          .subscribe();
+
+        // 2. Backup Polling (Increased interval to 10s to be more efficient)
+        pollingCountRef.current = 0;
         pollingRef.current = setInterval(async () => {
           pollingCountRef.current += 1;
 
-          // Poll for max ~3 minutes (45 × 4s)
-          if (pollingCountRef.current >= 45) {
+          // Poll for max ~3 minutes (18 × 10s)
+          if (pollingCountRef.current >= 18) {
             clearInterval(pollingRef.current!);
             setIsPolling(false);
+            supabase.removeChannel(channel);
             return;
           }
 
@@ -122,8 +159,9 @@ const OrderConfirmation = () => {
             if (updated.payment_status === 'paid') {
               toast.success('Payment confirmed! 🎉');
             }
+            supabase.removeChannel(channel);
           }
-        }, 4000);
+        }, 10000);
       }
     };
 
@@ -131,6 +169,7 @@ const OrderConfirmation = () => {
 
     return () => {
       if (pollingRef.current) clearInterval(pollingRef.current);
+      supabase.removeAllChannels();
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderId]);

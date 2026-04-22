@@ -40,11 +40,18 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
-    // Fetch this order's line items with their true product prices
-    const { data: orderItems, error: itemsError } = await supabase
-      .from('order_items')
-      .select('quantity, price')
-      .eq('order_id', orderId);
+    // Fetch this order's line items and shipping fee settings in parallel to reduce latency
+    const [ { data: orderItems, error: itemsError }, { data: shippingSetting } ] = await Promise.all([
+      supabase
+        .from('order_items')
+        .select('quantity, price')
+        .eq('order_id', orderId),
+      supabase
+        .from('store_settings')
+        .select('value')
+        .eq('key', 'shipping_base_fee')
+        .maybeSingle()
+    ]);
 
     if (itemsError || !orderItems || orderItems.length === 0) {
       return new Response(
@@ -52,13 +59,6 @@ serve(async (req) => {
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-
-    // Also fetch the shipping fee from store_settings
-    const { data: shippingSetting } = await supabase
-      .from('store_settings')
-      .select('value')
-      .eq('key', 'shipping_base_fee')
-      .maybeSingle();
 
     const shippingFee = shippingSetting?.value ? Number(shippingSetting.value) : 0;
 
