@@ -40,6 +40,8 @@ const OrderConfirmation = () => {
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [isPolling, setIsPolling] = useState(false);
+  const [paybillNumber, setPaybillNumber] = useState("123456");
+  const [whatsappNumber, setWhatsappNumber] = useState("+254700000000");
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pollingCountRef = useRef(0);
 
@@ -96,6 +98,23 @@ const OrderConfirmation = () => {
       if (!orderData) return;
       setOrder(orderData);
       setLoading(false);
+
+      // Fetch store settings for paybill
+      try {
+        const { data: settings } = await supabase
+          .from("store_settings")
+          .select("*")
+          .in("key", ["manual_paybill_number", "support_whatsapp_number"]);
+        
+        if (settings) {
+          const pb = settings.find(s => s.key === "manual_paybill_number");
+          const wa = settings.find(s => s.key === "support_whatsapp_number");
+          if (pb?.value) setPaybillNumber(pb.value);
+          if (wa?.value) setWhatsappNumber(wa.value);
+        }
+      } catch (err) {
+        console.error("Failed to fetch settings", err);
+      }
 
       // Start polling & Realtime subscription only if payment is still pending and method is mpesa
       if (orderData.payment_status === 'pending' && orderData.payment_method === 'mpesa') {
@@ -422,17 +441,54 @@ const OrderConfirmation = () => {
                       </span>
                     </div>
                     {order.payment_status !== 'paid' && (
-                      <div className="mt-4 p-4 bg-warning/5 border border-warning/20 rounded-xl">
+                      <div className="mt-4 p-4 bg-warning/5 border border-warning/20 rounded-xl space-y-3">
                         <p className="text-sm text-foreground font-medium mb-1">
-                          {isPolling ? 'Waiting for M-PESA confirmation...' : 'Payment Instructions'}
+                          {order.payment_method === 'mpesa' && isPolling ? 'Waiting for M-PESA confirmation...' : 'Payment Instructions'}
                         </p>
-                        <p className="text-xs text-muted-foreground">
-                          {order.payment_method === 'mpesa'
-                            ? isPolling
-                              ? 'Enter your M-PESA PIN on your phone. This page will update automatically once confirmed.'
-                              : 'If you haven\'t paid yet, please complete payment via the M-PESA prompt on your phone.'
-                            : 'Our team will contact you for card payment processing.'}
-                        </p>
+                        
+                        {order.payment_method === 'mpesa' && isPolling && (
+                          <p className="text-xs text-muted-foreground">
+                            Enter your M-PESA PIN on your phone. This page will update automatically once confirmed.
+                          </p>
+                        )}
+
+                        {((order.payment_method === 'mpesa' && !isPolling) || order.payment_method === 'manual_paybill') && (
+                          <div className="bg-white p-4 rounded-lg border border-border/50 text-sm space-y-3">
+                            <p className="font-semibold text-primary">Manual Paybill Option</p>
+                            <p className="text-muted-foreground text-xs">
+                              {order.payment_method === 'mpesa' ? "Didn't receive the prompt? Use our manual Paybill to complete your order." : "Please complete your payment using the Paybill details below."}
+                            </p>
+                            <div className="space-y-1 mt-2">
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">Paybill/Till No:</span>
+                                <span className="font-mono font-bold">{paybillNumber}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">Account No:</span>
+                                <span className="font-mono font-medium text-xs">{order.id.substring(0, 8).toUpperCase()} / {order.customer_phone}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">Amount:</span>
+                                <span className="font-semibold">KSH {order.total_amount.toLocaleString()}</span>
+                              </div>
+                            </div>
+                            
+                            <a 
+                              href={`https://wa.me/${whatsappNumber.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hello Support,\nI have completed payment.\nName: ${order.customer_name}\nPhone: ${order.customer_phone}\nOrder ID: ${order.id.substring(0, 8).toUpperCase()}\nAmount Paid: KSH ${order.total_amount.toLocaleString()}\nM-Pesa Message: [Paste your M-PESA message here]`)}`}
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="mt-3 w-full inline-flex items-center justify-center gap-2 rounded-lg bg-green-500 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600 transition-colors"
+                            >
+                              Confirm via WhatsApp
+                            </a>
+                          </div>
+                        )}
+
+                        {order.payment_method === 'card' && (
+                          <p className="text-xs text-muted-foreground">
+                            Our team will contact you for card payment processing.
+                          </p>
+                        )}
                       </div>
                     )}
                   </div>

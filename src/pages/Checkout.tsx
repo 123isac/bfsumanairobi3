@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import KenyaAddressForm, { KenyaAddress } from "@/components/KenyaAddressForm";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { CreditCard, Smartphone, Loader2, CheckCircle2, XCircle } from "lucide-react";
+import { CreditCard, Smartphone, Loader2, CheckCircle2, XCircle, Wallet } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, Navigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -17,7 +17,7 @@ const Checkout = () => {
   const { items, totalPrice, clearCart } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [paymentMethod, setPaymentMethod] = useState<'mpesa' | 'card'>('mpesa');
+  const [paymentMethod, setPaymentMethod] = useState<'mpesa' | 'card' | 'manual_paybill'>('mpesa');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [mpesaStatus, setMpesaStatus] = useState<'idle' | 'pending' | 'polling' | 'success' | 'error'>('idle');
   const [pollingOrderId, setPollingOrderId] = useState<string | null>(null);
@@ -282,7 +282,7 @@ const Checkout = () => {
         // If STK push succeeded, useEffect polling takes over navigation
       } else {
         clearCart();
-        toast.success('Order placed! Pay on delivery.');
+        toast.success(paymentMethod === 'manual_paybill' ? 'Order placed! Please complete your payment.' : 'Order placed! Pay on delivery.');
         navigate(`/order-confirmation/${order.id}`);
       }
     } catch (error: unknown) {
@@ -387,14 +387,22 @@ const Checkout = () => {
                 {/* Payment Method */}
                 <div className="bg-card rounded-2xl p-6 md:p-8 shadow-soft border border-border">
                   <h2 className="font-display font-bold text-xl md:text-2xl text-foreground mb-4 md:mb-6">Payment Method</h2>
-                  <div className="grid grid-cols-2 gap-3 md:gap-4 mb-4 md:mb-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 mb-4 md:mb-6">
                     <button
                       type="button"
                       onClick={() => setPaymentMethod('mpesa')}
                       className={`p-4 md:p-6 rounded-xl border-2 transition-smooth ${paymentMethod === 'mpesa' ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'}`}
                     >
                       <Smartphone className="h-6 w-6 md:h-8 md:w-8 mx-auto mb-2 text-primary" />
-                      <p className="font-semibold text-sm md:text-base text-foreground">M-PESA</p>
+                      <p className="font-semibold text-sm md:text-base text-foreground">Auto M-PESA</p>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod('manual_paybill')}
+                      className={`p-4 md:p-6 rounded-xl border-2 transition-smooth ${paymentMethod === 'manual_paybill' ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'}`}
+                    >
+                      <Wallet className="h-6 w-6 md:h-8 md:w-8 mx-auto mb-2 text-primary" />
+                      <p className="font-semibold text-sm md:text-base text-foreground">Manual Paybill</p>
                     </button>
                     <button
                       type="button"
@@ -408,6 +416,11 @@ const Checkout = () => {
                   {paymentMethod === 'mpesa' && (
                     <p className="text-sm text-muted-foreground">
                       You'll receive an M-PESA STK push notification. Enter your PIN to confirm payment instantly.
+                    </p>
+                  )}
+                  {paymentMethod === 'manual_paybill' && (
+                    <p className="text-sm text-muted-foreground">
+                      We'll provide a Paybill number for you to pay manually, then you can send us the confirmation message via WhatsApp.
                     </p>
                   )}
                   {paymentMethod === 'card' && (
@@ -494,7 +507,7 @@ const Checkout = () => {
                   >
                     {isSubmitting
                       ? (paymentMethod === 'mpesa' ? 'Initiating M-PESA...' : 'Placing Order...')
-                      : (paymentMethod === 'mpesa' ? 'Pay with M-PESA' : 'Place Order')
+                      : (paymentMethod === 'mpesa' ? 'Pay with M-PESA' : (paymentMethod === 'manual_paybill' ? 'Place Order & Pay' : 'Place Order'))
                     }
                   </Button>
                 </div>

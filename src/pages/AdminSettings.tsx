@@ -26,7 +26,29 @@ const AdminSettings = () => {
         .order("key");
 
       if (error) throw error;
-      setSettings(data || []);
+      
+      let currentSettings = data || [];
+      
+      // Auto-initialize missing settings
+      const requiredSettings = [
+        { key: 'manual_paybill_number', value: '123456', description: 'The M-PESA Paybill or Till number used for manual backup payments.' },
+        { key: 'support_whatsapp_number', value: '+254700000000', description: 'WhatsApp number for customers to send payment confirmation.' }
+      ];
+
+      let needsRefresh = false;
+      for (const req of requiredSettings) {
+        if (!currentSettings.find(s => s.key === req.key)) {
+          const { error: insertError } = await supabase.from('store_settings').insert(req);
+          if (!insertError) needsRefresh = true;
+        }
+      }
+
+      if (needsRefresh) {
+        const { data: refreshedData } = await supabase.from("store_settings").select("*").order("key");
+        if (refreshedData) currentSettings = refreshedData;
+      }
+
+      setSettings(currentSettings);
     } catch (error: any) {
       toast.error("Failed to load settings: " + error.message);
     } finally {
