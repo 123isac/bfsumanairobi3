@@ -33,47 +33,33 @@ serve(async (req) => {
     const secretKey = Deno.env.get('LIPANA_SECRET_KEY');
     if (!secretKey) throw new Error('LIPANA_SECRET_KEY is not configured');
 
-    // ── SECURITY FIX: Independently compute the correct amount server-side ──
-    // Never trust the frontend amount — re-calculate from the actual order_items in the DB
+    // ── SECURITY: Read the authoritative total_amount directly from the order row ──
+    // The total_amount is computed server-side at order creation (includes shipping & discounts).
+    // This single query replaces two parallel queries, saving one full DB round trip.
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
-    // Fetch this order's line items and shipping fee settings in parallel to reduce latency
-    const [ { data: orderItems, error: itemsError }, { data: shippingSetting } ] = await Promise.all([
-      supabase
-        .from('order_items')
-        .select('quantity, price')
-        .eq('order_id', orderId),
-      supabase
-        .from('store_settings')
-        .select('value')
-        .eq('key', 'shipping_base_fee')
-        .maybeSingle()
-    ]);
+    const { data: orderRow, error: orderError } = await supabase
+      .from('orders')
+      .select('total_amount')
+      .eq('id', orderId)
+      .single();
 
-    if (itemsError || !orderItems || orderItems.length === 0) {
+    if (orderError || !orderRow) {
       return new Response(
-        JSON.stringify({ error: 'Order not found or has no items' }),
+        JSON.stringify({ error: 'Order not found' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const shippingFee = shippingSetting?.value ? Number(shippingSetting.value) : 0;
-
-    // Server-computed authoritative total — immune to frontend tampering
-    const itemsTotal = orderItems.reduce(
-      (sum, item) => sum + (Number(item.price) * Number(item.quantity)),
-      0
-    );
-    const secureAmount = Math.round(itemsTotal + shippingFee);
-
-    console.log('Server-computed secure amount:', secureAmount, '(shipping:', shippingFee, ')');
+    const secureAmount = Math.round(Number(orderRow.total_amount));
+    console.log('Order total_amount used for STK push:', secureAmount);
 
     if (secureAmount < 1) {
       return new Response(
-        JSON.stringify({ error: 'Invalid order amount computed' }),
+        JSON.stringify({ error: 'Invalid order amount' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }

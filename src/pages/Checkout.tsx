@@ -153,14 +153,14 @@ const Checkout = () => {
         setMpesaStatus('error');
         toast.error('Payment failed or cancelled. You can retry from My Orders.');
         setTimeout(() => navigate(`/order-confirmation/${pollingOrderId}`), 2000);
-      } else if (pollingCountRef.current >= 24) {
-        // 24 × 5s = 2 minutes timeout
+      } else if (pollingCountRef.current >= 60) {
+        // 60 × 2s = 2 minutes timeout
         clearInterval(pollingRef.current!);
         setMpesaStatus('error');
         toast.info('Payment pending. Check My Orders to track status.');
         setTimeout(() => navigate(`/order-confirmation/${pollingOrderId}`), 2000);
       }
-    }, 5000);
+    }, 2000);
 
     return () => {
       if (pollingRef.current) clearInterval(pollingRef.current);
@@ -265,14 +265,12 @@ const Checkout = () => {
       const { error: itemsError } = await supabase.from("order_items").insert(orderItems);
       if (itemsError) throw itemsError;
 
-      // ── NEW FEATURE: Auto-Save their latest address gracefully to their profile! ──
-      try {
-        await supabase.from("profiles").update({ 
-          kenya_address: kenyaAddress as any 
-        }).eq("id", user.id);
-      } catch (profileSaveErr) {
+      // ── Auto-Save address to profile (fire-and-forget — does NOT block STK push) ──
+      supabase.from("profiles").update({ 
+        kenya_address: kenyaAddress as any 
+      }).eq("id", user.id).then(() => {}).catch((profileSaveErr: unknown) => {
         console.warn("Failed to auto-save address mapping to profile.", profileSaveErr);
-      }
+      });
 
       if (paymentMethod === 'mpesa') {
         const stkSuccess = await initiateSTKPush(order.id);
