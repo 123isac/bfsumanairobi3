@@ -460,11 +460,11 @@ const OrderConfirmation = () => {
                             </p>
                             <div className="space-y-1 mt-2">
                               <div className="flex justify-between">
-                                <span className="text-muted-foreground">Paybill/Till No:</span>
+                                <span className="text-muted-foreground">Business Number:</span>
                                 <span className="font-mono font-bold">{paybillNumber}</span>
                               </div>
                               <div className="flex justify-between">
-                                <span className="text-muted-foreground">Account No:</span>
+                                <span className="text-muted-foreground">Account Number:</span>
                                 <span className="font-mono font-medium text-xs">N3 / {order.id.substring(0, 8).toUpperCase()}</span>
                               </div>
                               <div className="flex justify-between">
