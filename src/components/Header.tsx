@@ -59,6 +59,13 @@ const Header = () => {
               About
             </Link>
             <Link
+              to="/my-orders"
+              className={`font-medium transition-smooth hover:text-primary ${isActive("/my-orders") ? "text-primary" : "text-foreground"
+                }`}
+            >
+              My Orders
+            </Link>
+            <Link
               to="/contact"
               className={`font-medium transition-smooth hover:text-primary ${isActive("/contact") ? "text-primary" : "text-foreground"
                 }`}
@@ -130,6 +137,14 @@ const Header = () => {
               onClick={() => setMobileMenuOpen(false)}
             >
               About
+            </Link>
+            <Link
+              to="/my-orders"
+              className={`block py-2 font-medium transition-smooth hover:text-primary ${isActive("/my-orders") ? "text-primary" : "text-foreground"
+                }`}
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              My Orders
             </Link>
             <Link
               to="/contact"
