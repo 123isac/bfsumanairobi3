@@ -452,11 +452,11 @@ const OrderConfirmation = () => {
                           </p>
                         )}
 
-                        {((order.payment_method === 'mpesa' && !isPolling) || order.payment_method === 'manual_paybill') && (
+                        {order.payment_method === 'mpesa' && !isPolling && (
                           <div className="bg-white p-4 rounded-lg border border-border/50 text-sm space-y-3">
-                            <p className="font-semibold text-primary">Manual Paybill Option</p>
+                            <p className="font-semibold text-primary">Manual Paybill Backup</p>
                             <p className="text-muted-foreground text-xs">
-                              {order.payment_method === 'mpesa' ? "Didn't receive the prompt? Use our manual Paybill to complete your order." : "Please complete your payment using the Paybill details below."}
+                              If the prompt delays please follow the below paybill to make your payments and forward to the support group.
                             </p>
                             <div className="space-y-1 mt-2">
                               <div className="flex justify-between">
@@ -479,7 +479,7 @@ const OrderConfirmation = () => {
                               rel="noopener noreferrer"
                               className="mt-3 w-full inline-flex items-center justify-center gap-2 rounded-lg bg-green-500 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600 transition-colors"
                             >
-                              Confirm via WhatsApp
+                              Forward to Support
                             </a>
                           </div>
                         )}

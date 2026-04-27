@@ -17,7 +17,7 @@ const Checkout = () => {
   const { items, totalPrice, clearCart } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [paymentMethod, setPaymentMethod] = useState<'mpesa' | 'card' | 'manual_paybill'>('mpesa');
+  const [paymentMethod, setPaymentMethod] = useState<'mpesa'>('mpesa');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [mpesaStatus, setMpesaStatus] = useState<'idle' | 'pending' | 'polling' | 'success' | 'error'>('idle');
   const [pollingOrderId, setPollingOrderId] = useState<string | null>(null);
@@ -282,7 +282,7 @@ const Checkout = () => {
         // If STK push succeeded, useEffect polling takes over navigation
       } else {
         clearCart();
-        toast.success(paymentMethod === 'manual_paybill' ? 'Order placed! Please complete your payment.' : 'Order placed! Pay on delivery.');
+        toast.success('Order placed!');
         navigate(`/order-confirmation/${order.id}`);
       }
     } catch (error: unknown) {
@@ -387,47 +387,15 @@ const Checkout = () => {
                 {/* Payment Method */}
                 <div className="bg-card rounded-2xl p-6 md:p-8 shadow-soft border border-border">
                   <h2 className="font-display font-bold text-xl md:text-2xl text-foreground mb-4 md:mb-6">Payment Method</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 mb-4 md:mb-6">
-                    <button
-                      type="button"
-                      onClick={() => setPaymentMethod('mpesa')}
-                      className={`p-4 md:p-6 rounded-xl border-2 transition-smooth ${paymentMethod === 'mpesa' ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'}`}
-                    >
+                  <div className="grid grid-cols-1 gap-3 md:gap-4 mb-4 md:mb-6">
+                    <div className="p-4 md:p-6 rounded-xl border-2 border-primary bg-primary/10">
                       <Smartphone className="h-6 w-6 md:h-8 md:w-8 mx-auto mb-2 text-primary" />
-                      <p className="font-semibold text-sm md:text-base text-foreground">Auto M-PESA</p>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setPaymentMethod('manual_paybill')}
-                      className={`p-4 md:p-6 rounded-xl border-2 transition-smooth ${paymentMethod === 'manual_paybill' ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'}`}
-                    >
-                      <Wallet className="h-6 w-6 md:h-8 md:w-8 mx-auto mb-2 text-primary" />
-                      <p className="font-semibold text-sm md:text-base text-foreground">Manual Paybill</p>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setPaymentMethod('card')}
-                      className={`p-4 md:p-6 rounded-xl border-2 transition-smooth ${paymentMethod === 'card' ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'}`}
-                    >
-                      <CreditCard className="h-6 w-6 md:h-8 md:w-8 mx-auto mb-2 text-primary" />
-                      <p className="font-semibold text-sm md:text-base text-foreground">Pay on Delivery</p>
-                    </button>
+                      <p className="font-semibold text-center text-sm md:text-base text-foreground">Auto M-PESA</p>
+                    </div>
                   </div>
-                  {paymentMethod === 'mpesa' && (
-                    <p className="text-sm text-muted-foreground">
-                      You'll receive an M-PESA STK push notification. Enter your PIN to confirm payment instantly.
-                    </p>
-                  )}
-                  {paymentMethod === 'manual_paybill' && (
-                    <p className="text-sm text-muted-foreground">
-                      We'll provide a Paybill number for you to pay manually, then you can send us the confirmation message via WhatsApp.
-                    </p>
-                  )}
-                  {paymentMethod === 'card' && (
-                    <p className="text-sm text-muted-foreground">
-                      Pay when your order is delivered. Cash or card accepted at the door.
-                    </p>
-                  )}
+                  <p className="text-sm text-muted-foreground text-center">
+                    You'll receive an M-PESA STK push notification. Enter your PIN to confirm payment instantly.
+                  </p>
                 </div>
               </div>
 
@@ -505,10 +473,7 @@ const Checkout = () => {
                     className="gradient-primary w-full rounded-full h-12 text-lg mt-2"
                     disabled={isSubmitting}
                   >
-                    {isSubmitting
-                      ? (paymentMethod === 'mpesa' ? 'Initiating M-PESA...' : 'Placing Order...')
-                      : (paymentMethod === 'mpesa' ? 'Pay with M-PESA' : (paymentMethod === 'manual_paybill' ? 'Place Order & Pay' : 'Place Order'))
-                    }
+                    {isSubmitting ? 'Initiating M-PESA...' : 'Pay with M-PESA'}
                   </Button>
                 </div>
               </div>
