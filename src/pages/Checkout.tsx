@@ -19,10 +19,6 @@ const Checkout = () => {
   const navigate = useNavigate();
   const [paymentMethod, setPaymentMethod] = useState<'mpesa'>('mpesa');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [mpesaStatus, setMpesaStatus] = useState<'idle' | 'pending' | 'polling' | 'success' | 'error'>('idle');
-  const [pollingOrderId, setPollingOrderId] = useState<string | null>(null);
-  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const pollingCountRef = useRef(0);
 
   // New Promotion and CMS Settings states
   const [shippingFee, setShippingFee] = useState<number>(0);
@@ -128,44 +124,7 @@ const Checkout = () => {
     }
   };
 
-  // Poll for payment confirmation after STK push
-  useEffect(() => {
-    if (!pollingOrderId) return;
 
-    pollingCountRef.current = 0;
-    pollingRef.current = setInterval(async () => {
-      pollingCountRef.current += 1;
-
-      const { data: order } = await supabase
-        .from("orders")
-        .select("payment_status")
-        .eq("id", pollingOrderId)
-        .single();
-
-      if (order?.payment_status === 'paid') {
-        clearInterval(pollingRef.current!);
-        setMpesaStatus('success');
-        clearCart();
-        toast.success('Payment confirmed! Redirecting...');
-        setTimeout(() => navigate(`/order-confirmation/${pollingOrderId}`), 1500);
-      } else if (order?.payment_status === 'failed') {
-        clearInterval(pollingRef.current!);
-        setMpesaStatus('error');
-        toast.error('Payment failed or cancelled. You can retry from My Orders.');
-        setTimeout(() => navigate(`/order-confirmation/${pollingOrderId}`), 2000);
-      } else if (pollingCountRef.current >= 60) {
-        // 60 × 2s = 2 minutes timeout
-        clearInterval(pollingRef.current!);
-        setMpesaStatus('error');
-        toast.info('Payment pending. Check My Orders to track status.');
-        setTimeout(() => navigate(`/order-confirmation/${pollingOrderId}`), 2000);
-      }
-    }, 2000);
-
-    return () => {
-      if (pollingRef.current) clearInterval(pollingRef.current);
-    };
-  }, [pollingOrderId, clearCart, navigate]);
 
   if (items.length === 0) {
     return <Navigate to="/cart" replace />;
@@ -177,7 +136,6 @@ const Checkout = () => {
 
   const initiateSTKPush = async (orderId: string) => {
     try {
-      setMpesaStatus('pending');
       const { data, error } = await supabase.functions.invoke('mpesa-stk-push', {
         body: {
           phone,
@@ -189,14 +147,11 @@ const Checkout = () => {
       if (error) throw error;
       if (data.success) {
         toast.success('M-PESA prompt sent! Enter your PIN on your phone.');
-        setMpesaStatus('polling');
-        setPollingOrderId(orderId);
         return true;
       } else {
         throw new Error(data.error || 'Failed to initiate payment');
       }
     } catch (error: unknown) {
-      setMpesaStatus('error');
       toast.error(error instanceof Error ? error.message : 'Failed to initiate M-PESA payment');
       return false;
     }
@@ -273,13 +228,9 @@ const Checkout = () => {
       });
 
       if (paymentMethod === 'mpesa') {
-        const stkSuccess = await initiateSTKPush(order.id);
-        if (!stkSuccess) {
-          // STK push failed — navigate anyway, order is created
-          clearCart();
-          navigate(`/order-confirmation/${order.id}`);
-        }
-        // If STK push succeeded, useEffect polling takes over navigation
+        await initiateSTKPush(order.id);
+        clearCart();
+        navigate(`/order-confirmation/${order.id}`);
       } else {
         clearCart();
         toast.success('Order placed!');
@@ -293,50 +244,7 @@ const Checkout = () => {
     }
   };
 
-  // M-PESA waiting screen
-  if (mpesaStatus === 'polling' || mpesaStatus === 'success' || mpesaStatus === 'error') {
-    return (
-      <div className="min-h-screen flex flex-col">
-        <Header />
-        <div className="flex-1 flex items-center justify-center bg-background px-4">
-          <div className="text-center max-w-sm space-y-6">
-            {mpesaStatus === 'polling' && (
-              <>
-                <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
-                  <Loader2 className="h-10 w-10 text-primary animate-spin" />
-                </div>
-                <h2 className="font-display font-bold text-2xl text-foreground">Waiting for Payment</h2>
-                <p className="text-muted-foreground">
-                  Enter your M-PESA PIN on your phone to confirm payment of{' '}
-                  <span className="font-semibold text-foreground">KSH {totalPrice.toLocaleString()}</span>.
-                </p>
-                <p className="text-sm text-muted-foreground">This page will update automatically once confirmed.</p>
-              </>
-            )}
-            {mpesaStatus === 'success' && (
-              <>
-                <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mx-auto">
-                  <CheckCircle2 className="h-10 w-10 text-green-600" />
-                </div>
-                <h2 className="font-display font-bold text-2xl text-foreground">Payment Confirmed!</h2>
-                <p className="text-muted-foreground">Redirecting to your order confirmation...</p>
-              </>
-            )}
-            {mpesaStatus === 'error' && (
-              <>
-                <div className="w-20 h-20 rounded-full bg-red-100 flex items-center justify-center mx-auto">
-                  <XCircle className="h-10 w-10 text-red-500" />
-                </div>
-                <h2 className="font-display font-bold text-2xl text-foreground">Payment Not Confirmed</h2>
-                <p className="text-muted-foreground">Redirecting to your order...</p>
-              </>
-            )}
-          </div>
-        </div>
-        <Footer />
-      </div>
-    );
-  }
+
 
   return (
     <div className="min-h-screen flex flex-col">
