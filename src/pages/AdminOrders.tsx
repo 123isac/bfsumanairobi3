@@ -74,6 +74,21 @@ const AdminOrders = () => {
     }
   };
 
+  const updatePaymentStatus = async (orderId: string, newStatus: string) => {
+    try {
+      const { error } = await supabase
+        .from("orders")
+        .update({ payment_status: newStatus })
+        .eq("id", orderId);
+
+      if (error) throw error;
+      toast.success(`Payment marked as ${newStatus}`);
+      fetchOrders();
+    } catch (error: any) {
+      toast.error("Failed to update payment status: " + error.message);
+    }
+  };
+
   const handleRetryMpesa = async (orderId: string, phone: string, amount: number) => {
     if (!confirm(`Are you sure you want to trigger an STK Push to ${phone} for KSh ${amount.toLocaleString()}?`)) return;
 
@@ -140,7 +155,8 @@ const AdminOrders = () => {
                   <th className="px-6 py-4 font-medium text-muted-foreground">Customer</th>
                   <th className="px-6 py-4 font-medium text-muted-foreground">Address</th>
                   <th className="px-6 py-4 font-medium text-muted-foreground">Amount</th>
-                  <th className="px-6 py-4 font-medium text-muted-foreground">Status</th>
+                  <th className="px-6 py-4 font-medium text-muted-foreground">Pay Status</th>
+                  <th className="px-6 py-4 font-medium text-muted-foreground">Fulfillment</th>
                   <th className="px-6 py-4 font-medium text-muted-foreground text-right">Actions</th>
                 </tr>
               </thead>
@@ -166,6 +182,11 @@ const AdminOrders = () => {
                       KSh {Number(order.total_amount).toLocaleString()}
                     </td>
                     <td className="px-6 py-4">
+                      <Badge variant={order.payment_status === "paid" ? "default" : "outline"} className={order.payment_status === "paid" ? "bg-green-100 text-green-800 hover:bg-green-100" : "bg-yellow-100 text-yellow-800 hover:bg-yellow-100"}>
+                        {order.payment_status || "pending"}
+                      </Badge>
+                    </td>
+                    <td className="px-6 py-4">
                       <Badge variant={order.status === "delivered" ? "default" : "secondary"}>
                         {order.status}
                       </Badge>
@@ -180,9 +201,14 @@ const AdminOrders = () => {
                         </Button>
                       )}
                       {order.status === "pending" && order.payment_method === "mpesa" && order.payment_status === "pending" && (
-                        <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700" onClick={() => handleRetryMpesa(order.id, order.customer_phone, order.total_amount)}>
-                          <HandCoins className="h-4 w-4 mr-2" /> Retry M-PESA
-                        </Button>
+                        <>
+                          <Button size="sm" variant="outline" className="text-green-600 border-green-600 hover:bg-green-50" onClick={() => updatePaymentStatus(order.id, "paid")}>
+                            <CheckCircle className="h-4 w-4 mr-2" /> Mark Paid
+                          </Button>
+                          <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700" onClick={() => handleRetryMpesa(order.id, order.customer_phone, order.total_amount)}>
+                            <HandCoins className="h-4 w-4 mr-2" /> Retry M-PESA
+                          </Button>
+                        </>
                       )}
                       {order.status === "processing" && (
                         <Button size="sm" variant="outline" onClick={() => updateOrderStatus(order.id, "shipped")}>
