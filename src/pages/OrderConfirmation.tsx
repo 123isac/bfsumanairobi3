@@ -452,8 +452,8 @@ const OrderConfirmation = () => {
                           </p>
                         )}
 
-                        {order.payment_method === 'mpesa' && !isPolling && (
-                          <div className="bg-white p-4 rounded-lg border border-border/50 text-sm space-y-3">
+                        {order.payment_method === 'mpesa' && (
+                          <div className="bg-white p-4 rounded-lg border border-border/50 text-sm space-y-3 mt-4">
                             <p className="font-semibold text-primary">Manual Paybill Backup</p>
                             <p className="text-muted-foreground text-xs">
                               If the prompt delays please follow the below paybill to make your payments and forward to the support group.
@@ -465,7 +465,7 @@ const OrderConfirmation = () => {
                               </div>
                               <div className="flex justify-between">
                                 <span className="text-muted-foreground">Account No:</span>
-                                <span className="font-mono font-medium text-xs">{order.id.substring(0, 8).toUpperCase()} / {order.customer_phone}</span>
+                                <span className="font-mono font-medium text-xs">N3 / {order.id.substring(0, 8).toUpperCase()}</span>
                               </div>
                               <div className="flex justify-between">
                                 <span className="text-muted-foreground">Amount:</span>
@@ -474,7 +474,7 @@ const OrderConfirmation = () => {
                             </div>
                             
                             <a 
-                              href={`https://wa.me/${whatsappNumber.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hello Support,\nI have completed payment.\nName: ${order.customer_name}\nPhone: ${order.customer_phone}\nOrder ID: ${order.id.substring(0, 8).toUpperCase()}\nAmount Paid: KSH ${order.total_amount.toLocaleString()}\nM-Pesa Message: [Paste your M-PESA message here]`)}`}
+                              href={`https://wa.me/${whatsappNumber.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hello Support,\nI have completed payment.\nName: ${order.customer_name}\nPhone: ${order.customer_phone}\nOrder ID: N3 / ${order.id.substring(0, 8).toUpperCase()}\nAmount Paid: KSH ${order.total_amount.toLocaleString()}\nM-Pesa Message: [Paste your M-PESA message here]`)}`}
                               target="_blank" 
                               rel="noopener noreferrer"
                               className="mt-3 w-full inline-flex items-center justify-center gap-2 rounded-lg bg-green-500 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600 transition-colors"

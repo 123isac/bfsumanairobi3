@@ -31,7 +31,7 @@ const AdminSettings = () => {
       
       // Auto-initialize missing settings
       const requiredSettings = [
-        { key: 'manual_paybill_number', value: '123456', description: 'The M-PESA Paybill or Till number used for manual backup payments.' },
+        { key: 'manual_paybill_number', value: '4115354', description: 'The M-PESA Paybill or Till number used for manual backup payments.' },
         { key: 'support_whatsapp_number', value: '+254700000000', description: 'WhatsApp number for customers to send payment confirmation.' }
       ];
 
