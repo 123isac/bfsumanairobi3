@@ -13,6 +13,7 @@ const corsHeaders = {
 
 const formatPhoneNumber = (phone: string): string => {
   let cleaned = phone.replace(/[\s\-()'+]/g, '');
+  if (cleaned.startsWith('2540')) return '254' + cleaned.substring(4);
   if (cleaned.startsWith('0')) return '254' + cleaned.substring(1);
   if (cleaned.startsWith('7') || cleaned.startsWith('1')) return '254' + cleaned;
   if (cleaned.startsWith('254')) return cleaned;
@@ -89,17 +90,21 @@ serve(async (req: Request) => {
     console.log('Lipana response status:', lipanaResponse.status);
     console.log('Lipana response body:', JSON.stringify(lipanaResult));
 
-    if (lipanaResponse.ok && lipanaResult.success && lipanaResult.data?.transactionId) {
+    const transactionId = lipanaResult.data?.transactionId || lipanaResult.data?.reference || lipanaResult.data?.id || lipanaResult.transactionId || lipanaResult.reference;
+
+    if (lipanaResponse.ok && (lipanaResult.success || transactionId)) {
       // Store transaction reference for webhook matching
-      await supabase
-        .from('orders')
-        .update({ payment_reference: lipanaResult.data.transactionId })
-        .eq('id', orderId);
+      if (transactionId) {
+        await supabase
+          .from('orders')
+          .update({ payment_reference: String(transactionId) })
+          .eq('id', orderId);
+      }
 
       return new Response(
         JSON.stringify({
           success: true,
-          checkoutRequestId: lipanaResult.data.transactionId,
+          checkoutRequestId: transactionId || 'initiated',
           message: 'M-PESA prompt sent. Enter your PIN on your phone.',
         }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

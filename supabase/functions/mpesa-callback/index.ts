@@ -26,43 +26,67 @@ serve(async (req) => {
 
     // Lipana webhook structure: { event, data: { transactionId, status, ... } }
     const { event, data } = callback;
-    const transactionId = data?.transactionId;
+    const transactionId = data?.transactionId || data?.reference || data?.id || callback?.transactionId || callback?.reference;
+    const orderId = data?.metadata?.orderId || data?.orderId || data?.accountReference?.replace(/^BFSuma-/, '');
 
-    console.log('Webhook event:', event, '| transactionId:', transactionId);
+    console.log('Webhook event:', event, '| transactionId:', transactionId, '| orderId:', orderId);
 
-    if (!event || !transactionId) {
-      console.error('Invalid Lipana webhook payload — missing event or transactionId');
+    if (!event || (!transactionId && !orderId)) {
+      console.error('Invalid Lipana webhook payload — missing event or identifiers');
       return new Response(JSON.stringify({ status: 'ok', message: 'Invalid payload ignored' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    if (event === 'transaction.success' || event === 'payment.success') {
-      console.log('Payment successful. Updating order for transactionId:', transactionId);
+    const isSuccess = [
+      'transaction.success',
+      'payment.success',
+      'stk.success',
+      'charge.success',
+      'success'
+    ].includes(event?.toLowerCase());
 
-      const { error } = await supabase
-        .from('orders')
-        .update({ payment_status: 'paid' })
-        .eq('payment_reference', transactionId);
+    const isFailure = [
+      'transaction.failed',
+      'payment.failed',
+      'transaction.cancelled',
+      'stk.failed',
+      'failed'
+    ].includes(event?.toLowerCase());
+
+    if (isSuccess) {
+      console.log('Payment successful. Updating order for transactionId:', transactionId, 'or orderId:', orderId);
+
+      let query = supabase.from('orders').update({ payment_status: 'paid' });
+      if (transactionId && orderId) {
+        query = query.or(`payment_reference.eq.${transactionId},id.eq.${orderId}`);
+      } else if (transactionId) {
+        query = query.eq('payment_reference', transactionId);
+      } else if (orderId) {
+        query = query.eq('id', orderId);
+      }
+
+      const { error } = await query;
 
       if (error) {
         console.error('Failed to update order to paid:', error);
       } else {
-        console.log('Order updated to paid for transactionId:', transactionId);
+        console.log('Order updated to paid successfully');
       }
 
-    } else if (
-      event === 'transaction.failed' ||
-      event === 'payment.failed' ||
-      event === 'transaction.cancelled'
-    ) {
+    } else if (isFailure) {
       console.log('Payment failed/cancelled for transactionId:', transactionId);
 
-      await supabase
-        .from('orders')
-        .update({ payment_status: 'failed' })
-        .eq('payment_reference', transactionId);
+      let query = supabase.from('orders').update({ payment_status: 'failed' });
+      if (transactionId && orderId) {
+        query = query.or(`payment_reference.eq.${transactionId},id.eq.${orderId}`);
+      } else if (transactionId) {
+        query = query.eq('payment_reference', transactionId);
+      } else if (orderId) {
+        query = query.eq('id', orderId);
+      }
 
+      await query;
     } else {
       // e.g. payment.initiated — just acknowledge, no DB update
       console.log('Unhandled event type (ignoring):', event);

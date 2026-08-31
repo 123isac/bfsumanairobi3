@@ -40,10 +40,45 @@ const OrderConfirmation = () => {
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [isPolling, setIsPolling] = useState(false);
-  const [paybillNumber, setPaybillNumber] = useState("123456");
+  const [paybillNumber, setPaybillNumber] = useState("4115354");
   const [whatsappNumber, setWhatsappNumber] = useState("+254700000000");
+  const [isResending, setIsResending] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pollingCountRef = useRef(0);
+
+  useEffect(() => {
+    if (resendCooldown > 0) {
+      const timer = setTimeout(() => setResendCooldown(prev => prev - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [resendCooldown]);
+
+  const handleResendSTK = async () => {
+    if (!order || isResending || resendCooldown > 0) return;
+    setIsResending(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('mpesa-stk-push', {
+        body: {
+          phone: order.customer_phone,
+          orderId: order.id,
+        },
+      });
+      if (error) throw error;
+      if (data?.success) {
+        toast.success('M-PESA prompt sent! Check your phone.');
+        setResendCooldown(30);
+        setIsPolling(true);
+        pollingCountRef.current = 0;
+      } else {
+        throw new Error(data?.error || 'Failed to send prompt');
+      }
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to resend M-PESA prompt');
+    } finally {
+      setIsResending(false);
+    }
+  };
 
   const fetchOrder = async (silent = false) => {
     if (!orderId) {
@@ -446,10 +481,32 @@ const OrderConfirmation = () => {
                           {order.payment_method === 'mpesa' && isPolling ? 'Waiting for M-PESA confirmation...' : 'Payment Instructions'}
                         </p>
                         
-                        {order.payment_method === 'mpesa' && isPolling && (
-                          <p className="text-xs text-muted-foreground">
-                            Enter your M-PESA PIN on your phone. This page will update automatically once confirmed.
-                          </p>
+                        {order.payment_method === 'mpesa' && (
+                          <div className="space-y-2">
+                            <p className="text-xs text-muted-foreground">
+                              Enter your M-PESA PIN on your phone. This page will update automatically once confirmed.
+                            </p>
+                            <Button
+                              type="button"
+                              onClick={handleResendSTK}
+                              disabled={isResending || resendCooldown > 0}
+                              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2 h-10 rounded-lg text-sm flex items-center justify-center gap-2"
+                            >
+                              {isResending ? (
+                                <>
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                  Sending prompt...
+                                </>
+                              ) : resendCooldown > 0 ? (
+                                `Resend prompt in ${resendCooldown}s`
+                              ) : (
+                                <>
+                                  <Phone className="h-4 w-4" />
+                                  Resend M-PESA Prompt ({order.customer_phone})
+                                </>
+                              )}
+                            </Button>
+                          </div>
                         )}
 
                         {order.payment_method === 'mpesa' && (

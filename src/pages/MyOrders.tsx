@@ -223,9 +223,19 @@ const MyOrders = () => {
 
                         {/* Action */}
                         <div className="flex md:flex-col items-center justify-center gap-2 p-4 md:p-6 border-t md:border-t-0 md:border-l border-border bg-secondary/20">
+                          {order.payment_status !== 'paid' && order.status !== 'cancelled' && (
+                            <Button
+                              size="sm"
+                              className="bg-emerald-600 hover:bg-emerald-700 text-white w-full"
+                              onClick={() => navigate(`/order-confirmation/${order.id}`)}
+                            >
+                              Pay Now
+                            </Button>
+                          )}
                           <Button
                             variant="outline"
                             size="sm"
+                            className="w-full"
                             onClick={() => setSelectedOrder(order)}
                           >
                             View Details
@@ -336,6 +346,21 @@ const MyOrders = () => {
               {selectedOrder.referral_code && (
                 <div className="text-sm text-muted-foreground">
                   Referred by: <Badge variant="outline">{selectedOrder.referral_code}</Badge>
+                </div>
+              )}
+
+              {selectedOrder.payment_status !== 'paid' && selectedOrder.status !== 'cancelled' && (
+                <div className="pt-2">
+                  <Button
+                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
+                    onClick={() => {
+                      const id = selectedOrder.id;
+                      setSelectedOrder(null);
+                      navigate(`/order-confirmation/${id}`);
+                    }}
+                  >
+                    Complete Payment / Pay with M-PESA
+                  </Button>
                 </div>
               )}
             </div>
