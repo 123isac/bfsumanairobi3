@@ -2,27 +2,25 @@ import { Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
+const STAFF_ROLES = ["shop_manager", "warehouse", "logistics", "teller", "logistics_asst"];
+
 export function AdminRoute({ children }: { children: React.ReactNode }) {
     const [loading, setLoading] = useState(true);
-    const [isAuthorized, setIsAuthorized] = useState(false);
+    const [isAdmin, setIsAdmin] = useState(false);
+    const [isStaff, setIsStaff] = useState(false);
 
     useEffect(() => {
         let mounted = true;
 
         const checkAuth = async () => {
             try {
-                // 1. Check direct session
                 const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
                 if (sessionError || !session?.user) {
-                    if (mounted) {
-                        setIsAuthorized(false);
-                        setLoading(false);
-                    }
+                    if (mounted) { setIsAdmin(false); setLoading(false); }
                     return;
                 }
 
-                // 2. Check admin role directly
                 const { data: roleData, error: roleError } = await supabase
                     .from('user_roles')
                     .select('role')
@@ -31,28 +29,23 @@ export function AdminRoute({ children }: { children: React.ReactNode }) {
 
                 if (mounted) {
                     if (!roleError && roleData?.role === 'admin') {
-                        setIsAuthorized(true);
+                        setIsAdmin(true);
+                    } else if (!roleError && STAFF_ROLES.includes(roleData?.role ?? '')) {
+                        // Staff member trying to access /admin — redirect them to staff portal
+                        setIsStaff(true);
                     } else {
-                        // Force signout if they shouldn't be here to keep the admin portal clean
                         await supabase.auth.signOut();
-                        setIsAuthorized(false);
                     }
                     setLoading(false);
                 }
             } catch (error) {
                 console.error("Admin Route Auth Error:", error);
-                if (mounted) {
-                    setIsAuthorized(false);
-                    setLoading(false);
-                }
+                if (mounted) { setIsAdmin(false); setLoading(false); }
             }
         };
 
         checkAuth();
-
-        return () => {
-            mounted = false;
-        };
+        return () => { mounted = false; };
     }, []);
 
     if (loading) {
@@ -60,15 +53,17 @@ export function AdminRoute({ children }: { children: React.ReactNode }) {
             <div className="min-h-screen flex items-center justify-center bg-muted/20">
                 <div className="flex flex-col items-center gap-4">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                    <p className="text-muted-foreground animate-pulse">Entering Secure Admin Portal...</p>
+                    <p className="text-muted-foreground animate-pulse">Verifying access...</p>
                 </div>
             </div>
         );
     }
 
-    if (!isAuthorized) {
-        return <Navigate to="/admin/login" replace />;
-    }
+    // Staff members who accidentally navigate to /admin get sent to their portal
+    if (isStaff) return <Navigate to="/staff/dashboard" replace />;
+
+    if (!isAdmin) return <Navigate to="/admin/login" replace />;
 
     return <>{children}</>;
 }
+
