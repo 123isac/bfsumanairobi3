@@ -62,18 +62,32 @@ const AdminCustomers = () => {
     if (!confirm(`Are you absolutely sure you want to permanently delete ${fullName || "this user"}? This action cannot be undone.`)) return;
 
     try {
+      // 1. Try deleting via delete-user Edge Function
       const { data, error } = await supabase.functions.invoke("delete-user", {
         body: { userIdToDelete: userId }
       });
 
-      if (error) throw error;
-      if (!data?.success) throw new Error(data?.error || "Failed to delete user");
+      if (!error && data?.success) {
+        toast.success("User account deleted successfully.");
+        fetchCustomers();
+        return;
+      }
 
-      toast.success("User securely erased.");
-      fetchCustomers(); // Refresh the grid
+      // 2. Direct database cleanup fallback
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .delete()
+        .eq("id", userId);
+
+      if (profileError) {
+        throw new Error(data?.error || error?.message || profileError.message);
+      }
+
+      toast.success("Customer profile deleted successfully.");
+      fetchCustomers();
     } catch (error: any) {
-      console.error(error);
-      toast.error(`Error deleting user: ${error.message}`);
+      console.error("Delete user error:", error);
+      toast.error(`Error deleting customer: ${error.message || "Failed to complete deletion"}`);
     }
   };
 

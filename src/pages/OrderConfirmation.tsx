@@ -64,21 +64,27 @@ const OrderConfirmation = () => {
           orderId: order.id,
         },
       });
-      if (error) throw error;
+
+      if (error) {
+        throw new Error(data?.error || error.message || 'M-PESA prompt failed');
+      }
+
       if (data?.success) {
         toast.success('M-PESA prompt sent! Check your phone.');
         setResendCooldown(30);
         setIsPolling(true);
         pollingCountRef.current = 0;
       } else {
-        throw new Error(data?.error || 'Failed to send prompt');
+        throw new Error(data?.error || 'Failed to send M-PESA prompt. Please check your phone number or use the manual Paybill below.');
       }
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : 'Failed to resend M-PESA prompt');
+      const msg = err instanceof Error ? err.message : 'Failed to resend M-PESA prompt';
+      toast.error(msg);
     } finally {
       setIsResending(false);
     }
   };
+
 
   const fetchOrder = async (silent = false) => {
     if (!orderId) {

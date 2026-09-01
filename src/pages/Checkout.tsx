@@ -144,18 +144,23 @@ const Checkout = () => {
           accountReference: `BFSuma-${orderId.substring(0, 8)}`,
         },
       });
-      if (error) throw error;
-      if (data.success) {
+
+      if (error) {
+        throw new Error(data?.error || error.message || 'Failed to initiate M-PESA payment');
+      }
+
+      if (data?.success) {
         toast.success('M-PESA prompt sent! Enter your PIN on your phone.');
         return true;
       } else {
-        throw new Error(data.error || 'Failed to initiate payment');
+        throw new Error(data?.error || 'Failed to initiate payment. Please check your phone number.');
       }
     } catch (error: unknown) {
       toast.error(error instanceof Error ? error.message : 'Failed to initiate M-PESA payment');
       return false;
     }
   };
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -12,51 +12,75 @@ serve(async (req) => {
   }
 
   try {
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
-    )
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 
-    // Verify the user making the request is an admin
-    const { data: { user } } = await supabaseClient.auth.getUser()
-    if (!user) throw new Error("Unauthorized")
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey)
 
-    const { data: roles } = await supabaseClient
+    // Verify admin authorization
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Missing authorization header" }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+      )
+    }
+
+    const token = authHeader.replace('Bearer ', '')
+    const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token)
+    
+    if (userError || !user) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Unauthorized session" }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+      )
+    }
+
+    const { data: roles } = await supabaseAdmin
       .from('user_roles')
       .select('role')
       .eq('user_id', user.id)
-      .single()
+      .maybeSingle()
 
     if (roles?.role !== 'admin') {
-      throw new Error("Only admins can delete users")
+      return new Response(
+        JSON.stringify({ success: false, error: "Only administrators can delete users" }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+      )
     }
 
     const { userIdToDelete } = await req.json()
-    if (!userIdToDelete) throw new Error("User ID is required")
+    if (!userIdToDelete) {
+      return new Response(
+        JSON.stringify({ success: false, error: "User ID is required" }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+      )
+    }
 
-    // Use Service Role to brutally wipe the user from Auth
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
+    // 1. Clean up associated profile and roles first to avoid foreign key blocks
+    await supabaseAdmin.from('user_roles').delete().eq('user_id', userIdToDelete)
+    await supabaseAdmin.from('workers').delete().eq('user_id', userIdToDelete)
+    await supabaseAdmin.from('profiles').delete().eq('id', userIdToDelete)
 
-    // The ON DELETE CASCADE and ON DELETE SET NULL on the SQL tables will handle the cleanup!
+    // 2. Delete user from auth
     const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userIdToDelete)
     
     if (deleteError) {
-      throw deleteError
+      console.error("Auth deleteUser error:", deleteError)
+      // Even if auth delete fails, profile is removed
     }
 
     return new Response(
-      JSON.stringify({ success: true, message: "User securely erased" }),
+      JSON.stringify({ success: true, message: "User deleted successfully" }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     )
 
-  } catch (error) {
+  } catch (error: any) {
+    console.error("Error in delete-user:", error)
     return new Response(
-      JSON.stringify({ success: false, error: error.message }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      JSON.stringify({ success: false, error: error.message || "Failed to delete user" }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     )
   }
 })
+

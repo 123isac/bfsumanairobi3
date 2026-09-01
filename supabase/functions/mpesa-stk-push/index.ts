@@ -26,22 +26,23 @@ serve(async (req: Request) => {
   }
 
   try {
-    // ── SECURITY: Only trust orderId + phone from client, NEVER the amount ──
     const { phone, orderId } = await req.json();
 
     if (!phone || !orderId) {
       return new Response(
-        JSON.stringify({ error: 'Phone and orderId are required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ success: false, error: 'Phone and orderId are required' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     const secretKey = Deno.env.get('LIPANA_SECRET_KEY');
-    if (!secretKey) throw new Error('LIPANA_SECRET_KEY is not configured');
+    if (!secretKey) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'LIPANA_SECRET_KEY is not configured on the server' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
-    // ── SECURITY: Read the authoritative total_amount directly from the order row ──
-    // The total_amount is computed server-side at order creation (includes shipping & discounts).
-    // This single query replaces two parallel queries, saving one full DB round trip.
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -55,24 +56,21 @@ serve(async (req: Request) => {
 
     if (orderError || !orderRow) {
       return new Response(
-        JSON.stringify({ error: 'Order not found' }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ success: false, error: 'Order not found' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     const secureAmount = Math.round(Number(orderRow.total_amount));
-    console.log('Order total_amount used for STK push:', secureAmount);
 
     if (secureAmount < 1) {
       return new Response(
-        JSON.stringify({ error: 'Invalid order amount' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ success: false, error: 'Invalid order amount' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     const formattedPhone = formatPhoneNumber(phone);
-    console.log('Formatted phone for Lipana:', formattedPhone);
-    console.log('Lipana payload:', { phone: formattedPhone, amount: secureAmount });
 
     const lipanaResponse = await fetch(
       'https://api.lipana.dev/v1/transactions/push-stk',
@@ -93,7 +91,6 @@ serve(async (req: Request) => {
     const transactionId = lipanaResult.data?.transactionId || lipanaResult.data?.reference || lipanaResult.data?.id || lipanaResult.transactionId || lipanaResult.reference;
 
     if (lipanaResponse.ok && (lipanaResult.success || transactionId)) {
-      // Store transaction reference for webhook matching
       if (transactionId) {
         await supabase
           .from('orders')
@@ -114,18 +111,19 @@ serve(async (req: Request) => {
       return new Response(
         JSON.stringify({
           success: false,
-          error: lipanaResult.message || lipanaResult.error || `Payment initiation failed (HTTP ${lipanaResponse.status})`,
+          error: lipanaResult.message || lipanaResult.error || `M-PESA push failed (HTTP ${lipanaResponse.status})`,
           details: lipanaResult,
         }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';
     console.error('Error in mpesa-stk-push:', error);
     return new Response(
-      JSON.stringify({ error: message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      JSON.stringify({ success: false, error: message }),
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });
+
