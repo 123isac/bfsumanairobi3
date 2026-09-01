@@ -11,7 +11,11 @@ import {
   Settings, 
   Menu,
   X,
-  LogOut
+  LogOut,
+  UserCog,
+  Shield,
+  ClipboardCheck,
+  Activity
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "./ui/button";
@@ -25,6 +29,10 @@ const NAV_ITEMS = [
   { label: "Customers", href: "/admin/customers", icon: Users },
   { label: "Partner Applications", href: "/admin/partners", icon: Handshake },
   { label: "Promotions", href: "/admin/promotions", icon: Percent },
+  { label: "Workers", href: "/admin/workers", icon: UserCog },
+  { label: "Roles & Permissions", href: "/admin/roles", icon: Shield },
+  { label: "Approvals", href: "/admin/approvals", icon: ClipboardCheck },
+  { label: "Activity Logs", href: "/admin/activity", icon: Activity },
   { label: "Settings", href: "/admin/settings", icon: Settings },
 ];
 

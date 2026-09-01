@@ -8,6 +8,8 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { ShieldCheck, Loader2 } from "lucide-react";
 
+const STAFF_ROLES = ["shop_manager", "warehouse", "logistics", "teller", "logistics_asst"];
+
 const AdminAuth = () => {
     const navigate = useNavigate();
     const [email, setEmail] = useState("");
@@ -15,7 +17,7 @@ const AdminAuth = () => {
     const [loading, setLoading] = useState(false);
     const [verifying, setVerifying] = useState(true);
 
-    // Check if already logged in as admin
+    // Check if already logged in
     useEffect(() => {
         const checkExistingSession = async () => {
             try {
@@ -28,7 +30,10 @@ const AdminAuth = () => {
                         .maybeSingle();
 
                     if (data?.role === 'admin') {
-                        navigate("/admin/products", { replace: true });
+                        navigate("/admin/dashboard", { replace: true });
+                        return;
+                    } else if (data?.role && STAFF_ROLES.includes(data.role)) {
+                        navigate("/staff/dashboard", { replace: true });
                         return;
                     }
                 }
@@ -60,7 +65,7 @@ const AdminAuth = () => {
             if (authError) throw authError;
 
             if (authData.user) {
-                // Verify admin role immediately
+                // Verify role immediately
                 const { data: roleData, error: roleError } = await supabase
                     .from('user_roles')
                     .select('role')
@@ -69,13 +74,17 @@ const AdminAuth = () => {
 
                 if (roleError) throw roleError;
 
-                if (roleData?.role === 'admin') {
+                const userRole = roleData?.role;
+
+                if (userRole === 'admin') {
                     toast.success("Admin access granted.");
-                    navigate("/admin/products", { replace: true });
+                    navigate("/admin/dashboard", { replace: true });
+                } else if (userRole && STAFF_ROLES.includes(userRole)) {
+                    toast.success("Staff portal access granted.");
+                    navigate("/staff/dashboard", { replace: true });
                 } else {
-                    // If not an admin, sign them out immediately
                     await supabase.auth.signOut();
-                    toast.error("Access Denied: You do not have administrator privileges.");
+                    toast.error("Access Denied: You do not have staff or administrator privileges.");
                 }
             }
         } catch (error: unknown) {
@@ -104,19 +113,19 @@ const AdminAuth = () => {
                     <div className="mx-auto bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mb-2">
                         <ShieldCheck className="h-8 w-8 text-primary" />
                     </div>
-                    <CardTitle className="text-2xl font-bold tracking-tight">Admin Portal</CardTitle>
+                    <CardTitle className="text-2xl font-bold tracking-tight">Staff & Admin Portal</CardTitle>
                     <CardDescription className="text-base">
-                        Secure login for BF Suma Nairobi administrators.
+                        Secure login for BF Suma Nairobi staff & administrators.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
                     <form onSubmit={handleLogin} className="space-y-4">
                         <div className="space-y-2">
-                            <Label htmlFor="email">Administrator Email</Label>
+                            <Label htmlFor="email">Work Email</Label>
                             <Input
                                 id="email"
                                 type="email"
-                                placeholder="admin@bfsumanairobi3.com"
+                                placeholder="name@bfsumanairobi3.com"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
@@ -163,3 +172,4 @@ const AdminAuth = () => {
 };
 
 export default AdminAuth;
+
