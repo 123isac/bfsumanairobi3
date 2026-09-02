@@ -88,46 +88,63 @@ const AdminWorkers = () => {
       return;
     }
 
+    if (password.length < 6) {
+      toast.error("Password must be at least 6 characters.");
+      return;
+    }
+
     setSubmitting(true);
     try {
-      // 1. Sign up the worker in Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: { full_name: fullName },
+      // 1. Try via Admin Worker Backend API
+      const res = await fetch("/api/admin/create-worker", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: email.trim(),
+          password,
+          fullName: fullName.trim(),
+          employeeId: employeeId.trim(),
+          position: position.trim() || ROLE_DISPLAY[role]?.label || role,
+          department,
+          role,
+        }),
+      });
+
+      const data = await res.json().catch(() => null);
+
+      if (res.ok && data?.success) {
+        if (data.isExistingUser) {
+          toast.success(`Existing user account upgraded to ${ROLE_DISPLAY[role]?.label || role} & password updated!`);
+        } else {
+          toast.success(`Staff account for ${fullName} created successfully!`);
+        }
+        setCreateOpen(false);
+        fetchWorkers();
+        return;
+      }
+
+      // 2. Try via Edge Function if API route returned error
+      const edgeRes = await supabase.functions.invoke("create-worker", {
+        body: {
+          email: email.trim(),
+          password,
+          fullName: fullName.trim(),
+          employeeId: employeeId.trim(),
+          position: position.trim() || ROLE_DISPLAY[role]?.label || role,
+          department,
+          role,
         },
       });
 
-      if (authError) throw authError;
-      if (!authData.user) throw new Error("Could not create user account.");
+      if (!edgeRes.error && edgeRes.data?.success) {
+        toast.success(edgeRes.data.message || `Staff account for ${fullName} configured successfully!`);
+        setCreateOpen(false);
+        fetchWorkers();
+        return;
+      }
 
-      const newUserId = authData.user.id;
-
-      // 2. Assign the role in user_roles table
-      const { error: roleError } = await supabase.from("user_roles").insert({
-        user_id: newUserId,
-        role: role as any,
-      });
-
-      if (roleError) throw roleError;
-
-      // 3. Create the staff profile in workers table
-      const { error: workerError } = await supabase.from("workers").insert({
-        user_id: newUserId,
-        employee_id: employeeId,
-        full_name: fullName,
-        position: position || ROLE_DISPLAY[role]?.label || role,
-        department,
-        role: role as any,
-        status: "active",
-      });
-
-      if (workerError) throw workerError;
-
-      toast.success(`Staff account for ${fullName} created successfully!`);
-      setCreateOpen(false);
-      fetchWorkers();
+      // If backend returned specific error
+      throw new Error(data?.error || edgeRes.error?.message || "Failed to create worker");
     } catch (err: any) {
       toast.error("Failed to create worker: " + err.message);
     } finally {
@@ -397,15 +414,20 @@ const AdminWorkers = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
+                <p className="text-[11px] text-muted-foreground mt-1">Min 6 characters. If user is already registered, this overrides their login password.</p>
               </div>
             </div>
+
+            <p className="text-xs text-muted-foreground bg-muted/30 p-2 rounded-lg border border-border/50">
+              💡 <strong>Tip:</strong> Works for brand new staff or existing customer accounts. If the person already registered on the website, their account will be upgraded to this staff role and their password set to the one above.
+            </p>
 
             <div className="flex justify-end gap-2 pt-3">
               <Button type="button" variant="outline" onClick={() => setCreateOpen(false)}>
                 Cancel
               </Button>
               <Button type="submit" disabled={submitting}>
-                {submitting ? "Creating Account..." : "Create Worker Account"}
+                {submitting ? "Processing Account..." : "Create / Upgrade Worker"}
               </Button>
             </div>
           </form>
