@@ -343,9 +343,9 @@ const ProductDetail = () => {
               {/* Delivery promise — desktop */}
               <div className="hidden lg:grid grid-cols-3 gap-3 text-center">
                 {[
-                  { icon: Truck, label: "Nairobi Same-Day", sub: "2–4 hr Dispatch", anim: "animate-truck text-emerald-600" },
-                  { icon: ShieldCheck, label: "100% Authentic", sub: "Genuine BF Suma Seal", anim: "animate-badge-shimmer text-amber-600" },
-                  { icon: RotateCcw, label: "7-Day Returns", sub: "Guaranteed Satisfaction", anim: "text-primary" },
+                  { icon: Truck, label: "Fast Delivery", sub: "Regional & Countrywide", anim: "animate-truck text-emerald-600" },
+                  { icon: ShieldCheck, label: "100% Authentic", sub: "Certified BF Suma", anim: "animate-badge-shimmer text-amber-600" },
+                  { icon: RotateCcw, label: "7-Day Returns", sub: "Easy Guarantee", anim: "text-primary" },
                 ].map(({ icon: Icon, label, sub, anim }) => (
                   <div key={label} className="bg-card border border-border rounded-2xl p-3.5 flex flex-col items-center gap-1 transition-all duration-300 shadow-sm">
                     <Icon className={`h-5 w-5 ${anim}`} />
@@ -419,30 +419,25 @@ const ProductDetail = () => {
               {stock > 5 && (
                 <div className="flex items-center gap-2 text-xs sm:text-sm text-emerald-600 dark:text-emerald-400 font-semibold">
                   <CheckCircle2 className="h-4 w-4 shrink-0" />
-                  <span>In Stock — Dispatched within 2–4 hours in Nairobi</span>
+                  <span>In Stock — Ready for Fast Regional & Countrywide Dispatch</span>
                 </div>
               )}
 
-              {/* Product Description */}
-              <div className="space-y-3">
-                <p className="text-foreground text-sm sm:text-base leading-relaxed">
-                  {fullDesc || "Authentic premium health and wellness formula from BF Suma."}
+              {/* Description — Under Product Price */}
+              <div className="rounded-2xl bg-primary/5 border border-primary/10 px-4 py-4 space-y-1.5">
+                <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-primary/70">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  What It Does
+                </span>
+                <p className="text-foreground text-base md:text-lg leading-relaxed font-medium">
+                  {fullDesc || "Premium quality wellness product from BF Suma."}
                 </p>
-
-                {/* Direct WhatsApp Specialist Callout */}
-                <div className="pt-1">
-                  <a
-                    href={`https://wa.me/${SUPPORT_WHATSAPP_NUMBER}?text=${encodeURIComponent(`Hello! I have a question about ${product.name}.`)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 transition-colors"
-                  >
-                    <MessageCircle className="h-4 w-4 text-[#25D366] shrink-0" />
-                    <span>Have questions? Chat with our Nairobi Wellness Advisor on WhatsApp</span>
-                  </a>
-                </div>
+                {benefitItems.length > 0 && (
+                  <p className="text-xs text-muted-foreground pt-0.5">
+                    ✓ See full benefits &amp; ingredients below ↓
+                  </p>
+                )}
               </div>
-
 
               {/* Quantity + Add to Cart */}
               <div className="space-y-3 pt-2">
@@ -471,6 +466,19 @@ const ProductDetail = () => {
                   <Button size="lg" variant="outline" className="h-13 w-13 rounded-full shrink-0 border-border hover:border-red-300 hover:text-red-500 transition-colors">
                     <Heart className="h-5 w-5" />
                   </Button>
+                </div>
+
+                {/* Delivery + Returns row */}
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 pt-2 text-sm text-muted-foreground">
+                  <span className="flex items-center gap-1.5">
+                    <Truck className="h-4 w-4 text-primary shrink-0" />
+                    Order today → fast regional delivery
+                  </span>
+                  <span className="hidden sm:block text-border">|</span>
+                  <span className="flex items-center gap-1.5">
+                    <RotateCcw className="h-4 w-4 text-primary shrink-0" />
+                    7-day returns
+                  </span>
                 </div>
               </div>
             </div>
