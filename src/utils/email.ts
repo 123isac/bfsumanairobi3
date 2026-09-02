@@ -120,7 +120,23 @@ export async function sendEmail(options: SendEmailOptions): Promise<{ success: b
     data,
   };
 
-  // ── Tier 1: Try Local / Backend API (/api/send-email) ──
+  // ── Tier 1: Supabase Database RPC (pg_net directly from PostgreSQL server) ──
+  try {
+    const { data: rpcData, error: rpcError } = await supabase.rpc("send_email_resend", {
+      to_email: toList[0],
+      subject,
+      html_body: html,
+      from_email: DEFAULT_FROM,
+    });
+
+    if (!rpcError && (rpcData as any)?.success) {
+      return { success: true, message: "Email dispatched successfully via Supabase!" };
+    }
+  } catch {
+    // Continue to next tier
+  }
+
+  // ── Tier 2: Local / Backend API (/api/send-email) ──
   try {
     const apiRes = await fetch("/api/send-email", {
       method: "POST",
@@ -133,10 +149,10 @@ export async function sendEmail(options: SendEmailOptions): Promise<{ success: b
       return { success: true, ...json };
     }
   } catch {
-    // Continue to Tier 2
+    // Continue to next tier
   }
 
-  // ── Tier 2: Try Supabase Edge Function ('send-email') ──
+  // ── Tier 3: Supabase Edge Function ('send-email') ──
   try {
     const { data: edgeData, error: edgeError } = await supabase.functions.invoke("send-email", {
       body: payload,
@@ -146,36 +162,15 @@ export async function sendEmail(options: SendEmailOptions): Promise<{ success: b
       return { success: true, ...edgeData };
     }
   } catch {
-    // Continue to Tier 3
+    // Continue
   }
 
-  // ── Tier 3: Direct Resend API Dispatch ──
-  try {
-    const directRes = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${RESEND_FALLBACK_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from: DEFAULT_FROM,
-        to: toList,
-        subject,
-        html,
-      }),
-    });
-
-    const directData = await directRes.json();
-    if (directRes.ok) {
-      return { success: true, resendId: directData.id, message: "Email dispatched successfully via Resend!" };
-    } else {
-      return { success: false, error: directData.message || "Failed to dispatch email via Resend" };
-    }
-  } catch (err: any) {
-    console.warn("All email dispatch tiers attempted. Error:", err);
-    return { success: false, error: err.message || "Failed to trigger email" };
-  }
+  return {
+    success: false,
+    error: "Email service requires the send_email_resend SQL function in Supabase. Run the migration in your Supabase SQL Editor to activate.",
+  };
 }
+
 
 /**
  * Send Order Confirmation Email to Customer
