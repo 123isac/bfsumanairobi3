@@ -42,6 +42,7 @@ const ProductDetail = () => {
       return data;
     },
     enabled: !!id,
+    staleTime: 1000 * 60 * 5,
   });
 
   const { data: relatedProducts = [] } = useQuery({
@@ -58,7 +59,9 @@ const ProductDetail = () => {
       return data;
     },
     enabled: !!product?.category_id,
+    staleTime: 1000 * 60 * 5,
   });
+
 
   // Dynamic review count
   const { data: reviewCount = 0 } = useQuery({

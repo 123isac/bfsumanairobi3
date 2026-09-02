@@ -70,6 +70,7 @@ const Index = () => {
       if (error) throw error;
       return data;
     },
+    staleTime: 1000 * 60 * 10, // 10 minutes cache
   });
 
   const { data: featuredProducts = [] } = useQuery({
@@ -84,7 +85,9 @@ const Index = () => {
       if (error) throw error;
       return data;
     },
+    staleTime: 1000 * 60 * 5, // 5 minutes cache
   });
+
 
   const categoryIcons = {
     "Digestive Health": Activity,

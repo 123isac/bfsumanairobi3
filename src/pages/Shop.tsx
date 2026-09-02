@@ -39,6 +39,7 @@ const Shop = () => {
       if (error) throw error;
       return data;
     },
+    staleTime: 1000 * 60 * 10,
   });
 
   const { data: allProducts = [], isLoading } = useQuery({
@@ -72,7 +73,9 @@ const Shop = () => {
       return data;
     },
     enabled: categories.length > 0,
+    staleTime: 1000 * 60 * 3, // 3 minutes cache
   });
+
 
   const handleCategoryClick = (slug: string | null) => {
     setPage(1);
