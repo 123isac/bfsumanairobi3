@@ -25,16 +25,22 @@ const AdminAuth = () => {
                 if (session?.user) {
                     const userId = session.user.id;
 
-                    // 1. Check user_roles
-                    const { data: roleData } = await supabase
-                        .from('user_roles')
-                        .select('role')
-                        .eq('user_id', userId)
-                        .maybeSingle();
+                    // 1. Try RPC function first
+                    const { data: rpcRole } = await supabase.rpc('get_current_user_role');
+                    let userRole = rpcRole as string | null;
 
-                    let userRole = roleData?.role;
+                    // 2. Fallback: Check user_roles
+                    if (!userRole || userRole === 'customer') {
+                        const { data: roleData } = await supabase
+                            .from('user_roles')
+                            .select('role')
+                            .eq('user_id', userId)
+                            .maybeSingle();
 
-                    // 2. Fallback check workers table
+                        if (roleData?.role) userRole = roleData.role;
+                    }
+
+                    // 3. Fallback: Check workers table
                     if (!userRole || userRole === 'customer') {
                         const { data: workerData } = await supabase
                             .from('workers')
@@ -76,7 +82,7 @@ const AdminAuth = () => {
 
         try {
             const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-                email: email.trim(),
+                email: email.trim().toLowerCase(),
                 password,
             });
 
@@ -85,16 +91,22 @@ const AdminAuth = () => {
             if (authData.user) {
                 const userId = authData.user.id;
 
-                // 1. Check user_roles
-                const { data: roleData } = await supabase
-                    .from('user_roles')
-                    .select('role')
-                    .eq('user_id', userId)
-                    .maybeSingle();
+                // 1. Try RPC function first (bypasses any RLS restrictions)
+                const { data: rpcRole, error: rpcError } = await supabase.rpc('get_current_user_role');
+                let userRole = rpcRole as string | null;
 
-                let userRole = roleData?.role;
+                // 2. Fallback check user_roles
+                if (!userRole || userRole === 'customer') {
+                    const { data: roleData } = await supabase
+                        .from('user_roles')
+                        .select('role')
+                        .eq('user_id', userId)
+                        .maybeSingle();
 
-                // 2. Check workers table if not found or customer
+                    if (roleData?.role) userRole = roleData.role;
+                }
+
+                // 3. Fallback check workers table
                 if (!userRole || userRole === 'customer') {
                     const { data: workerData } = await supabase
                         .from('workers')
@@ -134,6 +146,7 @@ const AdminAuth = () => {
             setLoading(false);
         }
     };
+
 
 
     if (verifying) {

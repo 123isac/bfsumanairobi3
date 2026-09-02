@@ -71,16 +71,22 @@ export const StaffAuthProvider = ({ children }: { children: ReactNode }) => {
 
       const userId = session.user.id;
 
-      // Load role from user_roles
-      const { data: roleData } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", userId)
-        .maybeSingle();
+      // 1. Try RPC function first
+      const { data: rpcRole } = await supabase.rpc('get_current_user_role');
+      let userRole = (rpcRole as AppRole) ?? null;
 
-      let userRole = (roleData?.role as AppRole) ?? null;
+      // 2. Fallback: Load role from user_roles
+      if (!userRole || userRole === "customer") {
+        const { data: roleData } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", userId)
+          .maybeSingle();
 
-      // Fallback: check workers table if user_roles is missing or customer
+        if (roleData?.role) userRole = roleData.role as AppRole;
+      }
+
+      // 3. Fallback: check workers table if user_roles is missing or customer
       if (!userRole || userRole === "customer") {
         const { data: workerRow } = await supabase
           .from("workers")
@@ -128,6 +134,7 @@ export const StaffAuthProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       setLoading(false);
     }
+
 
   };
 
