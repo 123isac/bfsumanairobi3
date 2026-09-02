@@ -35,18 +35,33 @@ serve(async (req: Request) => {
       );
     }
 
-    const secretKey = Deno.env.get('LIPANA_SECRET_KEY');
-    if (!secretKey) {
-      return new Response(
-        JSON.stringify({ success: false, error: 'LIPANA_SECRET_KEY is not configured on the server' }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
+
+    let secretKey = Deno.env.get('LIPANA_SECRET_KEY');
+    if (!secretKey) {
+      const { data: settingRow } = await supabase
+        .from('store_settings')
+        .select('value')
+        .eq('key', 'lipana_secret_key')
+        .maybeSingle();
+      if (settingRow?.value) {
+        secretKey = typeof settingRow.value === 'string' ? settingRow.value : String(settingRow.value);
+      }
+    }
+
+    if (!secretKey) {
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'M-PESA STK prompt gateway is unconfigured. Please use the Paybill details (4115354) shown below.' 
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
 
     const { data: orderRow, error: orderError } = await supabase
       .from('orders')

@@ -112,20 +112,17 @@ const AdminOrders = () => {
         body: { phone, amount, orderId },
       });
 
-      if (error) {
-        throw new Error(data?.error || error.message || "Failed to trigger STK Push");
+      if (!error && data?.success) {
+        toast.success("STK Push successfully sent to customer's phone!");
+      } else {
+        toast.error(data?.error || (error ? 'STK gateway returned non-2xx status code. Verify LIPANA_SECRET_KEY in Supabase secrets.' : 'Failed to trigger STK push'));
       }
-
-      if (!data?.success) {
-        throw new Error(data?.error || "Failed to initiate M-PESA push. Please check customer phone number.");
-      }
-
-      toast.success("STK Push successfully fired to the customer's phone!");
     } catch (err: any) {
       console.error(err);
       toast.error(err.message || 'Failed to retry M-PESA push');
     }
   };
+
 
 
   const filteredOrders = orders.filter((o) =>

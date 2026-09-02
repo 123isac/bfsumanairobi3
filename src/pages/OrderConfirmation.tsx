@@ -65,25 +65,23 @@ const OrderConfirmation = () => {
         },
       });
 
-      if (error) {
-        throw new Error(data?.error || error.message || 'M-PESA prompt failed');
-      }
-
-      if (data?.success) {
+      if (!error && data?.success) {
         toast.success('M-PESA prompt sent! Check your phone.');
         setResendCooldown(30);
         setIsPolling(true);
         pollingCountRef.current = 0;
       } else {
-        throw new Error(data?.error || 'Failed to send M-PESA prompt. Please check your phone number or use the manual Paybill below.');
+        const errorMsg = data?.error || (error ? 'M-PESA prompt gateway is currently connecting. Please use the manual Paybill below (4115354).' : 'Failed to send prompt.');
+        toast.info(errorMsg);
       }
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Failed to resend M-PESA prompt';
-      toast.error(msg);
+      console.warn('STK prompt error:', err);
+      toast.info('Please use the manual Paybill below (4115354) and forward confirmation to support.');
     } finally {
       setIsResending(false);
     }
   };
+
 
 
   const fetchOrder = async (silent = false) => {
