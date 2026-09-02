@@ -20,8 +20,9 @@ const AdminSettings = () => {
   const [saving, setSaving] = useState<string | null>(null);
 
   // Email Test States
-  const [testEmailAddress, setTestEmailAddress] = useState("neonnest254@gmail.com");
+  const [testEmailAddress, setTestEmailAddress] = useState("isaacmuteti2004@gmail.com");
   const [sendingTest, setSendingTest] = useState(false);
+
 
   const fetchSettings = async () => {
     setLoading(true);

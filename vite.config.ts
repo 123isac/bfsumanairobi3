@@ -3,6 +3,8 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 import { createClient } from "@supabase/supabase-js";
+import https from "https";
+
 
 function adminApiPlugin() {
   return {
@@ -120,11 +122,70 @@ function adminApiPlugin() {
           });
           return;
         }
+
+        if (req.url === "/api/send-email" && req.method === "POST") {
+          let body = "";
+          req.on("data", (chunk: any) => body += chunk);
+          req.on("end", async () => {
+            try {
+              const env = loadEnv("development", process.cwd(), "");
+              const resendApiKey = env.RESEND_API_KEY;
+              const defaultFrom = env.RESEND_FROM_EMAIL || "BF Suma Nairobi <onboarding@resend.dev>";
+
+
+              
+              const payload = JSON.parse(body);
+              const { to, subject, html, type, data = {} } = payload;
+              
+              const postData = JSON.stringify({
+                from: defaultFrom,
+                to: Array.isArray(to) ? to : [to],
+                subject: subject || "Notification from BF Suma Nairobi",
+                html: html || `<p>${data?.message || "Notification from BF Suma Nairobi"}</p>`
+              });
+
+              const resendReq = https.request({
+                hostname: "api.resend.com",
+                path: "/emails",
+                method: "POST",
+                headers: {
+                  "Authorization": `Bearer ${resendApiKey}`,
+                  "Content-Type": "application/json",
+                  "Content-Length": Buffer.byteLength(postData)
+                }
+              }, (resendRes) => {
+                let resBody = "";
+                resendRes.on("data", chunk => resBody += chunk);
+                resendRes.on("end", () => {
+                  res.statusCode = resendRes.statusCode || 200;
+                  res.setHeader("Content-Type", "application/json");
+                  res.end(resBody);
+                });
+              });
+
+              resendReq.on("error", (e) => {
+                res.statusCode = 500;
+                res.setHeader("Content-Type", "application/json");
+                res.end(JSON.stringify({ success: false, error: e.message }));
+              });
+
+              resendReq.write(postData);
+              resendReq.end();
+            } catch (err: any) {
+              res.statusCode = 500;
+              res.setHeader("Content-Type", "application/json");
+              res.end(JSON.stringify({ success: false, error: err.message || "Internal server error" }));
+            }
+          });
+          return;
+        }
+
         next();
       });
     }
   };
 }
+
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
