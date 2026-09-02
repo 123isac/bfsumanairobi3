@@ -1,22 +1,35 @@
-import { ShoppingCart, Menu, X, Sun, Moon } from "lucide-react";
+import { ShoppingCart, Menu, X, Sun, Moon, User as UserIcon, LogOut, LayoutDashboard, ShoppingBag, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
-
+import { useAuth } from "@/contexts/AuthContext";
+import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import { useTheme } from "next-themes";
-
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { totalItems } = useCart();
-
+  const { user, signOut } = useAuth();
+  const { isAdmin, isStaff, role } = useStaffAuth();
   const { theme, setTheme } = useTheme();
 
-
   const isActive = (path: string) => location.pathname === path;
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/");
+  };
 
 
 
@@ -87,7 +100,7 @@ const Header = () => {
               {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
             </Button>
 
-
+            {/* Shopping Cart */}
             <Link to="/cart">
               <Button variant="ghost" size="icon" className="relative hover:bg-secondary">
                 <ShoppingCart className="h-5 w-5" />
@@ -98,6 +111,70 @@ const Header = () => {
                 )}
               </Button>
             </Link>
+
+            {/* User Account / Profile Dropdown */}
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="rounded-full bg-primary/10 hover:bg-primary/20 text-primary">
+                    <UserIcon className="h-5 w-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56 p-2">
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-semibold leading-none text-foreground truncate">
+                        {user.user_metadata?.full_name || "My Account"}
+                      </p>
+                      <p className="text-xs leading-none text-muted-foreground truncate">
+                        {user.email}
+                      </p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link to="/profile" className="cursor-pointer flex items-center gap-2">
+                      <Settings className="h-4 w-4 text-primary" />
+                      <span>Profile & Settings</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/my-orders" className="cursor-pointer flex items-center gap-2">
+                      <ShoppingBag className="h-4 w-4 text-primary" />
+                      <span>My Orders</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  {isAdmin && (
+                    <DropdownMenuItem asChild>
+                      <Link to="/admin/dashboard" className="cursor-pointer flex items-center gap-2 text-primary font-medium">
+                        <LayoutDashboard className="h-4 w-4" />
+                        <span>Admin Dashboard</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+                  {isStaff && !isAdmin && (
+                    <DropdownMenuItem asChild>
+                      <Link to="/staff/dashboard" className="cursor-pointer flex items-center gap-2 text-purple-600 font-medium">
+                        <LayoutDashboard className="h-4 w-4" />
+                        <span>Staff Dashboard</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleSignOut} className="text-destructive cursor-pointer flex items-center gap-2">
+                    <LogOut className="h-4 w-4" />
+                    <span>Sign Out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Link to="/auth">
+                <Button variant="outline" size="sm" className="hidden sm:flex items-center gap-1.5 rounded-full px-4">
+                  <UserIcon className="h-4 w-4" />
+                  <span>Sign In</span>
+                </Button>
+              </Link>
+            )}
 
             {/* Mobile Menu Toggle */}
             <Button
@@ -146,6 +223,24 @@ const Header = () => {
             >
               My Orders
             </Link>
+            {user ? (
+              <Link
+                to="/profile"
+                className={`block py-2 font-medium transition-smooth hover:text-primary ${isActive("/profile") ? "text-primary" : "text-foreground"
+                  }`}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Profile & Settings
+              </Link>
+            ) : (
+              <Link
+                to="/auth"
+                className={`block py-2 font-medium transition-smooth text-primary`}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Sign In / Register
+              </Link>
+            )}
             <Link
               to="/contact"
               className={`block py-2 font-medium transition-smooth hover:text-primary ${isActive("/contact") ? "text-primary" : "text-foreground"
@@ -154,8 +249,6 @@ const Header = () => {
             >
               Contact
             </Link>
-
-
           </nav>
         )}
       </div>

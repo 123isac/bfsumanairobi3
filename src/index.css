@@ -150,6 +150,45 @@ All colors MUST be HSL.
       transform: translate3d(-20px, 20px, 0);
     }
   }
+
+  @keyframes truck-drive {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-3px) rotate(-1deg); }
+  }
+
+
+  @keyframes badge-shimmer {
+    0%, 100% { transform: scale(1) rotate(0deg); }
+    50% { transform: scale(1.06) rotate(3deg); }
+  }
+
+  @keyframes leaf-sway {
+    0%, 100% { transform: rotate(0deg); }
+    50% { transform: rotate(10deg); }
+  }
+
+  @keyframes pulse-ring {
+    0% { transform: scale(0.92); opacity: 0.9; }
+    50% { transform: scale(1.18); opacity: 0.25; }
+    100% { transform: scale(0.92); opacity: 0.9; }
+  }
+
+  .animate-truck {
+    animation: truck-drive 2s ease-in-out infinite;
+  }
+
+  .animate-badge-shimmer {
+    animation: badge-shimmer 3.2s ease-in-out infinite;
+  }
+
+  .animate-leaf-sway {
+    animation: leaf-sway 3.8s ease-in-out infinite;
+    transform-origin: bottom center;
+  }
+
+  .animate-pulse-ring {
+    animation: pulse-ring 2.5s ease-in-out infinite;
+  }
 }
 
 @layer utilities {
@@ -157,6 +196,7 @@ All colors MUST be HSL.
     animation: float 20s ease-in-out infinite;
   }
 }
+
 
 @media (max-width: 768px) {
   .hero-float,

@@ -6,7 +6,8 @@ import CategoryCard from "@/components/CategoryCard";
 import ProductCard from "@/components/ProductCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Sparkles, Heart, Shield, Leaf, Bone, ArrowRight, Activity, Sun, Baby, Home, Star } from "lucide-react";
+import { Sparkles, Heart, Shield, ShieldCheck, Leaf, Bone, ArrowRight, Activity, Sun, Baby, Home, Star, Truck, Lock } from "lucide-react";
+
 import { Link } from "react-router-dom";
 import heroBanner from "@/assets/hero-banner.jpg";
 import { useQuery } from "@tanstack/react-query";
@@ -179,25 +180,69 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Trust Strip */}
-      <section className="bg-background border-b border-border py-4 relative z-20">
+      {/* Animated Motion Trust Strip */}
+      <section className="bg-background/95 backdrop-blur-md border-b border-border py-6 relative z-20 shadow-sm">
         <div className="container mx-auto px-4 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-            {[
-              { icon: "✅", label: "100% Authentic", sub: "Certified BF Suma products" },
-              { icon: "🚚", label: "Kenya-Wide Delivery", sub: "Fast shipping nationwide" },
-              { icon: "🔒", label: "Secure Checkout", sub: "M-Pesa & card accepted" },
-              { icon: "🌿", label: "10+ Years Trusted", sub: "Science-led formulations" },
-            ].map((item) => (
-              <div key={item.label} className="flex flex-col items-center gap-1 py-2">
-                <span className="text-2xl">{item.icon}</span>
-                <span className="font-semibold text-sm text-foreground">{item.label}</span>
-                <span className="text-xs text-muted-foreground">{item.sub}</span>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            {/* 1. 100% Authentic — Shimmering Shield Motion */}
+            <div className="group bg-gradient-to-b from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/20 hover:border-amber-500/40 rounded-2xl p-4 flex flex-col sm:flex-row items-center text-center sm:text-left gap-3 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+              <div className="relative w-12 h-12 rounded-xl bg-amber-500/15 flex items-center justify-center flex-shrink-0 text-amber-600 group-hover:scale-110 transition-transform">
+                <span className="absolute inset-0 rounded-xl bg-amber-400/20 animate-pulse-ring"></span>
+                <ShieldCheck className="h-6 w-6 text-amber-600 animate-badge-shimmer relative z-10" />
               </div>
-            ))}
+              <div>
+                <h4 className="font-bold text-sm text-foreground flex items-center justify-center sm:justify-start gap-1">
+                  100% Authentic
+                </h4>
+                <p className="text-xs text-muted-foreground mt-0.5">Certified BF Suma seal</p>
+              </div>
+            </div>
+
+            {/* 2. Kenya-Wide Delivery — Driving Motion Truck */}
+            <div className="group bg-gradient-to-b from-emerald-500/10 via-emerald-500/5 to-transparent border border-emerald-500/20 hover:border-emerald-500/40 rounded-2xl p-4 flex flex-col sm:flex-row items-center text-center sm:text-left gap-3 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+              <div className="relative w-12 h-12 rounded-xl bg-emerald-500/15 flex items-center justify-center flex-shrink-0 text-emerald-600 group-hover:scale-110 transition-transform overflow-hidden">
+                <span className="absolute inset-0 rounded-xl bg-emerald-400/20 animate-pulse-ring"></span>
+                <Truck className="h-6 w-6 text-emerald-600 animate-truck relative z-10" />
+              </div>
+              <div>
+                <h4 className="font-bold text-sm text-foreground flex items-center justify-center sm:justify-start gap-1">
+                  Kenya-Wide Delivery
+                </h4>
+                <p className="text-xs text-muted-foreground mt-0.5">Fast shipping nationwide</p>
+              </div>
+            </div>
+
+            {/* 3. Secure Checkout — Shield & Lock Motion */}
+            <div className="group bg-gradient-to-b from-blue-500/10 via-blue-500/5 to-transparent border border-blue-500/20 hover:border-blue-500/40 rounded-2xl p-4 flex flex-col sm:flex-row items-center text-center sm:text-left gap-3 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+              <div className="relative w-12 h-12 rounded-xl bg-blue-500/15 flex items-center justify-center flex-shrink-0 text-blue-600 group-hover:scale-110 transition-transform">
+                <span className="absolute inset-0 rounded-xl bg-blue-400/20 animate-pulse-ring"></span>
+                <Lock className="h-6 w-6 text-blue-600 animate-badge-shimmer relative z-10" />
+              </div>
+              <div>
+                <h4 className="font-bold text-sm text-foreground flex items-center justify-center sm:justify-start gap-1">
+                  Secure Checkout
+                </h4>
+                <p className="text-xs text-muted-foreground mt-0.5">M-Pesa & card protected</p>
+              </div>
+            </div>
+
+            {/* 4. 10+ Years Trusted — Swaying Leaf Motion */}
+            <div className="group bg-gradient-to-b from-teal-500/10 via-teal-500/5 to-transparent border border-teal-500/20 hover:border-teal-500/40 rounded-2xl p-4 flex flex-col sm:flex-row items-center text-center sm:text-left gap-3 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+              <div className="relative w-12 h-12 rounded-xl bg-teal-500/15 flex items-center justify-center flex-shrink-0 text-teal-600 group-hover:scale-110 transition-transform">
+                <span className="absolute inset-0 rounded-xl bg-teal-400/20 animate-pulse-ring"></span>
+                <Leaf className="h-6 w-6 text-teal-600 animate-leaf-sway relative z-10" />
+              </div>
+              <div>
+                <h4 className="font-bold text-sm text-foreground flex items-center justify-center sm:justify-start gap-1">
+                  10+ Years Trusted
+                </h4>
+                <p className="text-xs text-muted-foreground mt-0.5">Science-led formulas</p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
+
 
       {/* Promotional Offers & New Arrivals */}
       <section className="py-8 bg-transparent relative z-20 -mt-10 sm:-mt-16">

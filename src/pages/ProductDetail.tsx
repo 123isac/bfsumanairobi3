@@ -5,9 +5,10 @@ import ProductReviews from "@/components/ProductReviews";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Star, ShoppingCart, Heart, Shield, Leaf, Sparkles,
+  Star, ShoppingCart, Heart, Shield, ShieldCheck, Leaf, Sparkles,
   Truck, RotateCcw, CheckCircle2, Flame, Clock, ArrowRight,
 } from "lucide-react";
+
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
@@ -265,17 +266,18 @@ const ProductDetail = () => {
               {/* Delivery promise — desktop only here */}
               <div className="hidden lg:grid grid-cols-3 gap-3 text-center">
                 {[
-                  { icon: Truck, label: "2–3 Day Delivery", sub: "Nationwide" },
-                  { icon: Shield, label: "100% Authentic", sub: "Certified BF Suma" },
-                  { icon: RotateCcw, label: "Easy Returns", sub: "7-day policy" },
-                ].map(({ icon: Icon, label, sub }) => (
-                  <div key={label} className="bg-secondary/40 rounded-2xl p-4 flex flex-col items-center gap-1.5">
-                    <Icon className="h-5 w-5 text-primary" />
+                  { icon: Truck, label: "2–3 Day Delivery", sub: "Nationwide", anim: "animate-truck text-emerald-600" },
+                  { icon: ShieldCheck, label: "100% Authentic", sub: "Certified BF Suma", anim: "animate-badge-shimmer text-amber-600" },
+                  { icon: RotateCcw, label: "Easy Returns", sub: "7-day policy", anim: "text-primary hover:rotate-180 transition-transform duration-500" },
+                ].map(({ icon: Icon, label, sub, anim }) => (
+                  <div key={label} className="bg-secondary/40 hover:bg-secondary/70 border border-border/50 rounded-2xl p-4 flex flex-col items-center gap-1.5 transition-all duration-300 hover:shadow-md">
+                    <Icon className={`h-5 w-5 ${anim}`} />
                     <span className="text-xs font-semibold text-foreground">{label}</span>
                     <span className="text-[10px] text-muted-foreground">{sub}</span>
                   </div>
                 ))}
               </div>
+
             </div>
 
             {/* RIGHT — Product Info */}
