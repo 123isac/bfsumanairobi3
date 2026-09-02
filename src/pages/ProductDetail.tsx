@@ -423,48 +423,26 @@ const ProductDetail = () => {
                 </div>
               )}
 
-              {/* ── Product Overview Card (Clear & Easy to Relate) ── */}
-              <div className="rounded-2xl bg-secondary/30 border border-border/80 p-4 sm:p-5 space-y-3.5 shadow-sm">
-                <div className="space-y-1.5">
-                  <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-primary">
-                    <Sparkles className="h-3.5 w-3.5" />
-                    How It Helps You
-                  </span>
-                  <p className="text-foreground text-sm sm:text-base leading-relaxed font-normal">
-                    {fullDesc || "Authentic premium health and wellness formula from BF Suma."}
-                  </p>
-                </div>
-
-                {/* Top 3 Quick Benefits preview */}
-                {benefitItems.length > 0 && (
-                  <div className="pt-2 border-t border-border/60 space-y-2">
-                    <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
-                      Key Highlights:
-                    </p>
-                    <ul className="space-y-1.5">
-                      {benefitItems.slice(0, 3).map((item, idx) => (
-                        <li key={idx} className="flex items-start gap-2 text-xs sm:text-sm text-foreground">
-                          <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
-                          <span>{item}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
+              {/* Product Description */}
+              <div className="space-y-3">
+                <p className="text-foreground text-sm sm:text-base leading-relaxed">
+                  {fullDesc || "Authentic premium health and wellness formula from BF Suma."}
+                </p>
 
                 {/* Direct WhatsApp Specialist Callout */}
                 <div className="pt-1">
                   <a
-                    href={`https://wa.me/${SUPPORT_WHATSAPP_NUMBER}?text=${encodeURIComponent(`Hello! I would like more information and dosage advice for ${product.name}.`)}`}
+                    href={`https://wa.me/${SUPPORT_WHATSAPP_NUMBER}?text=${encodeURIComponent(`Hello! I have a question about ${product.name}.`)}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 text-xs font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 px-3.5 py-2 rounded-xl border border-emerald-200 dark:border-emerald-800/40 transition-colors w-full justify-center sm:justify-start"
+                    className="inline-flex items-center gap-2 text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 transition-colors"
                   >
                     <MessageCircle className="h-4 w-4 text-[#25D366] shrink-0" />
-                    <span>Have questions? Ask our Nairobi Wellness Advisor on WhatsApp</span>
+                    <span>Have questions? Chat with our Nairobi Wellness Advisor on WhatsApp</span>
                   </a>
                 </div>
               </div>
+
 
               {/* Quantity + Add to Cart */}
               <div className="space-y-3 pt-2">
@@ -498,175 +476,91 @@ const ProductDetail = () => {
             </div>
           </div>
 
-          {/* ── Structured Product Tabs (Readable & Easy to Understand) ── */}
+          {/* ── Product Tabs ── */}
           <div className="mb-16 md:mb-24">
             <Tabs defaultValue="benefits" className="w-full">
-              <TabsList className="w-full justify-start border-b border-border rounded-none bg-transparent h-auto p-0 gap-4 sm:gap-8 overflow-x-auto">
+              <TabsList className="w-full justify-start border-b border-border rounded-none bg-transparent h-auto p-0 gap-6 md:gap-8 overflow-x-auto">
                 <TabsTrigger
                   value="benefits"
-                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-1 pb-3 whitespace-nowrap font-bold text-sm sm:text-base text-muted-foreground data-[state=active]:text-primary transition-colors"
+                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 pb-3 whitespace-nowrap font-semibold text-base text-muted-foreground data-[state=active]:text-primary transition-colors"
                 >
-                  Health Benefits ({benefitItems.length || 1})
+                  Benefits
                 </TabsTrigger>
 
                 <TabsTrigger
                   value="ingredients"
-                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-1 pb-3 whitespace-nowrap font-bold text-sm sm:text-base text-muted-foreground data-[state=active]:text-primary transition-colors"
+                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 pb-3 whitespace-nowrap font-semibold text-base text-muted-foreground data-[state=active]:text-primary transition-colors"
                 >
-                  Ingredients & Formulation
-                </TabsTrigger>
-
-                <TabsTrigger
-                  value="delivery"
-                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-1 pb-3 whitespace-nowrap font-bold text-sm sm:text-base text-muted-foreground data-[state=active]:text-primary transition-colors"
-                >
-                  Delivery & Guarantee
+                  Ingredients
                 </TabsTrigger>
 
                 {hasVideo && (
                   <TabsTrigger
                     value="video"
-                    className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-1 pb-3 whitespace-nowrap font-bold text-sm sm:text-base text-muted-foreground data-[state=active]:text-primary transition-colors"
+                    className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 pb-3 whitespace-nowrap font-semibold text-base text-muted-foreground data-[state=active]:text-primary transition-colors"
                   >
-                    Video Guide
+                    Video
                   </TabsTrigger>
                 )}
 
                 <TabsTrigger
                   value="reviews"
-                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-1 pb-3 whitespace-nowrap font-bold text-sm sm:text-base text-muted-foreground data-[state=active]:text-primary transition-colors"
+                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 pb-3 whitespace-nowrap font-semibold text-base text-muted-foreground data-[state=active]:text-primary transition-colors"
                 >
                   Reviews ({reviewCount})
                 </TabsTrigger>
               </TabsList>
 
-              {/* TAB 1: HEALTH BENEFITS */}
+              {/* TAB 1: BENEFITS */}
               <TabsContent value="benefits" className="mt-8">
-                <div className="max-w-4xl space-y-4">
-                  <div className="space-y-1">
-                    <h3 className="font-bold text-lg text-foreground flex items-center gap-2">
-                      <ShieldCheck className="h-5 w-5 text-primary" /> Key Health Benefits & Results
-                    </h3>
-                    <p className="text-xs sm:text-sm text-muted-foreground">
-                      Science-led results you can expect with consistent use of this authentic BF Suma formula:
-                    </p>
-                  </div>
-
+                <div className="max-w-3xl space-y-4">
                   {benefitItems.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
+                    <ul className="space-y-2.5">
                       {benefitItems.map((benefit, i) => (
-                        <div key={i} className="p-4 rounded-2xl bg-card border border-border/80 flex items-start gap-3 shadow-xs hover:border-primary/40 transition-colors">
-                          <span className="w-6 h-6 rounded-full bg-emerald-500/15 flex items-center justify-center shrink-0 mt-0.5">
-                            <Check className="h-3.5 w-3.5 text-emerald-600 font-bold" />
+                        <li key={i} className="flex items-start gap-3 rounded-xl hover:bg-primary/4 transition-colors px-2 py-1.5">
+                          <span className="mt-0.5 flex-shrink-0 w-5 h-5 rounded-full bg-emerald-500/15 flex items-center justify-center">
+                            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
                           </span>
-                          <span className="text-sm text-foreground leading-relaxed font-medium">{benefit}</span>
-                        </div>
+                          <span className="text-base text-foreground leading-relaxed font-medium">{benefit}</span>
+                        </li>
                       ))}
-                    </div>
+                    </ul>
                   ) : (
-                    <div className="p-5 rounded-2xl bg-card border border-border text-sm text-foreground leading-relaxed">
-                      {fullDesc || "Formulated with premium natural ingredients and certified American wellness technology to support your vitality, immunity, and overall body balance."}
-                    </div>
+                    <p className="text-muted-foreground text-base">
+                      {fullDesc || "Premium quality wellness product from BF Suma — backed by science and nature."}
+                    </p>
                   )}
                 </div>
               </TabsContent>
 
               {/* TAB 2: INGREDIENTS */}
               <TabsContent value="ingredients" className="mt-8">
-                <div className="max-w-4xl space-y-4">
-                  <div className="space-y-1">
-                    <h3 className="font-bold text-lg text-foreground flex items-center gap-2">
-                      <Leaf className="h-5 w-5 text-emerald-600" /> Active Natural Ingredients
-                    </h3>
-                    <p className="text-xs sm:text-sm text-muted-foreground">
-                      Pure, tested, and high-potency ingredients selected for maximum bioavailability:
-                    </p>
-                  </div>
-
+                <div className="max-w-3xl space-y-4">
                   {ingredientItems.length > 0 ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                    <div className="flex flex-wrap gap-2.5">
                       {ingredientItems.map((ing, i) => (
-                        <div key={i} className="p-3.5 rounded-2xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200/60 dark:border-emerald-800/40 flex items-center gap-3">
-                          <span className="w-7 h-7 rounded-xl bg-emerald-600/10 text-emerald-600 flex items-center justify-center shrink-0">
-                            <Leaf className="h-4 w-4" />
-                          </span>
-                          <span className="text-xs sm:text-sm font-semibold text-foreground">{ing}</span>
-                        </div>
+                        <span
+                          key={i}
+                          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm font-medium bg-primary/8 text-primary border border-primary/15 hover:bg-primary/14 transition-colors"
+                        >
+                          <Leaf className="h-3 w-3 shrink-0" />
+                          {ing}
+                        </span>
                       ))}
                     </div>
                   ) : (
-                    <div className="p-5 rounded-2xl bg-card border border-border space-y-2">
-                      <p className="text-sm font-semibold text-foreground">Natural Botanical & Bio-Active Formula</p>
-                      <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                        Contains pure, GMP-certified active botanical extracts and micronutrients formulated without harmful additives or synthetic fillers.
-                      </p>
-                    </div>
-                  )}
-
-                  <div className="p-4 rounded-2xl bg-secondary/30 border border-border/80 flex items-center gap-3 text-xs text-muted-foreground mt-4">
-                    <Shield className="h-5 w-5 text-primary shrink-0" />
-                    <span>All ingredients comply with international Good Manufacturing Practices (GMP) and BF Suma authenticity testing standards.</span>
-                  </div>
-                </div>
-              </TabsContent>
-
-              {/* TAB 3: DELIVERY & GUARANTEE */}
-              <TabsContent value="delivery" className="mt-8">
-                <div className="max-w-4xl space-y-4">
-                  <div className="space-y-1">
-                    <h3 className="font-bold text-lg text-foreground flex items-center gap-2">
-                      <Truck className="h-5 w-5 text-primary" /> Delivery Timelines & Authenticity Guarantee
-                    </h3>
-                    <p className="text-xs sm:text-sm text-muted-foreground">
-                      Fast and reliable delivery from our Nairobi dispatch hub directly to your location:
+                    <p className="text-muted-foreground text-base">
+                      Premium natural ingredients carefully selected for quality and effectiveness.
                     </p>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                    <div className="p-4 rounded-2xl bg-card border border-border space-y-1.5 shadow-xs">
-                      <p className="font-bold text-sm text-foreground flex items-center gap-2">
-                        <Clock className="h-4 w-4 text-emerald-600" /> Nairobi Same-Day Delivery
-                      </p>
-                      <p className="text-xs text-muted-foreground leading-relaxed">
-                        Orders placed before 4:00 PM are delivered within <strong>2–4 hours</strong> via direct rider across Nairobi.
-                      </p>
-                    </div>
-
-                    <div className="p-4 rounded-2xl bg-card border border-border space-y-1.5 shadow-xs">
-                      <p className="font-bold text-sm text-foreground flex items-center gap-2">
-                        <Truck className="h-4 w-4 text-blue-600" /> Countrywide Kenya Delivery
-                      </p>
-                      <p className="text-xs text-muted-foreground leading-relaxed">
-                        Next-day parcel delivery (<strong>24–48 hours</strong>) to Mombasa, Kisumu, Nakuru, Eldoret, and all 47 counties.
-                      </p>
-                    </div>
-
-                    <div className="p-4 rounded-2xl bg-card border border-border space-y-1.5 shadow-xs">
-                      <p className="font-bold text-sm text-foreground flex items-center gap-2">
-                        <ShieldCheck className="h-4 w-4 text-amber-600" /> 100% Genuine Seal
-                      </p>
-                      <p className="text-xs text-muted-foreground leading-relaxed">
-                        Every package carries the official BF Suma hologram seal and authentic batch verification code.
-                      </p>
-                    </div>
-
-                    <div className="p-4 rounded-2xl bg-card border border-border space-y-1.5 shadow-xs">
-                      <p className="font-bold text-sm text-foreground flex items-center gap-2">
-                        <RotateCcw className="h-4 w-4 text-primary" /> 7-Day Return Policy
-                      </p>
-                      <p className="text-xs text-muted-foreground leading-relaxed">
-                        Unopened products can be returned or exchanged within 7 days of delivery with receipt.
-                      </p>
-                    </div>
-                  </div>
+                  )}
                 </div>
               </TabsContent>
 
-              {/* TAB 4: VIDEO */}
+              {/* TAB 3: VIDEO */}
               {hasVideo && (
                 <TabsContent value="video" className="mt-8">
                   <div className="max-w-3xl space-y-3">
-                    <div className="relative w-full aspect-video rounded-3xl overflow-hidden bg-black shadow-luxury border border-border">
+                    <div className="relative w-full aspect-video rounded-2xl overflow-hidden bg-black shadow-luxury">
                       <iframe
                         src={`https://www.youtube.com/embed/${youtubeVideoId}?rel=0`}
                         title={`${product.name} - Video Demo`}
@@ -675,14 +569,14 @@ const ProductDetail = () => {
                         className="absolute inset-0 w-full h-full"
                       />
                     </div>
-                    <p className="text-muted-foreground text-xs sm:text-sm">
-                      Watch how {product.name} works and how to incorporate it into your daily wellness routine.
+                    <p className="text-muted-foreground text-sm">
+                      Watch how {product.name} works and its key benefits.
                     </p>
                   </div>
                 </TabsContent>
               )}
 
-              {/* TAB 5: REVIEWS */}
+              {/* TAB 4: REVIEWS */}
               <TabsContent value="reviews" className="mt-8">
                 <div className="max-w-3xl">
                   {id && <ProductReviews productId={id} />}
@@ -690,6 +584,7 @@ const ProductDetail = () => {
               </TabsContent>
             </Tabs>
           </div>
+
 
 
           {/* ── Related Products ── */}
