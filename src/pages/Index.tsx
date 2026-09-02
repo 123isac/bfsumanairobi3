@@ -147,14 +147,15 @@ const Index = () => {
                 { l: "M", w: "Manufacturer", c: "text-emerald-400" },
                 { l: "A", w: "America", c: "text-indigo-400" }
               ].map((item, i) => (
-                <div key={i} className="flex flex-col items-center group cursor-default">
+                <div key={i} className="relative flex flex-col items-center group cursor-default pb-5">
                   <span className={`text-3xl md:text-5xl lg:text-6xl font-display font-bold text-white mb-2 drop-shadow-md group-hover:-translate-y-2 transition-transform duration-300`}>
                     {item.l}
                   </span>
-                  <span className={`text-[10px] md:text-xs lg:text-sm font-medium tracking-widest uppercase opacity-0 group-hover:opacity-100 ${item.c} transition-all duration-300 absolute -bottom-6`}>
+                  <span className={`text-[10px] md:text-xs lg:text-sm font-medium tracking-widest uppercase opacity-0 group-hover:opacity-100 ${item.c} transition-all duration-300 absolute bottom-0 whitespace-nowrap`}>
                     {item.w}
                   </span>
                 </div>
+
               ))}
             </div>
 
