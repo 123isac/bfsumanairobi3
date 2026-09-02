@@ -8,6 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { partnerApplicationSchema } from "@/utils/validation";
 import { toast } from "sonner";
+import { sendEmail } from "@/utils/email";
+
 
 const codeFromName = (name: string) => {
   const seed = name.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6) || "PARTNR";
@@ -55,7 +57,21 @@ const PartnerApply = () => {
         message: "[PARTNER APPLICATION]\n" + parsed.data.background.trim(),
       });
 
+      // Dispatch Resend alert to admin (non-blocking)
+      sendEmail({
+        type: "partner_application",
+        to: "neonnest254@gmail.com",
+        data: {
+          fullName: parsed.data.fullName,
+          email: parsed.data.email.trim().toLowerCase(),
+          phone: parsed.data.phone.trim(),
+          city: "Kenya",
+          experience: parsed.data.background.trim(),
+        },
+      }).catch(err => console.warn("Partner application email error:", err));
+
       toast.success("Application submitted. Our team will review and contact you soon.");
+
       setFormData({ fullName: "", email: "", phone: "", background: "" });
     } catch (error: unknown) {
       if (import.meta.env.DEV) {

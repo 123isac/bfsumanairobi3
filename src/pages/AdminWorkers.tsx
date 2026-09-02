@@ -8,6 +8,8 @@ import { Users, Plus, Search, UserCheck, UserX, Edit, Shield, RefreshCw } from "
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { sendWorkerInviteEmail } from "@/utils/email";
+
 
 interface Worker {
   id: string;
@@ -114,6 +116,13 @@ const AdminWorkers = () => {
       });
 
       if (!edgeError && edgeData?.success) {
+        sendWorkerInviteEmail({
+          email: cleanEmail,
+          fullName: cleanName,
+          role: ROLE_DISPLAY[role]?.label || role,
+          tempPassword: password,
+        }).catch(e => console.warn("Worker invite email error:", e));
+
         toast.success(edgeData.message || `Staff account for ${cleanName} configured successfully!`);
         setCreateOpen(false);
         fetchWorkers();
@@ -131,6 +140,13 @@ const AdminWorkers = () => {
       });
 
       if (!rpcError && rpcData?.success) {
+        sendWorkerInviteEmail({
+          email: cleanEmail,
+          fullName: cleanName,
+          role: ROLE_DISPLAY[role]?.label || role,
+          tempPassword: password,
+        }).catch(e => console.warn("Worker invite email error:", e));
+
         toast.success(rpcData.message || `Customer (${cleanEmail}) upgraded to ${ROLE_DISPLAY[role]?.label || role}!`);
         setCreateOpen(false);
         fetchWorkers();
@@ -174,11 +190,19 @@ const AdminWorkers = () => {
           status: "active",
         }, { onConflict: 'user_id' });
 
+        sendWorkerInviteEmail({
+          email: cleanEmail,
+          fullName: cleanName,
+          role: ROLE_DISPLAY[role]?.label || role,
+          tempPassword: password,
+        }).catch(e => console.warn("Worker invite email error:", e));
+
         toast.success(`Staff account for ${cleanName} created successfully!`);
         setCreateOpen(false);
         fetchWorkers();
         return;
       }
+
 
       throw new Error(edgeData?.error || "Failed to configure worker account");
     } catch (err: any) {

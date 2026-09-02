@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Package, Search, Clock, CheckCircle, Eye, HandCoins } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { sendDeliveryStatusEmail } from "@/utils/email";
+
 
 // Define an interface matching the Supabase orders schema
 interface Order {
@@ -67,12 +69,25 @@ const AdminOrders = () => {
         .eq("id", orderId);
 
       if (error) throw error;
+
+      // Dispatch Resend delivery status email to customer (non-blocking)
+      const currentOrder = orders.find(o => o.id === orderId);
+      if (currentOrder && currentOrder.customer_email) {
+        sendDeliveryStatusEmail({
+          customerEmail: currentOrder.customer_email,
+          customerName: currentOrder.customer_name,
+          orderId: currentOrder.id,
+          status: newStatus as any,
+        }).catch(err => console.warn("Delivery update email error:", err));
+      }
+
       toast.success(`Order marked as ${newStatus}`);
       fetchOrders();
     } catch (error: any) {
       toast.error("Failed to update order: " + error.message);
     }
   };
+
 
   const updatePaymentStatus = async (orderId: string, newStatus: string) => {
     try {
