@@ -94,63 +94,101 @@ const AdminWorkers = () => {
     }
 
     setSubmitting(true);
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanName = fullName.trim();
+    const cleanEmpId = employeeId.trim();
+    const cleanPosition = position.trim() || ROLE_DISPLAY[role]?.label || role;
+
     try {
-      // 1. Try via Admin Worker Backend API
-      const res = await fetch("/api/admin/create-worker", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: email.trim(),
-          password,
-          fullName: fullName.trim(),
-          employeeId: employeeId.trim(),
-          position: position.trim() || ROLE_DISPLAY[role]?.label || role,
-          department,
-          role,
-        }),
-      });
-
-      const data = await res.json().catch(() => null);
-
-      if (res.ok && data?.success) {
-        if (data.isExistingUser) {
-          toast.success(`Existing user account upgraded to ${ROLE_DISPLAY[role]?.label || role} & password updated!`);
-        } else {
-          toast.success(`Staff account for ${fullName} created successfully!`);
-        }
-        setCreateOpen(false);
-        fetchWorkers();
-        return;
-      }
-
-      // 2. Try via Edge Function if API route returned error
-      const edgeRes = await supabase.functions.invoke("create-worker", {
+      // 1. Primary Method: Invoke 'create-worker' Edge Function
+      const { data: edgeData, error: edgeError } = await supabase.functions.invoke("create-worker", {
         body: {
-          email: email.trim(),
+          email: cleanEmail,
           password,
-          fullName: fullName.trim(),
-          employeeId: employeeId.trim(),
-          position: position.trim() || ROLE_DISPLAY[role]?.label || role,
+          fullName: cleanName,
+          employeeId: cleanEmpId,
+          position: cleanPosition,
           department,
           role,
         },
       });
 
-      if (!edgeRes.error && edgeRes.data?.success) {
-        toast.success(edgeRes.data.message || `Staff account for ${fullName} configured successfully!`);
+      if (!edgeError && edgeData?.success) {
+        toast.success(edgeData.message || `Staff account for ${cleanName} configured successfully!`);
         setCreateOpen(false);
         fetchWorkers();
         return;
       }
 
-      // If backend returned specific error
-      throw new Error(data?.error || edgeRes.error?.message || "Failed to create worker");
+      // 2. Secondary Method (Database RPC Fallback for existing customers)
+      const { data: rpcData, error: rpcError } = await supabase.rpc("admin_upsert_worker", {
+        _email: cleanEmail,
+        _full_name: cleanName,
+        _employee_id: cleanEmpId,
+        _position: cleanPosition,
+        _department: department,
+        _role: role,
+      });
+
+      if (!rpcError && rpcData?.success) {
+        toast.success(rpcData.message || `Customer (${cleanEmail}) upgraded to ${ROLE_DISPLAY[role]?.label || role}!`);
+        setCreateOpen(false);
+        fetchWorkers();
+        return;
+      }
+
+      // 3. Tertiary Method (Standard client-side creation for brand new email)
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: cleanEmail,
+        password,
+        options: {
+          data: { full_name: cleanName },
+        },
+      });
+
+      if (authError) {
+        // If email already registered but RPC couldn't upgrade, report clear reason
+        if (authError.message.includes("already registered") || authError.message.includes("already exists")) {
+          throw new Error(`This email (${cleanEmail}) is already registered in the system. Deploy the create-worker function or run the admin_upsert_worker SQL to upgrade them.`);
+        }
+        throw authError;
+      }
+
+      if (authData.user) {
+        const newUserId = authData.user.id;
+
+        // Assign user role
+        await supabase.from("user_roles").upsert({
+          user_id: newUserId,
+          role: role as any,
+        }, { onConflict: 'user_id' });
+
+        // Insert worker profile
+        await supabase.from("workers").upsert({
+          user_id: newUserId,
+          employee_id: cleanEmpId,
+          full_name: cleanName,
+          position: cleanPosition,
+          department,
+          role: role as any,
+          status: "active",
+        }, { onConflict: 'user_id' });
+
+        toast.success(`Staff account for ${cleanName} created successfully!`);
+        setCreateOpen(false);
+        fetchWorkers();
+        return;
+      }
+
+      throw new Error(edgeData?.error || "Failed to configure worker account");
     } catch (err: any) {
-      toast.error("Failed to create worker: " + err.message);
+      console.error("Create worker error:", err);
+      toast.error(err.message || "Failed to create worker account");
     } finally {
       setSubmitting(false);
     }
   };
+
 
   const toggleStatus = async (worker: Worker) => {
     const newStatus = worker.status === "active" ? "suspended" : "active";
