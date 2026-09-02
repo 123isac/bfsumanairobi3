@@ -71,14 +71,29 @@ export const StaffAuthProvider = ({ children }: { children: ReactNode }) => {
 
       const userId = session.user.id;
 
-      // Load role
+      // Load role from user_roles
       const { data: roleData } = await supabase
         .from("user_roles")
         .select("role")
         .eq("user_id", userId)
         .maybeSingle();
 
-      const userRole = (roleData?.role as AppRole) ?? null;
+      let userRole = (roleData?.role as AppRole) ?? null;
+
+      // Fallback: check workers table if user_roles is missing or customer
+      if (!userRole || userRole === "customer") {
+        const { data: workerRow } = await supabase
+          .from("workers")
+          .select("*")
+          .eq("user_id", userId)
+          .maybeSingle();
+
+        if (workerRow && workerRow.status === "active" && workerRow.role && STAFF_ROLES.includes(workerRow.role as AppRole)) {
+          userRole = workerRow.role as AppRole;
+          setWorkerProfile(workerRow);
+        }
+      }
+
       setRole(userRole);
 
       if (userRole === "admin") {
@@ -89,14 +104,16 @@ export const StaffAuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       if (userRole && STAFF_ROLES.includes(userRole)) {
-        // Load worker profile
-        const { data: profile } = await supabase
-          .from("workers")
-          .select("*")
-          .eq("user_id", userId)
-          .maybeSingle();
+        // Load worker profile if not already loaded
+        if (!workerProfile) {
+          const { data: profile } = await supabase
+            .from("workers")
+            .select("*")
+            .eq("user_id", userId)
+            .maybeSingle();
 
-        setWorkerProfile(profile ?? null);
+          setWorkerProfile(profile ?? null);
+        }
 
         // Load permissions for this role
         const { data: perms } = await supabase
@@ -111,6 +128,7 @@ export const StaffAuthProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       setLoading(false);
     }
+
   };
 
   useEffect(() => {

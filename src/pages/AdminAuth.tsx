@@ -23,16 +23,34 @@ const AdminAuth = () => {
             try {
                 const { data: { session } } = await supabase.auth.getSession();
                 if (session?.user) {
-                    const { data } = await supabase
+                    const userId = session.user.id;
+
+                    // 1. Check user_roles
+                    const { data: roleData } = await supabase
                         .from('user_roles')
                         .select('role')
-                        .eq('user_id', session.user.id)
+                        .eq('user_id', userId)
                         .maybeSingle();
 
-                    if (data?.role === 'admin') {
+                    let userRole = roleData?.role;
+
+                    // 2. Fallback check workers table
+                    if (!userRole || userRole === 'customer') {
+                        const { data: workerData } = await supabase
+                            .from('workers')
+                            .select('role, status')
+                            .eq('user_id', userId)
+                            .maybeSingle();
+
+                        if (workerData && workerData.status === 'active') {
+                            userRole = workerData.role;
+                        }
+                    }
+
+                    if (userRole === 'admin') {
                         navigate("/admin/dashboard", { replace: true });
                         return;
-                    } else if (data?.role && STAFF_ROLES.includes(data.role)) {
+                    } else if (userRole && STAFF_ROLES.includes(userRole)) {
                         navigate("/staff/dashboard", { replace: true });
                         return;
                     }
@@ -58,23 +76,42 @@ const AdminAuth = () => {
 
         try {
             const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-                email,
+                email: email.trim(),
                 password,
             });
 
             if (authError) throw authError;
 
             if (authData.user) {
-                // Verify role immediately
-                const { data: roleData, error: roleError } = await supabase
+                const userId = authData.user.id;
+
+                // 1. Check user_roles
+                const { data: roleData } = await supabase
                     .from('user_roles')
                     .select('role')
-                    .eq('user_id', authData.user.id)
+                    .eq('user_id', userId)
                     .maybeSingle();
 
-                if (roleError) throw roleError;
+                let userRole = roleData?.role;
 
-                const userRole = roleData?.role;
+                // 2. Check workers table if not found or customer
+                if (!userRole || userRole === 'customer') {
+                    const { data: workerData } = await supabase
+                        .from('workers')
+                        .select('role, status')
+                        .eq('user_id', userId)
+                        .maybeSingle();
+
+                    if (workerData && workerData.status === 'active' && STAFF_ROLES.includes(workerData.role)) {
+                        userRole = workerData.role;
+
+                        // Auto-sync user_roles
+                        await supabase.from('user_roles').upsert({
+                            user_id: userId,
+                            role: workerData.role,
+                        }, { onConflict: 'user_id' });
+                    }
+                }
 
                 if (userRole === 'admin') {
                     toast.success("Admin access granted.");
@@ -97,6 +134,7 @@ const AdminAuth = () => {
             setLoading(false);
         }
     };
+
 
     if (verifying) {
         return (

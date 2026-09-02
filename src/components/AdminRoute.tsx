@@ -27,17 +27,31 @@ export function AdminRoute({ children }: { children: React.ReactNode }) {
                     .eq('user_id', session.user.id)
                     .maybeSingle();
 
+                let currentRole = roleData?.role;
+
+                if (!currentRole || currentRole === 'customer') {
+                    const { data: workerData } = await supabase
+                        .from('workers')
+                        .select('role, status')
+                        .eq('user_id', session.user.id)
+                        .maybeSingle();
+
+                    if (workerData && workerData.status === 'active') {
+                        currentRole = workerData.role;
+                    }
+                }
+
                 if (mounted) {
-                    if (!roleError && roleData?.role === 'admin') {
+                    if (currentRole === 'admin') {
                         setIsAdmin(true);
-                    } else if (!roleError && STAFF_ROLES.includes(roleData?.role ?? '')) {
-                        // Staff member trying to access /admin — redirect them to staff portal
+                    } else if (currentRole && STAFF_ROLES.includes(currentRole)) {
                         setIsStaff(true);
                     } else {
                         await supabase.auth.signOut();
                     }
                     setLoading(false);
                 }
+
             } catch (error) {
                 console.error("Admin Route Auth Error:", error);
                 if (mounted) { setIsAdmin(false); setLoading(false); }
