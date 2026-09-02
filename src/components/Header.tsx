@@ -1,4 +1,5 @@
-import { ShoppingCart, Menu, X, Sun, Moon, User as UserIcon, LogOut, LayoutDashboard, ShoppingBag, Settings, Sparkles } from "lucide-react";
+import { ShoppingCart, Menu, X, Sun, Moon, User as UserIcon, LogOut, LayoutDashboard, ShoppingBag, Settings, Sparkles, Headphones, MessageSquare } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -90,16 +91,35 @@ const Header = () => {
 
             {/* Cart & Upper Header Actions */}
             <div className="flex items-center space-x-2 sm:space-x-3">
-              {/* Upper Assistant Chat Button */}
-              <Button
-                variant="outline"
-                size="sm"
+              {/* Upper Support & Help Desk Button */}
+              <button
+                type="button"
                 onClick={() => setAssistantOpen(true)}
-                className="flex items-center gap-1.5 rounded-full px-3 py-1.5 h-9 bg-primary/10 hover:bg-primary/20 border-primary/30 text-primary text-xs font-semibold shadow-sm transition-all"
+                className="group flex items-center gap-2 rounded-full pl-1.5 pr-3 py-1 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 border border-emerald-300 dark:border-emerald-700/50 shadow-sm transition-all duration-200"
+                aria-label="Customer Support and Health Advisor"
               >
-                <Sparkles className="h-3.5 w-3.5 text-primary animate-badge-shimmer" />
-                <span className="hidden sm:inline">Assistant</span>
-              </Button>
+                {/* Support Agent Avatar Image / Badge */}
+                <div className="relative flex items-center justify-center">
+                  <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
+                    <Headphones className="h-3.5 w-3.5" />
+                  </div>
+                  {/* Live Online Green Pulse Indicator */}
+                  <span className="absolute -bottom-0.5 -right-0.5 flex h-2.5 w-2.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500 border border-background"></span>
+                  </span>
+                </div>
+
+                <div className="flex flex-col text-left leading-none">
+                  <span className="text-[11px] font-bold text-foreground group-hover:text-primary transition-colors">
+                    Support
+                  </span>
+                  <span className="text-[9px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5 hidden sm:inline">
+                    Online 🟢
+                  </span>
+                </div>
+              </button>
+
 
               {/* Dark Mode Toggle */}
               <Button

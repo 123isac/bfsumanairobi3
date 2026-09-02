@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { SUPPORT_WHATSAPP_NUMBER, SUPPORT_PHONE_DISPLAY } from "@/config/site";
 import { 
+  Headphones,
   Sparkles, 
   MessageCircle, 
   Search, 
@@ -19,6 +20,7 @@ import {
   Clock,
   Package
 } from "lucide-react";
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -93,19 +95,27 @@ export const WellnessAssistantModal = ({ open, onOpenChange }: WellnessAssistant
         {/* Header with Emerald Gradient */}
         <div className="bg-gradient-primary p-6 text-white relative">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white">
-              <Sparkles className="h-5 w-5 animate-badge-shimmer" />
+            {/* Support Specialist Avatar */}
+            <div className="relative">
+              <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white border border-white/30 shadow-inner">
+                <Headphones className="h-6 w-6 text-white animate-bounce-slight" />
+              </div>
+              <span className="absolute -bottom-1 -right-1 flex h-3.5 w-3.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-300 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-400 border-2 border-emerald-900"></span>
+              </span>
             </div>
             <div>
               <DialogTitle className="text-xl font-bold text-white flex items-center gap-2">
-                BF Suma Wellness Assistant
-                <Badge className="bg-emerald-400 text-emerald-950 font-semibold text-[10px] px-2">24/7 Support</Badge>
+                BF Suma Customer Support
+                <Badge className="bg-emerald-400 text-emerald-950 font-bold text-[10px] px-2 py-0.5">Live 24/7</Badge>
               </DialogTitle>
-              <DialogDescription className="text-white/80 text-xs mt-0.5">
-                Instant health product finder, order tracking, and live specialist support.
+              <DialogDescription className="text-white/85 text-xs mt-0.5">
+                Nairobi Wellness Advisor • Product Finder • Instant Order Tracking
               </DialogDescription>
             </div>
           </div>
+
 
           {/* Quick Navigation Tabs */}
           <div className="flex items-center gap-2 mt-4">
