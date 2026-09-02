@@ -18,7 +18,11 @@ import {
   Loader2, 
   CheckCircle2,
   Clock,
-  Package
+  Package,
+  Activity,
+  Leaf,
+  Zap,
+  BookOpen
 } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -30,11 +34,11 @@ interface WellnessAssistantModalProps {
 }
 
 const HEALTH_GOALS = [
-  { label: "Immune Boosters", category: "immune-boosters", icon: "🛡️", desc: "Pure & Refined Micropowder, Ansobot, Reishi" },
-  { label: "Bone & Joint Care", category: "bone-joint-care", icon: "🦴", desc: "Zaminocal, Glucosamine, ArthroXtra" },
-  { label: "Digestive Health", category: "digestive-health", icon: "🌿", desc: "ConstiRelax, Probiotics, Detox Tea" },
-  { label: "Cardiovascular Care", category: "cardiovascular-health", icon: "❤️", desc: "MicrO2 Cycle Tea, Purewell, CereBrain" },
-  { label: "Energy & Vitality", category: "energy-vitality", icon: "⚡", desc: "Cordyceps, Maca, Ginseng" },
+  { label: "Immune Boosters", category: "immune-boosters", Icon: ShieldCheck, color: "text-amber-600 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/40", desc: "Pure & Refined Micropowder, Ansobot, Reishi" },
+  { label: "Bone & Joint Care", category: "bone-joint-care", Icon: Activity, color: "text-blue-600 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/40", desc: "Zaminocal, Glucosamine, ArthroXtra" },
+  { label: "Digestive Health", category: "digestive-health", Icon: Leaf, color: "text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/40", desc: "ConstiRelax, Probiotics, Detox Tea" },
+  { label: "Cardiovascular Care", category: "cardiovascular-health", Icon: HeartPulse, color: "text-rose-600 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/40", desc: "MicrO2 Cycle Tea, Purewell, CereBrain" },
+  { label: "Energy & Vitality", category: "energy-vitality", Icon: Zap, color: "text-yellow-600 bg-yellow-50 dark:bg-yellow-950/40 border border-yellow-200 dark:border-yellow-800/40", desc: "Cordyceps, Maca, Ginseng" },
 ];
 
 const FAQS = [
@@ -116,38 +120,37 @@ export const WellnessAssistantModal = ({ open, onOpenChange }: WellnessAssistant
             </div>
           </div>
 
-
           {/* Quick Navigation Tabs */}
           <div className="flex items-center gap-2 mt-4">
             <button
               onClick={() => setActiveTab("guide")}
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all ${
                 activeTab === "guide" 
                   ? "bg-white text-primary shadow-sm" 
                   : "bg-white/15 text-white hover:bg-white/25"
               }`}
             >
-              🩺 Product Finder
+              <Search className="h-3.5 w-3.5" /> Product Finder
             </button>
             <button
               onClick={() => setActiveTab("track")}
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all ${
                 activeTab === "track" 
                   ? "bg-white text-primary shadow-sm" 
                   : "bg-white/15 text-white hover:bg-white/25"
               }`}
             >
-              📦 Track Order
+              <Package className="h-3.5 w-3.5" /> Track Order
             </button>
             <button
               onClick={() => setActiveTab("faq")}
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all ${
                 activeTab === "faq" 
                   ? "bg-white text-primary shadow-sm" 
                   : "bg-white/15 text-white hover:bg-white/25"
               }`}
             >
-              ❓ Quick FAQs
+              <HelpCircle className="h-3.5 w-3.5" /> FAQs
             </button>
           </div>
         </div>
@@ -165,22 +168,28 @@ export const WellnessAssistantModal = ({ open, onOpenChange }: WellnessAssistant
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                {HEALTH_GOALS.map((goal) => (
-                  <button
-                    key={goal.category}
-                    onClick={() => handleGoalClick(goal.category)}
-                    className="flex items-start gap-3 p-3 text-left rounded-2xl border border-border/80 bg-secondary/30 hover:bg-secondary/80 hover:border-primary/40 transition-all group"
-                  >
-                    <span className="text-2xl mt-0.5 group-hover:scale-110 transition-transform">{goal.icon}</span>
-                    <div className="space-y-0.5">
-                      <p className="font-semibold text-sm text-foreground group-hover:text-primary transition-colors flex items-center gap-1">
-                        {goal.label} <ArrowRight className="h-3.5 w-3.5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                      </p>
-                      <p className="text-[11px] text-muted-foreground line-clamp-1">{goal.desc}</p>
-                    </div>
-                  </button>
-                ))}
+                {HEALTH_GOALS.map((goal) => {
+                  const IconComp = goal.Icon;
+                  return (
+                    <button
+                      key={goal.category}
+                      onClick={() => handleGoalClick(goal.category)}
+                      className="flex items-start gap-3 p-3 text-left rounded-2xl border border-border/80 bg-secondary/30 hover:bg-secondary/80 hover:border-primary/40 transition-all group"
+                    >
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${goal.color} group-hover:scale-105 transition-transform`}>
+                        <IconComp className="h-4 w-4" />
+                      </div>
+                      <div className="space-y-0.5">
+                        <p className="font-semibold text-sm text-foreground group-hover:text-primary transition-colors flex items-center gap-1">
+                          {goal.label} <ArrowRight className="h-3.5 w-3.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </p>
+                        <p className="text-[11px] text-muted-foreground line-clamp-1">{goal.desc}</p>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
+
 
               {/* Direct WhatsApp Consultant Banner */}
               <div className="mt-4 p-4 rounded-2xl bg-gradient-to-r from-emerald-500/15 via-emerald-500/5 to-transparent border border-emerald-500/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">

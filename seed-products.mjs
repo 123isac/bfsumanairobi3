@@ -133,18 +133,49 @@ const products = [
     },
     {
         slug: 'beauty-antiaging',
-        name: `SUMA GRAND 1: Cleanser+Lotion+Toner`,
+        name: `SUMA GRAND 1: Youth Essence 3-Piece Skincare Pack (Cleanser + Toner + Lotion)`,
         price: 12987,
         stock: 100,
-        description: `Premium BF Suma product.`
+        description: `Premier 3-in-1 Youth Essence daily skincare regimen combining Youth Refreshing Facial Cleanser, Youth Essence Toner, and Youth Essence Lotion. Uses advanced mitochondrial cellular repair and liposomal delivery to purify, tighten pores, and deeply hydrate for firm, radiant skin.`,
+        benefits: [
+            'Complete 3-step daily youth protocol: Cleanses, balances, and moisturizes',
+            'Youth Refreshing Cleanser gently purifies without stripping natural moisture',
+            'Youth Essence Toner tightens pores and balances skin pH in seconds',
+            'Youth Essence Lotion locks in deep cellular moisture and improves elasticity',
+            'Powered by BF Suma mitochondrial repair technology to combat aging'
+        ],
+        ingredients: [
+            'Youth Refreshing Facial Cleanser: Purifying amino acids, botanical extracts, gentle cleansing surfactants',
+            'Youth Essence Toner: Multi-molecular Hyaluronic Acid, Marine Astaxanthin, Witch Hazel Extract',
+            'Youth Essence Lotion: Squalane, Niacinamide (Vitamin B3), Coenzyme Q10, Collagen Bio-Peptides'
+        ],
+        usage_instructions: `1. Cleanse face with Youth Refreshing Facial Cleanser morning & night.\n2. Pat Youth Essence Toner gently onto face and neck.\n3. Smooth Youth Essence Lotion over skin until fully absorbed.`
     },
     {
         slug: 'beauty-antiaging',
-        name: `SUMA GRAND 2: Cleanser+Lotion+Toner+Face mask+ Cream`,
+        name: `SUMA GRAND 2: Youth Essence 5-Piece Ultimate Anti-Aging Skincare Collection (Cleanser + Toner + Lotion + Face Mask + Cream)`,
         price: 22113,
         stock: 100,
-        description: `Premium BF Suma product.`
+        description: `The ultimate 5-in-1 luxury Youth Essence anti-aging collection featuring Youth Refreshing Facial Cleanser, Youth Essence Toner, Youth Essence Lotion, Youth Essence Facial Mask, and Youth Essence Activating Facial Cream. Recharges cellular energy, smooths wrinkles, evens tone, and imparts a luminous youthful radiance.`,
+        benefits: [
+            'Complete 5-piece luxury anti-aging and skin regeneration master collection',
+            'Youth Refreshing Cleanser: Deeply cleanses and refreshes pores',
+            'Youth Essence Toner: Instant pore-tightening, deep hydration, and skin preparation',
+            'Youth Essence Lotion: Daily hydration barrier, elasticity reinforcement, and fine line softening',
+            'Youth Essence Facial Mask: Intensive weekly brightening treatment to diminish age spots and fatigue',
+            'Youth Essence Facial Cream: Deep collagen revitalization to firm skin and soften deep wrinkles',
+            'Comprehensive 24-hour antioxidant defense against environmental aging'
+        ],
+        ingredients: [
+            'Youth Refreshing Facial Cleanser: Amino acid complexes, plant-derived botanical extracts',
+            'Youth Essence Toner: Hyaluronic Acid, Marine Astaxanthin, Witch Hazel, Liposome Activators',
+            'Youth Essence Lotion: Niacinamide (Vitamin B3), Squalane, Collagen Peptides, Vitamin E',
+            'Youth Essence Facial Mask: Bio-Cellulose matrix, Revitalizing Peptides, Deep Hydration Essence',
+            'Youth Essence Facial Cream: Mitochondrial Repair Complex, Retinol-Alternative Botanicals, Shea Butter, Ceramides'
+        ],
+        usage_instructions: `Daily Skincare Routine:\n1. Cleanse with Youth Refreshing Facial Cleanser.\n2. Tone with Youth Essence Toner.\n3. Hydrate with Youth Essence Lotion.\n4. Lock in moisture with Youth Essence Facial Cream.\nWeekly: Apply Youth Essence Facial Mask for 15-20 minutes after toner.`
     },
+
     {
         slug: 'beauty-antiaging',
         name: `Youth Refreshing Facial Cleanser`,
@@ -408,20 +439,41 @@ async function seed() {
             continue;
         }
 
-        // Check if product already exists
+        // Check if product already exists by full name or prefix
         const { data: existing } = await supabase
             .from('products')
-            .select('id')
-            .eq('name', p.name)
-            .single();
+            .select('id, name')
+            .or(`name.eq."${p.name}",name.ilike."%${p.name.split(':')[0]}%"`)
+            .limit(1)
+            .maybeSingle();
 
         if (existing) {
-            console.log(`⏭️   Already exists — skipping: ${p.name}`);
-            skipped++;
+            const updatePayload = {
+                name: p.name,
+                description: p.description,
+                price: p.price,
+                stock_quantity: p.stock,
+                category_id: categoryId,
+                is_active: true,
+            };
+            if (p.benefits) updatePayload.benefits = p.benefits;
+            if (p.ingredients) updatePayload.ingredients = p.ingredients;
+
+            const { error: upErr } = await supabase
+                .from('products')
+                .update(updatePayload)
+                .eq('id', existing.id);
+
+            if (upErr) {
+                console.error(`❌  Failed to update "${p.name}":`, upErr.message);
+            } else {
+                console.log(`🔄  Updated: ${p.name}`);
+                inserted++;
+            }
             continue;
         }
 
-        const { error } = await supabase.from('products').insert({
+        const insertPayload = {
             name: p.name,
             description: p.description,
             price: p.price,
@@ -430,7 +482,12 @@ async function seed() {
             image_url: null,
             rating: 5.0,
             is_active: true,
-        });
+        };
+        if (p.benefits) insertPayload.benefits = p.benefits;
+        if (p.ingredients) insertPayload.ingredients = p.ingredients;
+
+        const { error } = await supabase.from('products').insert(insertPayload);
+
 
         if (error) {
             console.error(`❌  Failed to insert "${p.name}":`, error.message);
@@ -438,6 +495,7 @@ async function seed() {
             console.log(`✅  Inserted: ${p.name} — KSH ${p.price.toLocaleString()}`);
             inserted++;
         }
+
     }
 
     console.log(`\n────────────────────────────────────`);

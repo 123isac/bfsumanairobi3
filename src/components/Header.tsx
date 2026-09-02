@@ -115,9 +115,10 @@ const Header = () => {
                     Support
                   </span>
                   <span className="text-[8px] sm:text-[9px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5 hidden min-[420px]:inline">
-                    Online 🟢
+                    Online
                   </span>
                 </div>
+
               </button>
 
               {/* Dark Mode Toggle (Desktop) */}
