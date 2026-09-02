@@ -26,27 +26,88 @@ const getYouTubeVideoId = (url: string): string | null => {
   return match && match[2].length === 11 ? match[2] : null;
 };
 
-// Robust bullet / list parser
+// Robust bullet / list parser that strips tags, colons, and prefixes
 const parseListItems = (val: any): string[] => {
   if (!val) return [];
+  let rawList: string[] = [];
+
   if (Array.isArray(val)) {
-    return val.map(String).filter(s => s.trim().length > 0);
-  }
-  if (typeof val === "string") {
+    rawList = val.map(String);
+  } else if (typeof val === "string") {
     const trimmed = val.trim();
     if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
       try {
         const parsed = JSON.parse(trimmed);
-        if (Array.isArray(parsed)) return parsed.map(String).filter(s => s.trim().length > 0);
+        if (Array.isArray(parsed)) rawList = parsed.map(String);
       } catch {}
     }
-    return trimmed
-      .split(/\r?\n|•|;/)
-      .map(s => s.replace(/^[-*•\d\.\s✓]+/, "").trim())
-      .filter(s => s.length > 0);
+    if (rawList.length === 0) {
+      rawList = trimmed.split(/\r?\n|•/);
+    }
   }
-  return [];
+
+  const cleaned: string[] = [];
+  for (const raw of rawList) {
+    const str = raw.trim();
+    if (!str) continue;
+
+    // Check if the item contains a prefix tag with colon e.g. "Youth Refreshing Cleanser: Thoroughly purifies..."
+    let content = str;
+    if (content.includes(":") && !content.startsWith("http")) {
+      const parts = content.split(":");
+      // If the part after the colon is substantial, take it
+      if (parts[1] && parts[1].trim().length > 3) {
+        content = parts.slice(1).join(":").trim();
+      }
+    }
+
+    // Clean leading bullets, numbers, hyphens, ticks
+    content = content.replace(/^[-*•\d\.\s✓–—]+/, "").trim();
+
+    if (content.length > 0) {
+      // Capitalize first character
+      content = content.charAt(0).toUpperCase() + content.slice(1);
+      cleaned.push(content);
+    }
+  }
+
+  return cleaned;
 };
+
+// Ingredient parser that splits comma-separated items into clean individual pills
+const parseIngredientItems = (val: any): string[] => {
+  if (!val) return [];
+  const list = parseListItems(val);
+  const result: string[] = [];
+
+  for (const item of list) {
+    // If an ingredient line has multiple items separated by commas
+    if (item.includes(",")) {
+      const subItems = item.split(",");
+      for (const sub of subItems) {
+        let s = sub.trim().replace(/^[-*•\d\.\s✓–—]+/, "").trim();
+        if (s.includes(":")) {
+          s = s.split(":").pop()?.trim() || "";
+        }
+        if (s.length > 1) {
+          s = s.charAt(0).toUpperCase() + s.slice(1);
+          result.push(s);
+        }
+      }
+    } else {
+      let s = item.trim();
+      if (s.includes(":")) {
+        s = s.split(":").pop()?.trim() || "";
+      }
+      if (s.length > 1) {
+        result.push(s);
+      }
+    }
+  }
+
+  return result;
+};
+
 
 
 const ProductDetail = () => {
@@ -218,8 +279,9 @@ const ProductDetail = () => {
 
   // Parse benefits and ingredients robustly
   const benefitItems = parseListItems(p.benefits);
-  const ingredientItems = parseListItems(p.ingredients);
+  const ingredientItems = parseIngredientItems(p.ingredients);
   const fullDesc = product.description || "";
+
 
   return (
     <div className="min-h-screen flex flex-col">

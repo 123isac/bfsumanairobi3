@@ -138,16 +138,21 @@ const products = [
         stock: 100,
         description: `Premier 3-in-1 Youth Essence daily skincare regimen combining Youth Refreshing Facial Cleanser, Youth Essence Toner, and Youth Essence Lotion. Uses advanced mitochondrial cellular repair and liposomal delivery to purify, tighten pores, and deeply hydrate for firm, radiant skin.`,
         benefits: [
-            'Complete 3-step daily youth protocol: Cleanses, balances, and moisturizes',
-            'Youth Refreshing Cleanser gently purifies without stripping natural moisture',
-            'Youth Essence Toner tightens pores and balances skin pH in seconds',
-            'Youth Essence Lotion locks in deep cellular moisture and improves elasticity',
-            'Powered by BF Suma mitochondrial repair technology to combat aging'
+            'Deeply purifies and clears impurities without stripping moisture',
+            'Tightens enlarged pores and instantly balances skin pH',
+            'Delivers long-lasting cellular hydration and restores natural skin elasticity',
+            'Powered by BF Suma mitochondrial repair technology to combat aging',
+            'Complete daily 3-in-1 youth restoration protocol for glowing skin'
         ],
         ingredients: [
-            'Youth Refreshing Facial Cleanser: Purifying amino acids, botanical extracts, gentle cleansing surfactants',
-            'Youth Essence Toner: Multi-molecular Hyaluronic Acid, Marine Astaxanthin, Witch Hazel Extract',
-            'Youth Essence Lotion: Squalane, Niacinamide (Vitamin B3), Coenzyme Q10, Collagen Bio-Peptides'
+            'Purifying Amino Acids',
+            'Marine Astaxanthin',
+            'Multi-molecular Hyaluronic Acid',
+            'Botanical Squalane',
+            'Niacinamide (Vitamin B3)',
+            'Coenzyme Q10',
+            'Collagen Bio-Peptides',
+            'Witch Hazel Extract'
         ],
         usage_instructions: `1. Cleanse face with Youth Refreshing Facial Cleanser morning & night.\n2. Pat Youth Essence Toner gently onto face and neck.\n3. Smooth Youth Essence Lotion over skin until fully absorbed.`
     },
@@ -158,23 +163,29 @@ const products = [
         stock: 100,
         description: `The ultimate 5-in-1 luxury Youth Essence anti-aging collection featuring Youth Refreshing Facial Cleanser, Youth Essence Toner, Youth Essence Lotion, Youth Essence Facial Mask, and Youth Essence Activating Facial Cream. Recharges cellular energy, smooths wrinkles, evens tone, and imparts a luminous youthful radiance.`,
         benefits: [
-            'Complete 5-piece luxury anti-aging and skin regeneration master collection',
-            'Youth Refreshing Cleanser: Deeply cleanses and refreshes pores',
-            'Youth Essence Toner: Instant pore-tightening, deep hydration, and skin preparation',
-            'Youth Essence Lotion: Daily hydration barrier, elasticity reinforcement, and fine line softening',
-            'Youth Essence Facial Mask: Intensive weekly brightening treatment to diminish age spots and fatigue',
-            'Youth Essence Facial Cream: Deep collagen revitalization to firm skin and soften deep wrinkles',
-            'Comprehensive 24-hour antioxidant defense against environmental aging'
+            'Thoroughly clarifies pores and removes dead skin cells',
+            'Rapidly refines pore texture and provides deep moisture balance',
+            'Strengthens the skin barrier and smooths fine lines and wrinkles',
+            'Intensively brightens skin tone and fades dark spots and blemishes',
+            'Recharges collagen production to firm and lift sagging facial skin',
+            'Provides 24-hour antioxidant defense against environmental aging',
+            'Complete 5-piece luxury anti-aging and rejuvenation master suite'
         ],
         ingredients: [
-            'Youth Refreshing Facial Cleanser: Amino acid complexes, plant-derived botanical extracts',
-            'Youth Essence Toner: Hyaluronic Acid, Marine Astaxanthin, Witch Hazel, Liposome Activators',
-            'Youth Essence Lotion: Niacinamide (Vitamin B3), Squalane, Collagen Peptides, Vitamin E',
-            'Youth Essence Facial Mask: Bio-Cellulose matrix, Revitalizing Peptides, Deep Hydration Essence',
-            'Youth Essence Facial Cream: Mitochondrial Repair Complex, Retinol-Alternative Botanicals, Shea Butter, Ceramides'
+            'Mitochondrial Repair Complex',
+            'Collagen Bio-Peptides',
+            'Multi-molecular Hyaluronic Acid',
+            'Marine Astaxanthin',
+            'Niacinamide (Vitamin B3)',
+            'Botanical Squalane & Shea Butter',
+            'Bio-Cellulose Peptide Matrix',
+            'Retinol-Alternative Botanical Extracts',
+            'Natural Ceramides & Vitamin E',
+            'Witch Hazel Extract'
         ],
         usage_instructions: `Daily Skincare Routine:\n1. Cleanse with Youth Refreshing Facial Cleanser.\n2. Tone with Youth Essence Toner.\n3. Hydrate with Youth Essence Lotion.\n4. Lock in moisture with Youth Essence Facial Cream.\nWeekly: Apply Youth Essence Facial Mask for 15-20 minutes after toner.`
     },
+
 
     {
         slug: 'beauty-antiaging',
