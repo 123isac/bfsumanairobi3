@@ -12,7 +12,6 @@ import { AdminLayout } from "./components/AdminLayout";
 import { StaffLayout } from "./components/StaffLayout";
 import { PartnerLayout } from "./components/PartnerLayout";
 import { PartnerRoute } from "./components/PartnerRoute";
-import WhatsAppButton from "./components/WhatsAppButton";
 import { Outlet } from "react-router-dom";
 import { supabase } from "./integrations/supabase/client";
 
@@ -139,8 +138,8 @@ const App = () => (
             <Sonner />
             <AnalyticsTracker />
             <ScrollToTop />
-            <WhatsAppButton />
             <Suspense fallback={<RouteLoader />}>
+
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/shop" element={<Shop />} />

@@ -188,26 +188,36 @@ const Contact = () => {
                   </div>
                 </div>
 
-                {/* WhatsApp */}
-                <div className="flex items-start space-x-4 p-6 bg-secondary/50 rounded-2xl hover:shadow-soft transition-smooth">
-                  <div className="w-12 h-12 rounded-full gradient-primary flex items-center justify-center flex-shrink-0">
-                    <MessageCircle className="h-6 w-6 text-primary-foreground" />
+                {/* WhatsApp Support */}
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-6 bg-gradient-to-r from-emerald-500/15 via-emerald-500/5 to-transparent border border-emerald-500/20 rounded-2xl hover:shadow-soft transition-smooth">
+                  <div className="flex items-start space-x-4">
+                    <div className="w-12 h-12 rounded-full bg-[#25D366] flex items-center justify-center flex-shrink-0 shadow-md">
+                      <MessageCircle className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold text-lg text-foreground">WhatsApp Direct Chat</h3>
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-semibold bg-emerald-100 text-emerald-800 rounded-full">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                          Online
+                        </span>
+                      </div>
+                      <p className="text-muted-foreground text-sm mt-0.5">Quick response for orders, product guidance & inquiries</p>
+                      <p className="text-xs text-emerald-700 font-medium mt-1">{SUPPORT_PHONE_DISPLAY}</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-lg text-foreground mb-1">WhatsApp</h3>
-                    <p className="text-muted-foreground">{SUPPORT_PHONE_DISPLAY}</p>
-                    <a
-                      href={"https://wa.me/" + SUPPORT_WHATSAPP_NUMBER}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-block mt-2"
-                    >
-                      <Button size="sm" className="gradient-gold hover:shadow-gold text-accent-foreground rounded-full">
-                        Chat Now
-                      </Button>
-                    </a>
-                  </div>
+                  <a
+                    href={`https://wa.me/${SUPPORT_WHATSAPP_NUMBER}?text=${encodeURIComponent("Hello BF Suma Nairobi! I would like assistance with your products and orders.")}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full sm:w-auto"
+                  >
+                    <Button size="lg" className="w-full sm:w-auto bg-[#25D366] hover:bg-[#20bd5a] text-white font-semibold rounded-full shadow-md gap-2">
+                      <MessageCircle className="h-5 w-5" /> Chat on WhatsApp
+                    </Button>
+                  </a>
                 </div>
+
 
                 {/* Physical Address */}
                 <div className="flex items-start space-x-4 p-6 bg-secondary/50 rounded-2xl hover:shadow-soft transition-smooth">
