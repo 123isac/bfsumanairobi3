@@ -7,7 +7,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Star, ShoppingCart, Heart, Shield, ShieldCheck, Leaf, Sparkles,
   Truck, RotateCcw, CheckCircle2, Flame, Clock, ArrowRight,
+  MessageCircle, HelpCircle, Activity, Info, Award, Check
 } from "lucide-react";
+import { SUPPORT_WHATSAPP_NUMBER } from "@/config/site";
 
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
@@ -23,6 +25,29 @@ const getYouTubeVideoId = (url: string): string | null => {
   const match = url.match(regExp);
   return match && match[2].length === 11 ? match[2] : null;
 };
+
+// Robust bullet / list parser
+const parseListItems = (val: any): string[] => {
+  if (!val) return [];
+  if (Array.isArray(val)) {
+    return val.map(String).filter(s => s.trim().length > 0);
+  }
+  if (typeof val === "string") {
+    const trimmed = val.trim();
+    if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        if (Array.isArray(parsed)) return parsed.map(String).filter(s => s.trim().length > 0);
+      } catch {}
+    }
+    return trimmed
+      .split(/\r?\n|•|;/)
+      .map(s => s.replace(/^[-*•\d\.\s✓]+/, "").trim())
+      .filter(s => s.length > 0);
+  }
+  return [];
+};
+
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -191,23 +216,10 @@ const ProductDetail = () => {
   const rating = Number(product.rating || 5);
   const filledStars = Math.max(0, Math.min(5, Math.round(rating)));
 
-  // Parse benefits as bullet lines
-  const benefitLines = (p.benefits || product.description || "")
-    .split("\n")
-    .filter((l: string) => l.trim().length > 0);
-
-  // Short description: first 1-2 sentences, max 160 chars, plain English
+  // Parse benefits and ingredients robustly
+  const benefitItems = parseListItems(p.benefits);
+  const ingredientItems = parseListItems(p.ingredients);
   const fullDesc = product.description || "";
-  const shortDesc = (() => {
-    // Split on sentence boundaries
-    const sentences = fullDesc.match(/[^.!?]+[.!?]+/g) || [];
-    if (sentences.length === 0) return fullDesc.slice(0, 140);
-    // Take first sentence; if it's very short, grab second too
-    let out = sentences[0].trim();
-    if (out.length < 60 && sentences[1]) out += " " + sentences[1].trim();
-    // Cap at 160 chars
-    return out.length > 160 ? out.slice(0, 157) + "…" : out;
-  })();
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -239,22 +251,22 @@ const ProductDetail = () => {
           </div>
         </div>
 
-        <div className="container mx-auto px-4 lg:px-8 py-8 md:py-14 relative z-10">
+        <div className="container mx-auto px-4 lg:px-8 py-8 md:py-12 relative z-10">
           {/* ── Main Product Section ── */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 xl:gap-16 mb-16 md:mb-24">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 xl:gap-16 mb-14 md:mb-20">
 
             {/* LEFT — Image */}
             <div className="space-y-4">
-              <div className="relative aspect-square rounded-3xl overflow-hidden bg-secondary/40 shadow-luxury group">
+              <div className="relative aspect-square rounded-3xl overflow-hidden bg-white dark:bg-muted/10 border border-border shadow-luxury group flex items-center justify-center p-6">
                 <img
                   src={product.image_url || "/placeholder.svg"}
                   alt={product.name}
                   decoding="async"
-                  className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-700 ease-out p-6 bg-white"
+                  className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-700 ease-out"
                 />
                 {discountPct && (
                   <div className="absolute top-4 left-4">
-                    <span className="px-3 py-1.5 bg-red-500 text-white text-sm font-bold rounded-full shadow-lg">
+                    <span className="px-3 py-1.5 bg-red-500 text-white text-xs sm:text-sm font-bold rounded-full shadow-lg">
                       -{discountPct}% OFF
                     </span>
                   </div>
@@ -266,21 +278,20 @@ const ProductDetail = () => {
                 )}
               </div>
 
-              {/* Delivery promise — desktop only here */}
+              {/* Delivery promise — desktop */}
               <div className="hidden lg:grid grid-cols-3 gap-3 text-center">
                 {[
-                  { icon: Truck, label: "2–3 Day Delivery", sub: "Nationwide", anim: "animate-truck text-emerald-600" },
-                  { icon: ShieldCheck, label: "100% Authentic", sub: "Certified BF Suma", anim: "animate-badge-shimmer text-amber-600" },
-                  { icon: RotateCcw, label: "Easy Returns", sub: "7-day policy", anim: "text-primary hover:rotate-180 transition-transform duration-500" },
+                  { icon: Truck, label: "Nairobi Same-Day", sub: "2–4 hr Dispatch", anim: "animate-truck text-emerald-600" },
+                  { icon: ShieldCheck, label: "100% Authentic", sub: "Genuine BF Suma Seal", anim: "animate-badge-shimmer text-amber-600" },
+                  { icon: RotateCcw, label: "7-Day Returns", sub: "Guaranteed Satisfaction", anim: "text-primary" },
                 ].map(({ icon: Icon, label, sub, anim }) => (
-                  <div key={label} className="bg-secondary/40 hover:bg-secondary/70 border border-border/50 rounded-2xl p-4 flex flex-col items-center gap-1.5 transition-all duration-300 hover:shadow-md">
+                  <div key={label} className="bg-card border border-border rounded-2xl p-3.5 flex flex-col items-center gap-1 transition-all duration-300 shadow-sm">
                     <Icon className={`h-5 w-5 ${anim}`} />
-                    <span className="text-xs font-semibold text-foreground">{label}</span>
+                    <span className="text-xs font-bold text-foreground">{label}</span>
                     <span className="text-[10px] text-muted-foreground">{sub}</span>
                   </div>
                 ))}
               </div>
-
             </div>
 
             {/* RIGHT — Product Info */}
@@ -288,10 +299,10 @@ const ProductDetail = () => {
 
               {/* Category + Name */}
               <div>
-                <span className="inline-block px-3 py-1 bg-primary/10 text-primary text-xs font-semibold rounded-full mb-3 uppercase tracking-wide">
+                <span className="inline-block px-3 py-1 bg-primary/10 text-primary text-xs font-bold rounded-full mb-3 uppercase tracking-wider">
                   {product.categories?.name}
                 </span>
-                <h1 className="font-display font-bold text-3xl md:text-4xl xl:text-5xl text-foreground leading-tight mb-3">
+                <h1 className="font-display font-bold text-2xl sm:text-3xl md:text-4xl text-foreground leading-snug mb-3">
                   {product.name}
                 </h1>
 
@@ -299,211 +310,301 @@ const ProductDetail = () => {
                 <div className="flex items-center gap-3 flex-wrap">
                   <div className="flex items-center gap-0.5">
                     {[...Array(5)].map((_, i) => (
-                      <Star key={i} className={`h-5 w-5 ${i < filledStars ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30"}`} />
+                      <Star key={i} className={`h-4 w-4 sm:h-5 sm:w-5 ${i < filledStars ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30"}`} />
                     ))}
                   </div>
                   <span className="text-sm font-semibold text-foreground">{rating.toFixed(1)}</span>
                   <span className="text-sm text-muted-foreground">
-                    {reviewCount > 0 ? `· ${reviewCount} verified ${reviewCount === 1 ? "review" : "reviews"}` : "· Be the first to review"}
+                    {reviewCount > 0 ? `· ${reviewCount} verified reviews` : "· Top Rated Authentic Product"}
                   </span>
                 </div>
               </div>
 
               {/* Pricing */}
-              <div className="flex items-end gap-4">
-                <span className="font-display font-bold text-4xl md:text-5xl text-primary leading-none">
+              <div className="flex items-baseline gap-4">
+                <span className="font-display font-bold text-3xl sm:text-4xl md:text-5xl text-primary leading-none">
                   KSH {price.toLocaleString()}
                 </span>
                 {comparePrice && comparePrice > price && (
-                  <div className="flex flex-col pb-1">
-                    <span className="text-lg text-muted-foreground line-through leading-none">
+                  <div className="flex flex-col">
+                    <span className="text-base sm:text-lg text-muted-foreground line-through leading-none">
                       KSH {comparePrice.toLocaleString()}
                     </span>
                     {savings && (
-                      <span className="text-sm text-emerald-600 font-semibold mt-0.5">
-                        Save KSH {savings.toLocaleString()} 🎉
+                      <span className="text-xs sm:text-sm text-emerald-600 font-bold mt-1">
+                        Save KSH {savings.toLocaleString()}
                       </span>
                     )}
                   </div>
                 )}
               </div>
 
-              {/* Urgency / Stock */}
+              {/* Stock Status */}
               {lowStock && (
-                <div className="flex items-center gap-2 px-4 py-3 bg-red-50 border border-red-100 rounded-xl">
+                <div className="flex items-center gap-2 px-3.5 py-2.5 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/40 rounded-xl">
                   <Flame className="h-4 w-4 text-red-500 shrink-0" />
-                  <span className="text-sm font-semibold text-red-600">
-                    Only {stock} left in stock — order soon!
+                  <span className="text-xs sm:text-sm font-semibold text-red-600 dark:text-red-400">
+                    Only {stock} units left in stock — order today!
                   </span>
                 </div>
               )}
               {stock === 0 && (
-                <div className="flex items-center gap-2 px-4 py-3 bg-muted border border-border rounded-xl">
+                <div className="flex items-center gap-2 px-3.5 py-2.5 bg-muted border border-border rounded-xl">
                   <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
-                  <span className="text-sm font-medium text-muted-foreground">Out of stock — back soon</span>
+                  <span className="text-xs sm:text-sm font-medium text-muted-foreground">Currently out of stock — restocked shortly</span>
                 </div>
               )}
               {stock > 5 && (
-                <div className="flex items-center gap-2 text-sm text-emerald-600">
+                <div className="flex items-center gap-2 text-xs sm:text-sm text-emerald-600 dark:text-emerald-400 font-semibold">
                   <CheckCircle2 className="h-4 w-4 shrink-0" />
-                  <span className="font-medium">In stock — ready to ship</span>
+                  <span>In Stock — Dispatched within 2–4 hours in Nairobi</span>
                 </div>
               )}
 
-              {/* Description — short, simple, premium */}
-              <div className="rounded-2xl bg-primary/5 border border-primary/10 px-4 py-4 space-y-1.5">
-                <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-primary/70">
-                  <Sparkles className="h-3.5 w-3.5" />
-                  What It Does
-                </span>
-                <p className="text-foreground text-base md:text-lg leading-relaxed font-medium">
-                  {shortDesc || "Premium quality wellness product from BF Suma."}
-                </p>
-                {benefitLines.length > 0 && (
-                  <p className="text-xs text-muted-foreground pt-0.5">
-                    ✓ See full benefits &amp; ingredients below ↓
+              {/* ── Product Overview Card (Clear & Easy to Relate) ── */}
+              <div className="rounded-2xl bg-secondary/30 border border-border/80 p-4 sm:p-5 space-y-3.5 shadow-sm">
+                <div className="space-y-1.5">
+                  <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-primary">
+                    <Sparkles className="h-3.5 w-3.5" />
+                    How It Helps You
+                  </span>
+                  <p className="text-foreground text-sm sm:text-base leading-relaxed font-normal">
+                    {fullDesc || "Authentic premium health and wellness formula from BF Suma."}
                   </p>
+                </div>
+
+                {/* Top 3 Quick Benefits preview */}
+                {benefitItems.length > 0 && (
+                  <div className="pt-2 border-t border-border/60 space-y-2">
+                    <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+                      Key Highlights:
+                    </p>
+                    <ul className="space-y-1.5">
+                      {benefitItems.slice(0, 3).map((item, idx) => (
+                        <li key={idx} className="flex items-start gap-2 text-xs sm:text-sm text-foreground">
+                          <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 )}
+
+                {/* Direct WhatsApp Specialist Callout */}
+                <div className="pt-1">
+                  <a
+                    href={`https://wa.me/${SUPPORT_WHATSAPP_NUMBER}?text=${encodeURIComponent(`Hello! I would like more information and dosage advice for ${product.name}.`)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 text-xs font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 px-3.5 py-2 rounded-xl border border-emerald-200 dark:border-emerald-800/40 transition-colors w-full justify-center sm:justify-start"
+                  >
+                    <MessageCircle className="h-4 w-4 text-[#25D366] shrink-0" />
+                    <span>Have questions? Ask our Nairobi Wellness Advisor on WhatsApp</span>
+                  </a>
+                </div>
               </div>
 
               {/* Quantity + Add to Cart */}
-              <div className="space-y-3">
+              <div className="space-y-3 pt-2">
                 <div className="flex items-center gap-4">
-                  <span className="font-medium text-sm">Qty:</span>
-                  <div className="flex items-center border border-border rounded-full overflow-hidden">
-                    <Button variant="ghost" size="sm" onClick={() => setQuantity(Math.max(1, quantity - 1))} className="rounded-none px-5 h-11">−</Button>
-                    <span className="px-6 font-bold text-base">{quantity}</span>
-                    <Button variant="ghost" size="sm" onClick={() => setQuantity(q => q + 1)} className="rounded-none px-5 h-11">+</Button>
+                  <span className="font-semibold text-sm">Quantity:</span>
+                  <div className="flex items-center border border-border rounded-full overflow-hidden bg-card">
+                    <Button variant="ghost" size="sm" onClick={() => setQuantity(Math.max(1, quantity - 1))} className="rounded-none px-4 h-10 text-base font-bold">−</Button>
+                    <span className="px-4 font-bold text-sm">{quantity}</span>
+                    <Button variant="ghost" size="sm" onClick={() => setQuantity(q => q + 1)} className="rounded-none px-4 h-10 text-base font-bold">+</Button>
                   </div>
                 </div>
 
                 <div className="flex gap-3">
                   <Button
                     size="lg"
-                    className={`flex-1 h-14 text-base font-bold rounded-full transition-all duration-300 ${added
-                      ? "bg-green-500 hover:bg-green-500 text-white"
-                      : "gradient-primary hover:shadow-luxury hover:scale-[1.02]"
+                    className={`flex-1 h-13 text-base font-bold rounded-full transition-all duration-300 ${added
+                      ? "bg-emerald-600 hover:bg-emerald-600 text-white"
+                      : "gradient-primary hover:shadow-luxury hover:scale-[1.01]"
                       }`}
                     onClick={handleAddToCart}
                     disabled={stock < 1}
                   >
                     <ShoppingCart className="mr-2 h-5 w-5" />
-                    {added ? "Added to Cart ✓" : stock > 0 ? `Add to Cart · KSH ${(price * quantity).toLocaleString()}` : "Out of Stock"}
+                    {added ? "Added to Cart ✓" : stock > 0 ? `Add to Cart • KSH ${(price * quantity).toLocaleString()}` : "Out of Stock"}
                   </Button>
-                  <Button size="lg" variant="outline" className="h-14 w-14 rounded-full shrink-0 border-border hover:border-red-300 hover:text-red-500 transition-colors">
+                  <Button size="lg" variant="outline" className="h-13 w-13 rounded-full shrink-0 border-border hover:border-red-300 hover:text-red-500 transition-colors">
                     <Heart className="h-5 w-5" />
                   </Button>
                 </div>
-
-                {/* Delivery + Returns row */}
-                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 pt-2 text-sm text-muted-foreground">
-                  <span className="flex items-center gap-1.5">
-                    <Truck className="h-4 w-4 text-primary shrink-0" />
-                    Order today → delivered in 2–3 days
-                  </span>
-                  <span className="hidden sm:block text-border">|</span>
-                  <span className="flex items-center gap-1.5">
-                    <RotateCcw className="h-4 w-4 text-primary shrink-0" />
-                    7-day returns
-                  </span>
-                </div>
-              </div>
-
-              {/* Trust badges */}
-              <div className="grid grid-cols-3 gap-3 pt-4 border-t border-border">
-                {[
-                  { Icon: Shield, label: "Authentic" },
-                  { Icon: Leaf, label: "Natural" },
-                  { Icon: Sparkles, label: "Premium" },
-                ].map(({ Icon, label }) => (
-                  <div key={label} className="flex flex-col items-center gap-1.5 text-center">
-                    <div className="w-10 h-10 rounded-full bg-primary/8 flex items-center justify-center">
-                      <Icon className="h-5 w-5 text-primary" />
-                    </div>
-                    <span className="text-xs font-medium text-foreground">{label}</span>
-                  </div>
-                ))}
               </div>
             </div>
           </div>
 
-          {/* ── Product Tabs ── */}
+          {/* ── Structured Product Tabs (Readable & Easy to Understand) ── */}
           <div className="mb-16 md:mb-24">
             <Tabs defaultValue="benefits" className="w-full">
-              <TabsList className="w-full justify-start border-b border-border rounded-none bg-transparent h-auto p-0 gap-6 md:gap-8 overflow-x-auto">
-                {[
-                  { value: "benefits", label: "Benefits" },
-                  { value: "ingredients", label: "Ingredients" },
-                  ...(hasVideo ? [{ value: "video", label: "▶ Video" }] : []),
-                  { value: "reviews", label: "Reviews" },
-                ].map(({ value, label }) => (
+              <TabsList className="w-full justify-start border-b border-border rounded-none bg-transparent h-auto p-0 gap-4 sm:gap-8 overflow-x-auto">
+                <TabsTrigger
+                  value="benefits"
+                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-1 pb-3 whitespace-nowrap font-bold text-sm sm:text-base text-muted-foreground data-[state=active]:text-primary transition-colors"
+                >
+                  Health Benefits ({benefitItems.length || 1})
+                </TabsTrigger>
+
+                <TabsTrigger
+                  value="ingredients"
+                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-1 pb-3 whitespace-nowrap font-bold text-sm sm:text-base text-muted-foreground data-[state=active]:text-primary transition-colors"
+                >
+                  Ingredients & Formulation
+                </TabsTrigger>
+
+                <TabsTrigger
+                  value="delivery"
+                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-1 pb-3 whitespace-nowrap font-bold text-sm sm:text-base text-muted-foreground data-[state=active]:text-primary transition-colors"
+                >
+                  Delivery & Guarantee
+                </TabsTrigger>
+
+                {hasVideo && (
                   <TabsTrigger
-                    key={value}
-                    value={value}
-                    className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 pb-3 whitespace-nowrap font-semibold text-base text-muted-foreground data-[state=active]:text-primary transition-colors"
+                    value="video"
+                    className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-1 pb-3 whitespace-nowrap font-bold text-sm sm:text-base text-muted-foreground data-[state=active]:text-primary transition-colors"
                   >
-                    {label}
+                    Video Guide
                   </TabsTrigger>
-                ))}
+                )}
+
+                <TabsTrigger
+                  value="reviews"
+                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-1 pb-3 whitespace-nowrap font-bold text-sm sm:text-base text-muted-foreground data-[state=active]:text-primary transition-colors"
+                >
+                  Reviews ({reviewCount})
+                </TabsTrigger>
               </TabsList>
 
-              {/* Benefits — visual checkmarks */}
+              {/* TAB 1: HEALTH BENEFITS */}
               <TabsContent value="benefits" className="mt-8">
-                <div className="max-w-3xl space-y-5">
-                  {benefitLines.length > 0 ? (
-                    <>
-                      <p className="text-sm text-muted-foreground font-medium">Here is what this product helps you with:</p>
-                      <ul className="space-y-2.5">
-                        {benefitLines.map((line: string, i: number) => (
-                          <li key={i} className="flex items-start gap-3 rounded-xl hover:bg-primary/4 transition-colors px-2 py-1.5">
-                            <span className="mt-0.5 flex-shrink-0 w-5 h-5 rounded-full bg-emerald-500/15 flex items-center justify-center">
-                              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
-                            </span>
-                            <span className="text-base text-foreground leading-relaxed">{line}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </>
-                  ) : (
-                    <p className="text-muted-foreground text-lg">
-                      Premium quality wellness product from BF Suma — backed by science and nature.
+                <div className="max-w-4xl space-y-4">
+                  <div className="space-y-1">
+                    <h3 className="font-bold text-lg text-foreground flex items-center gap-2">
+                      <ShieldCheck className="h-5 w-5 text-primary" /> Key Health Benefits & Results
+                    </h3>
+                    <p className="text-xs sm:text-sm text-muted-foreground">
+                      Science-led results you can expect with consistent use of this authentic BF Suma formula:
                     </p>
-                  )}
-                </div>
-              </TabsContent>
+                  </div>
 
-              {/* Ingredients */}
-              <TabsContent value="ingredients" className="mt-8">
-                <div className="max-w-3xl space-y-5">
-                  {p.ingredients ? (
-                    <>
-                      <p className="text-sm text-muted-foreground font-medium">Key active ingredients in this product:</p>
-                      <div className="flex flex-wrap gap-2.5">
-                        {(p.ingredients).split("\n").filter((l: string) => l.trim()).map((line: string, i: number) => (
-                          <span
-                            key={i}
-                            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm font-medium bg-primary/8 text-primary border border-primary/15 hover:bg-primary/14 transition-colors"
-                          >
-                            <Leaf className="h-3 w-3 shrink-0" />
-                            {line.trim()}
+                  {benefitItems.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
+                      {benefitItems.map((benefit, i) => (
+                        <div key={i} className="p-4 rounded-2xl bg-card border border-border/80 flex items-start gap-3 shadow-xs hover:border-primary/40 transition-colors">
+                          <span className="w-6 h-6 rounded-full bg-emerald-500/15 flex items-center justify-center shrink-0 mt-0.5">
+                            <Check className="h-3.5 w-3.5 text-emerald-600 font-bold" />
                           </span>
-                        ))}
-                      </div>
-                      <p className="text-xs text-muted-foreground pt-1">All ingredients are naturally sourced and carefully selected for safety and effectiveness.</p>
-                    </>
+                          <span className="text-sm text-foreground leading-relaxed font-medium">{benefit}</span>
+                        </div>
+                      ))}
+                    </div>
                   ) : (
-                    <p className="text-muted-foreground text-lg">
-                      Premium natural ingredients carefully selected for quality and effectiveness.
-                    </p>
+                    <div className="p-5 rounded-2xl bg-card border border-border text-sm text-foreground leading-relaxed">
+                      {fullDesc || "Formulated with premium natural ingredients and certified American wellness technology to support your vitality, immunity, and overall body balance."}
+                    </div>
                   )}
                 </div>
               </TabsContent>
 
-              {/* Video */}
+              {/* TAB 2: INGREDIENTS */}
+              <TabsContent value="ingredients" className="mt-8">
+                <div className="max-w-4xl space-y-4">
+                  <div className="space-y-1">
+                    <h3 className="font-bold text-lg text-foreground flex items-center gap-2">
+                      <Leaf className="h-5 w-5 text-emerald-600" /> Active Natural Ingredients
+                    </h3>
+                    <p className="text-xs sm:text-sm text-muted-foreground">
+                      Pure, tested, and high-potency ingredients selected for maximum bioavailability:
+                    </p>
+                  </div>
+
+                  {ingredientItems.length > 0 ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                      {ingredientItems.map((ing, i) => (
+                        <div key={i} className="p-3.5 rounded-2xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200/60 dark:border-emerald-800/40 flex items-center gap-3">
+                          <span className="w-7 h-7 rounded-xl bg-emerald-600/10 text-emerald-600 flex items-center justify-center shrink-0">
+                            <Leaf className="h-4 w-4" />
+                          </span>
+                          <span className="text-xs sm:text-sm font-semibold text-foreground">{ing}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-5 rounded-2xl bg-card border border-border space-y-2">
+                      <p className="text-sm font-semibold text-foreground">Natural Botanical & Bio-Active Formula</p>
+                      <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                        Contains pure, GMP-certified active botanical extracts and micronutrients formulated without harmful additives or synthetic fillers.
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="p-4 rounded-2xl bg-secondary/30 border border-border/80 flex items-center gap-3 text-xs text-muted-foreground mt-4">
+                    <Shield className="h-5 w-5 text-primary shrink-0" />
+                    <span>All ingredients comply with international Good Manufacturing Practices (GMP) and BF Suma authenticity testing standards.</span>
+                  </div>
+                </div>
+              </TabsContent>
+
+              {/* TAB 3: DELIVERY & GUARANTEE */}
+              <TabsContent value="delivery" className="mt-8">
+                <div className="max-w-4xl space-y-4">
+                  <div className="space-y-1">
+                    <h3 className="font-bold text-lg text-foreground flex items-center gap-2">
+                      <Truck className="h-5 w-5 text-primary" /> Delivery Timelines & Authenticity Guarantee
+                    </h3>
+                    <p className="text-xs sm:text-sm text-muted-foreground">
+                      Fast and reliable delivery from our Nairobi dispatch hub directly to your location:
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                    <div className="p-4 rounded-2xl bg-card border border-border space-y-1.5 shadow-xs">
+                      <p className="font-bold text-sm text-foreground flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-emerald-600" /> Nairobi Same-Day Delivery
+                      </p>
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        Orders placed before 4:00 PM are delivered within <strong>2–4 hours</strong> via direct rider across Nairobi.
+                      </p>
+                    </div>
+
+                    <div className="p-4 rounded-2xl bg-card border border-border space-y-1.5 shadow-xs">
+                      <p className="font-bold text-sm text-foreground flex items-center gap-2">
+                        <Truck className="h-4 w-4 text-blue-600" /> Countrywide Kenya Delivery
+                      </p>
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        Next-day parcel delivery (<strong>24–48 hours</strong>) to Mombasa, Kisumu, Nakuru, Eldoret, and all 47 counties.
+                      </p>
+                    </div>
+
+                    <div className="p-4 rounded-2xl bg-card border border-border space-y-1.5 shadow-xs">
+                      <p className="font-bold text-sm text-foreground flex items-center gap-2">
+                        <ShieldCheck className="h-4 w-4 text-amber-600" /> 100% Genuine Seal
+                      </p>
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        Every package carries the official BF Suma hologram seal and authentic batch verification code.
+                      </p>
+                    </div>
+
+                    <div className="p-4 rounded-2xl bg-card border border-border space-y-1.5 shadow-xs">
+                      <p className="font-bold text-sm text-foreground flex items-center gap-2">
+                        <RotateCcw className="h-4 w-4 text-primary" /> 7-Day Return Policy
+                      </p>
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        Unopened products can be returned or exchanged within 7 days of delivery with receipt.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </TabsContent>
+
+              {/* TAB 4: VIDEO */}
               {hasVideo && (
                 <TabsContent value="video" className="mt-8">
-                  <div className="max-w-3xl">
-                    <div className="relative w-full aspect-video rounded-2xl overflow-hidden bg-black shadow-luxury">
+                  <div className="max-w-3xl space-y-3">
+                    <div className="relative w-full aspect-video rounded-3xl overflow-hidden bg-black shadow-luxury border border-border">
                       <iframe
                         src={`https://www.youtube.com/embed/${youtubeVideoId}?rel=0`}
                         title={`${product.name} - Video Demo`}
@@ -512,14 +613,14 @@ const ProductDetail = () => {
                         className="absolute inset-0 w-full h-full"
                       />
                     </div>
-                    <p className="mt-4 text-muted-foreground text-sm">
-                      Watch how {product.name} works and its key benefits.
+                    <p className="text-muted-foreground text-xs sm:text-sm">
+                      Watch how {product.name} works and how to incorporate it into your daily wellness routine.
                     </p>
                   </div>
                 </TabsContent>
               )}
 
-              {/* Reviews */}
+              {/* TAB 5: REVIEWS */}
               <TabsContent value="reviews" className="mt-8">
                 <div className="max-w-3xl">
                   {id && <ProductReviews productId={id} />}
@@ -527,6 +628,7 @@ const ProductDetail = () => {
               </TabsContent>
             </Tabs>
           </div>
+
 
           {/* ── Related Products ── */}
           {relatedProducts.length > 0 && (
