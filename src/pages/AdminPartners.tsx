@@ -51,6 +51,7 @@ const AdminPartners = () => {
     try {
       const payload: Database["public"]["Tables"]["spas"]["Update"] = {
         application_status: status,
+        is_active: status === "approved",
         rejection_reason: status === "rejected" ? rejectionReason : null,
         approved_by: user?.id || null,
         approved_at: status === "approved" ? new Date().toISOString() : null,
@@ -65,6 +66,7 @@ const AdminPartners = () => {
       const message = error instanceof Error ? error.message : "Unknown error";
       toast.error("Failed to update application: " + message);
     }
+
   };
 
   const filtered = useMemo(() => {

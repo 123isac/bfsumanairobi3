@@ -17,13 +17,30 @@ export const PartnerRoute = ({ children }: { children: React.ReactNode }) => {
 
     const checkPartnerStatus = async () => {
       try {
+        const cleanEmail = (user.email || "").trim().toLowerCase();
+
+        // 1. Try RPC get_my_partner_profile
+        try {
+          const { data: rpcData } = await supabase.rpc("get_my_partner_profile" as any);
+          if (rpcData && typeof rpcData === "object" && (rpcData as any).id) {
+            const status = (rpcData as any).application_status;
+            const isActive = (rpcData as any).is_active;
+            if (status === "approved" || isActive) {
+              setPartnerStatus("approved");
+              return;
+            } else {
+              setPartnerStatus("pending");
+              return;
+            }
+          }
+        } catch {}
+
+        // 2. Direct table lookup
         const { data, error } = await supabase
           .from("spas")
-          .select("application_status, is_active")
-          .eq("email", user.email)
+          .select("application_status, is_active, email")
+          .ilike("email", cleanEmail)
           .maybeSingle();
-
-        if (error) throw error;
 
         if (data) {
           if (data.application_status === "approved" || data.is_active) {
@@ -39,6 +56,8 @@ export const PartnerRoute = ({ children }: { children: React.ReactNode }) => {
         setPartnerStatus("none");
       }
     };
+
+
 
     checkPartnerStatus();
   }, [user, authLoading]);

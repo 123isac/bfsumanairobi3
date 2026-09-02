@@ -1,11 +1,12 @@
-import { ShoppingCart, Menu, X, Sun, Moon, User as UserIcon, LogOut, LayoutDashboard, ShoppingBag, Settings, Sparkles, Headphones, MessageSquare } from "lucide-react";
+import { ShoppingCart, Menu, X, Sun, Moon, User as UserIcon, LogOut, LayoutDashboard, ShoppingBag, Settings, Sparkles, Headphones, MessageSquare, Handshake } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { useTheme } from "next-themes";
 import { WellnessAssistantModal } from "@/components/WellnessAssistantModal";
 import {
@@ -20,6 +21,7 @@ import {
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [assistantOpen, setAssistantOpen] = useState(false);
+  const [isPartner, setIsPartner] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { totalItems } = useCart();
@@ -27,7 +29,28 @@ const Header = () => {
   const { isAdmin, isStaff, role } = useStaffAuth();
   const { theme, setTheme } = useTheme();
 
+  useEffect(() => {
+    if (!user?.email) {
+      setIsPartner(false);
+      return;
+    }
+    supabase
+      .from("spas")
+      .select("application_status, is_active")
+      .ilike("email", user.email.trim())
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data && (data.application_status === "approved" || data.is_active)) {
+          setIsPartner(true);
+        } else {
+          setIsPartner(false);
+        }
+      })
+      .catch(() => setIsPartner(false));
+  }, [user]);
+
   const isActive = (path: string) => location.pathname === path;
+
 
   const handleSignOut = async () => {
     await signOut();
@@ -176,6 +199,14 @@ const Header = () => {
                         <span>Order History</span>
                       </Link>
                     </DropdownMenuItem>
+                    {isPartner && (
+                      <DropdownMenuItem asChild>
+                        <Link to="/partner/dashboard" className="cursor-pointer flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-medium">
+                          <Handshake className="h-4 w-4" />
+                          <span>Partner Dashboard</span>
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
                     {isAdmin && (
                       <DropdownMenuItem asChild>
                         <Link to="/admin/dashboard" className="cursor-pointer flex items-center gap-2 text-primary font-medium">
@@ -192,6 +223,7 @@ const Header = () => {
                         </Link>
                       </DropdownMenuItem>
                     )}
+
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleSignOut} className="text-destructive cursor-pointer flex items-center gap-2">
                       <LogOut className="h-4 w-4" />
@@ -256,6 +288,16 @@ const Header = () => {
               >
                 My Orders
               </Link>
+              {isPartner && (
+                <Link
+                  to="/partner/dashboard"
+                  className={`block py-2 font-medium transition-smooth text-emerald-600 dark:text-emerald-400 ${isActive("/partner/dashboard") ? "font-bold" : ""
+                    }`}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Partner Dashboard
+                </Link>
+              )}
               {user ? (
                 <Link
                   to="/profile"
@@ -274,6 +316,7 @@ const Header = () => {
                   Sign In / Register
                 </Link>
               )}
+
               <Link
                 to="/contact"
                 className={`block py-2 font-medium transition-smooth hover:text-primary ${isActive("/contact") ? "text-primary" : "text-foreground"

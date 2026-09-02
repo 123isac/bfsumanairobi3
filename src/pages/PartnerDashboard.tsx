@@ -43,17 +43,37 @@ const PartnerDashboard = () => {
     const fetchPartnerData = async () => {
       setLoading(true);
       try {
-        // 1. Get SPA profile
-        const { data: spaData, error: spaError } = await supabase
-          .from("spas")
-          .select("*")
-          .eq("email", user.email)
-          .single();
+        const cleanEmail = (user.email || "").trim().toLowerCase();
 
-        if (spaError) throw spaError;
+        // 1. Try RPC get_my_partner_profile
+        let spaData: any = null;
+        try {
+          const { data: rpcData } = await supabase.rpc("get_my_partner_profile" as any);
+          if (rpcData && typeof rpcData === "object" && (rpcData as any).id) {
+            spaData = rpcData;
+          }
+        } catch {}
+
+        if (!spaData) {
+          // 2. Direct lookup
+          const { data, error: spaError } = await supabase
+            .from("spas")
+            .select("*")
+            .ilike("email", cleanEmail)
+            .maybeSingle();
+
+          if (spaError) throw spaError;
+          spaData = data;
+        }
+
+        if (!spaData) {
+          toast.error("Partner profile not found. Please contact support.");
+          setLoading(false);
+          return;
+        }
         setPartner(spaData);
 
-        // 2. Extract their referral links
+        // 3. Extract their referral links
         if (spaData?.referral_code) {
           const { data: orderData, error: orderError } = await supabase
             .from("orders")
@@ -61,8 +81,9 @@ const PartnerDashboard = () => {
             .eq("referral_code", spaData.referral_code)
             .order("created_at", { ascending: false });
 
-          if (orderError) throw orderError;
-          setOrders(orderData || []);
+          if (!orderError) {
+            setOrders(orderData || []);
+          }
         }
       } catch (err: any) {
         console.error("Partner sync failed", err);
@@ -71,6 +92,8 @@ const PartnerDashboard = () => {
         setLoading(false);
       }
     };
+
+
 
     fetchPartnerData();
   }, [user]);

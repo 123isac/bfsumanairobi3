@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { z } from "zod";
 import { Sparkles, Github } from "lucide-react";
@@ -25,6 +26,7 @@ const signupSchema = loginSchema.extend({
 
 const Auth = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { signIn, signUp, signInWithGitHub, user, isAdmin, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(false);
 
@@ -42,12 +44,31 @@ const Auth = () => {
   useEffect(() => {
     if (user && !authLoading) {
       if (isAdmin) {
-        navigate("/admin/products");
+        navigate("/admin/dashboard");
       } else {
-        navigate("/");
+        const from = (location.state as any)?.from?.pathname;
+        if (from) {
+          navigate(from, { replace: true });
+        } else {
+          // Check if user is an approved partner
+          supabase
+            .from("spas")
+            .select("application_status, is_active")
+            .ilike("email", (user.email || "").trim())
+            .maybeSingle()
+            .then(({ data }) => {
+              if (data && (data.application_status === "approved" || data.is_active)) {
+                navigate("/partner/dashboard");
+              } else {
+                navigate("/");
+              }
+            })
+            .catch(() => navigate("/"));
+        }
       }
     }
-  }, [user, isAdmin, authLoading, navigate]);
+  }, [user, isAdmin, authLoading, navigate, location.state]);
+
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
