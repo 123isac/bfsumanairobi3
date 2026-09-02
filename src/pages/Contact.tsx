@@ -9,8 +9,11 @@ import { Mail, MapPin, Phone, MessageCircle, Send } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+
 import { contactSchema } from "@/utils/validation";
 import { SUPPORT_EMAIL, SUPPORT_PHONE_DISPLAY, SUPPORT_WHATSAPP_NUMBER, SUPPORT_ADDRESS } from "@/config/site";
+import { sendContactNotificationEmail } from "@/utils/email";
+
 
 const Contact = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -48,7 +51,16 @@ const Contact = () => {
 
       if (error) throw error;
 
+      // Dispatch Resend Notification to Admin + Customer Auto-Reply (non-blocking)
+      sendContactNotificationEmail({
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone || null,
+        message: formData.message,
+      }).catch(err => console.warn("Contact email dispatch error:", err));
+
       toast.success("Message sent successfully! We'll get back to you soon.");
+
 
       // Reset form
       setFormData({

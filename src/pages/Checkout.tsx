@@ -12,6 +12,8 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { getReferralCode } from "@/utils/referral";
 import { checkoutSchema } from "@/utils/validation";
+import { sendOrderConfirmationEmail } from "@/utils/email";
+
 
 const Checkout = () => {
   const { items, totalPrice, clearCart } = useCart();
@@ -232,6 +234,19 @@ const Checkout = () => {
         console.warn("Failed to auto-save address mapping to profile.", profileSaveErr);
       });
 
+      // ── Dispatch Resend Order Confirmation Email (non-blocking) ──
+      sendOrderConfirmationEmail({
+        customerEmail: email,
+        customerName: fullName,
+        orderId: order.id,
+        items: items.map(i => ({ name: i.name, quantity: i.quantity, price: i.price })),
+        totalAmount: finalTotal,
+        shippingAddress: `${kenyaAddress.building}, ${kenyaAddress.street}, ${kenyaAddress.area}`,
+        shippingCity: kenyaAddress.county,
+        paymentMethod: paymentMethod === 'mpesa' ? 'M-Pesa STK' : 'M-Pesa',
+        paymentStatus: 'Pending Confirmation',
+      }).catch(err => console.warn("Email dispatch error:", err));
+
       if (paymentMethod === 'mpesa') {
         await initiateSTKPush(order.id);
         clearCart();
@@ -241,6 +256,7 @@ const Checkout = () => {
         toast.success('Order placed!');
         navigate(`/order-confirmation/${order.id}`);
       }
+
     } catch (error: unknown) {
       if (import.meta.env.DEV) console.error('Checkout error:', error);
       toast.error('Unable to process order. Please try again.');
