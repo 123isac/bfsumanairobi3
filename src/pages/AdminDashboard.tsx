@@ -1,14 +1,17 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Package, ShoppingBag, Banknote, Users, Activity } from "lucide-react";
+import { Package, ShoppingBag, Banknote, Users, Activity, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { Input } from "@/components/ui/input";
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState({
     revenue: 0,
     orders: 0,
     visits: 0,
-    customers: 0
+    customers: 0,
+    productsCount: 0,
+    avgMargin: 0
   });
 
   const [pipeline, setPipeline] = useState({
@@ -28,6 +31,8 @@ const AdminDashboard = () => {
   });
 
   const [topResellers, setTopResellers] = useState<any[]>([]);
+  const [allProducts, setAllProducts] = useState<any[]>([]);
+  const [productSearch, setProductSearch] = useState("");
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -38,23 +43,37 @@ const AdminDashboard = () => {
           { count: usersCount },
           { data: allOrdersData },
           { data: commData },
-          { data: resellersData }
+          { data: resellersData },
+          { data: productsData }
         ] = await Promise.all([
           supabase.from("orders").select("total_amount").eq("status", "delivered"),
           supabase.from("page_visits").select("*", { count: 'exact', head: true }),
           supabase.from("user_roles").select("*", { count: 'exact', head: true }).eq("role", "customer"),
           supabase.from("orders").select("status"),
           supabase.from("commissions").select("*"),
-          supabase.from("orders").select("reseller_id, commissions(amount), spas(name)").not("reseller_id", "is", null)
+          supabase.from("orders").select("reseller_id, commissions(amount), spas(name)").not("reseller_id", "is", null),
+          supabase.from("products").select("id, name, price, cost_price, is_active").order("name")
         ]);
 
         const totalRevenue = ordersData?.reduce((sum, order) => sum + (order.total_amount || 0), 0) || 0;
+
+        let totalMargin = 0;
+        let marginCount = 0;
+        productsData?.forEach(p => {
+          if (p.price && p.cost_price && p.price > p.cost_price) {
+            totalMargin += (Number(p.price) - Number(p.cost_price));
+            marginCount++;
+          }
+        });
+        const avgMargin = marginCount > 0 ? totalMargin / marginCount : 0;
 
         setStats({
           revenue: totalRevenue,
           orders: ordersData?.length || 0,
           visits: visitsCount || 0,
-          customers: usersCount || 0
+          customers: usersCount || 0,
+          productsCount: productsData?.filter(p => p.is_active)?.length || 0,
+          avgMargin: avgMargin
         });
 
         const pStats = { paymentPending: 0, paid: 0, packed: 0, inTransit: 0, delivered: 0, failedReturned: 0 };
@@ -70,10 +89,14 @@ const AdminDashboard = () => {
 
         let tGen = 0, pFees = 0, nPaid = 0, pPending = 0;
         commData?.forEach((c: any) => {
-          tGen += Number(c.amount || 0);
-          pFees += Number(c.platform_fee_amount || 0);
-          if (c.status === 'paid') nPaid += Number(c.net_commission || 0);
-          if (c.status === 'pending') pPending += Number(c.net_commission || 0);
+          const grossAmount = Number(c.amount || 0);
+          const platformFee = grossAmount * 0.15;
+          const netComm = grossAmount * 0.85;
+
+          tGen += grossAmount;
+          pFees += platformFee;
+          if (c.status === 'paid') nPaid += netComm;
+          if (c.status === 'pending') pPending += netComm;
         });
         setCommissionStats({ totalGenerated: tGen, platformFees: pFees, netPaid: nPaid, pending: pPending });
 
@@ -90,6 +113,7 @@ const AdminDashboard = () => {
         
         const topList = Object.values(rMap).sort((a, b) => b.count - a.count).slice(0, 5);
         setTopResellers(topList);
+        setAllProducts(productsData || []);
 
       } catch (err) {
         console.error("Failed to load dashboard stats", err);
@@ -106,7 +130,7 @@ const AdminDashboard = () => {
         <p className="text-muted-foreground mt-1">Welcome back. Here is what's happening with your store today.</p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
@@ -148,6 +172,28 @@ const AdminDashboard = () => {
           <CardContent>
             <div className="text-2xl font-bold">{stats.customers}</div>
             <p className="text-xs text-muted-foreground">Active platform users</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Active Products</CardTitle>
+            <Package className="h-4 w-4 text-primary" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.productsCount || 0}</div>
+            <p className="text-xs text-muted-foreground">In catalog</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Avg Reseller Margin</CardTitle>
+            <Banknote className="h-4 w-4 text-primary" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">KSh {Math.round(stats.avgMargin || 0).toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">Gross margin per product</p>
           </CardContent>
         </Card>
       </div>
@@ -241,6 +287,64 @@ const AdminDashboard = () => {
               </tbody>
             </table>
           )}
+        </div>
+      </div>
+
+      <div className="bg-white p-6 rounded-xl border border-border shadow-sm">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
+          <h2 className="text-xl font-semibold">Reseller Pricing & Margins per Product</h2>
+          <div className="relative w-full max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input 
+              placeholder="Search products..." 
+              className="pl-9" 
+              value={productSearch} 
+              onChange={(e) => setProductSearch(e.target.value)} 
+            />
+          </div>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm text-left">
+            <thead className="bg-muted/40">
+              <tr>
+                <th className="px-4 py-3 font-medium">Product Name</th>
+                <th className="px-4 py-3 font-medium text-right">Reseller Buying Price</th>
+                <th className="px-4 py-3 font-medium text-right">Reseller Selling Price</th>
+                <th className="px-4 py-3 font-medium text-right">Gross Margin</th>
+                <th className="px-4 py-3 font-medium text-right text-orange-600">Platform Fee (15%)</th>
+                <th className="px-4 py-3 font-medium text-right text-green-600">Reseller Net Payout</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {allProducts.filter(p => (p.name || '').toLowerCase().includes(productSearch.toLowerCase())).map((p) => {
+                const costPrice = Number(p.cost_price || 0);
+                const sellingPrice = Number(p.price || 0);
+                const margin = sellingPrice - costPrice;
+                const fee = margin * 0.15;
+                const net = margin * 0.85;
+
+                return (
+                  <tr key={p.id} className="hover:bg-muted/20">
+                    <td className="px-4 py-3 font-medium">
+                      {p.name} {!p.is_active && <span className="text-xs text-red-500 ml-2">(Inactive)</span>}
+                    </td>
+                    <td className="px-4 py-3 text-right">KSh {costPrice.toLocaleString()}</td>
+                    <td className="px-4 py-3 text-right">KSh {sellingPrice.toLocaleString()}</td>
+                    <td className="px-4 py-3 text-right font-medium">KSh {margin.toLocaleString()}</td>
+                    <td className="px-4 py-3 text-right text-orange-600">KSh {fee.toLocaleString()}</td>
+                    <td className="px-4 py-3 text-right font-bold text-green-600">KSh {net.toLocaleString()}</td>
+                  </tr>
+                );
+              })}
+              {allProducts.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
+                    No products found.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

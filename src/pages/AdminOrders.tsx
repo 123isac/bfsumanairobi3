@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Package, Search, Clock, CheckCircle, Eye, HandCoins } from "lucide-react";
+import { Package, Search, Clock, CheckCircle, Eye, HandCoins, Trash2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { sendDeliveryStatusEmail } from "@/utils/email";
 
@@ -123,7 +123,26 @@ const AdminOrders = () => {
     }
   };
 
+  const deleteOrder = async (orderId: string) => {
+    if (!confirm("Are you sure you want to delete this order? This action cannot be undone.")) return;
 
+    try {
+      // Cascade delete order_items and commissions if necessary
+      await supabase.from("order_items").delete().eq("order_id", orderId);
+      await supabase.from("commissions").delete().eq("order_id", orderId);
+      
+      const { error } = await supabase
+        .from("orders")
+        .delete()
+        .eq("id", orderId);
+
+      if (error) throw error;
+      toast.success("Order deleted successfully");
+      fetchOrders();
+    } catch (error: any) {
+      toast.error("Failed to delete order: " + error.message);
+    }
+  };
 
   const filteredOrders = orders.filter((o) =>
     o.customer_name.toLowerCase().includes(search.toLowerCase()) ||
@@ -240,6 +259,9 @@ const AdminOrders = () => {
                           <HandCoins className="h-4 w-4 mr-1" /> Retry STK
                         </Button>
                       )}
+                      <Button size="sm" variant="destructive" className="ml-2" onClick={() => deleteOrder(order.id)}>
+                        <Trash2 className="h-4 w-4 mr-1" /> Delete
+                      </Button>
                     </td>
                   </tr>
                 ))}

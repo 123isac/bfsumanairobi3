@@ -97,7 +97,7 @@ const PartnerDashboard = () => {
             .from("orders")
             .select(`
               id, customer_name, total_amount, status, payment_status, created_at,
-              commissions ( amount, platform_fee_amount, net_commission, status )
+              commissions ( amount, status )
             `)
             .eq("referral_code", spaData.referral_code)
             .order("created_at", { ascending: false });
@@ -282,7 +282,11 @@ const PartnerDashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-yellow-600">
-              KSH {commissions.filter(c => c.status === 'pending').reduce((sum, c) => sum + Number(c.net_commission || 0), 0).toLocaleString()}
+              KSH {commissions.filter(c => c.status === 'pending').reduce((sum, c) => {
+                const gross = Number(c.amount || 0);
+                const net = c.net_commission != null ? Number(c.net_commission) : (gross * 0.85);
+                return sum + net;
+              }, 0).toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground mt-1">Awaiting release</p>
           </CardContent>
@@ -295,7 +299,11 @@ const PartnerDashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-green-600">
-              KSH {commissions.filter(c => c.status === 'paid').reduce((sum, c) => sum + Number(c.net_commission || 0), 0).toLocaleString()}
+              KSH {commissions.filter(c => c.status === 'paid').reduce((sum, c) => {
+                const gross = Number(c.amount || 0);
+                const net = c.net_commission != null ? Number(c.net_commission) : (gross * 0.85);
+                return sum + net;
+              }, 0).toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground mt-1">Total approved net payouts</p>
           </CardContent>
@@ -308,7 +316,11 @@ const PartnerDashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">
-              KSH {commissions.reduce((sum, c) => sum + Number(c.platform_fee_amount || 0), 0).toLocaleString()}
+              KSH {commissions.reduce((sum, c) => {
+                const gross = Number(c.amount || 0);
+                const fee = c.platform_fee_amount != null ? Number(c.platform_fee_amount) : (gross * 0.15);
+                return sum + fee;
+              }, 0).toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground mt-1">Total platform fees deducted (15%)</p>
           </CardContent>
@@ -433,6 +445,10 @@ const PartnerDashboard = () => {
               <tbody className="divide-y divide-border">
                 {orders.map((order) => {
                   const comm = order.commissions && order.commissions.length > 0 ? order.commissions[0] : null;
+                  const gross = comm ? Number(comm.amount || 0) : 0;
+                  const fee = comm ? (comm.platform_fee_amount != null ? Number(comm.platform_fee_amount) : gross * 0.15) : 0;
+                  const net = comm ? (comm.net_commission != null ? Number(comm.net_commission) : gross * 0.85) : 0;
+
                   return (
                     <tr key={order.id} className="hover:bg-muted/30 transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -445,13 +461,13 @@ const PartnerDashboard = () => {
                         KSH {Number(order.total_amount).toLocaleString()}
                       </td>
                       <td className="px-6 py-4 text-right">
-                        {comm ? `KSH ${Number(comm.amount).toLocaleString()}` : '-'}
+                        {comm ? `KSH ${gross.toLocaleString()}` : '-'}
                       </td>
                       <td className="px-6 py-4 text-right">
-                        {comm ? `KSH ${Number(comm.platform_fee_amount).toLocaleString()}` : '-'}
+                        {comm ? `KSH ${fee.toLocaleString()}` : '-'}
                       </td>
                       <td className="px-6 py-4 text-right font-medium text-green-600">
-                        {comm ? `KSH ${Number(comm.net_commission).toLocaleString()}` : '-'}
+                        {comm ? `KSH ${net.toLocaleString()}` : '-'}
                       </td>
                       <td className="px-6 py-4 text-right">
                         <Badge variant={order.status === 'delivered' ? 'default' : 'secondary'}>

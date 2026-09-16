@@ -252,7 +252,24 @@ export function AdminProductModal({ isOpen, onClose, product, onSaved }: AdminPr
                                 <div>
                                     <Label htmlFor="costPrice">Cost / Buying Price (KSh)</Label>
                                     <Input id="costPrice" type="number" value={costPrice} onChange={(e) => setCostPrice(e.target.value)} placeholder="e.g. 8000" />
-                                    <p className="text-xs text-muted-foreground mt-1">Reseller commission = Selling − Cost</p>
+                                    {price && costPrice && Number(price) > Number(costPrice) ? (
+                                        <div className="text-xs mt-2 p-2 bg-muted rounded-md space-y-1">
+                                            <div className="flex justify-between font-medium">
+                                                <span>Gross Margin:</span>
+                                                <span>KSh {(Number(price) - Number(costPrice)).toLocaleString()}</span>
+                                            </div>
+                                            <div className="flex justify-between text-muted-foreground">
+                                                <span>Platform Fee (15%):</span>
+                                                <span>KSh {((Number(price) - Number(costPrice)) * 0.15).toLocaleString()}</span>
+                                            </div>
+                                            <div className="flex justify-between font-semibold text-green-600 border-t pt-1 mt-1">
+                                                <span>Reseller Net Earnings:</span>
+                                                <span>KSh {((Number(price) - Number(costPrice)) * 0.85).toLocaleString()}</span>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <p className="text-xs text-muted-foreground mt-1">Reseller commission = Selling − Cost</p>
+                                    )}
                                 </div>
                             </div>
 
