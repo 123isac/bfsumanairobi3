@@ -133,7 +133,7 @@ const Header = () => {
                   </span>
                 </div>
 
-                <div className="flex flex-col text-left leading-none">
+                <div className="flex flex-col text-left leading-none hidden sm:flex">
                   <span className="text-[10px] sm:text-[11px] font-bold text-foreground group-hover:text-primary transition-colors">
                     Support
                   </span>
@@ -246,6 +246,8 @@ const Header = () => {
                 size="icon"
                 className="md:hidden h-8 w-8 sm:h-9 sm:w-9 shrink-0"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                aria-expanded={mobileMenuOpen}
+                aria-controls="mobile-nav"
                 aria-label="Toggle navigation menu"
               >
                 {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -255,7 +257,7 @@ const Header = () => {
 
           {/* Mobile Navigation */}
           {mobileMenuOpen && (
-            <nav className="md:hidden py-4 space-y-3 border-t border-border animate-fade-in">
+            <nav id="mobile-nav" className="md:hidden py-4 space-y-3 border-t border-border animate-fade-in">
               <Link
                 to="/"
                 className={`block py-2 font-medium transition-smooth hover:text-primary ${isActive("/") ? "text-primary" : "text-foreground"

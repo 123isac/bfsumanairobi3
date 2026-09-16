@@ -14,8 +14,48 @@ serve(async (req) => {
     const rawBody = await req.text();
     console.log('Lipana Webhook received (raw):', rawBody);
 
-    // --- Signature verification removed (caused Deno deployment error) ---
+    const signature = req.headers.get('x-lipana-signature');
+    const secretKey = Deno.env.get('LIPANA_SECRET_KEY');
 
+    if (secretKey && signature) {
+      const encoder = new TextEncoder();
+      const key = await crypto.subtle.importKey(
+        'raw',
+        encoder.encode(secretKey),
+        { name: 'HMAC', hash: 'SHA-256' },
+        false,
+        ['verify']
+      );
+
+      const hexToBytes = (hex: string) => {
+        const bytes = new Uint8Array(Math.ceil(hex.length / 2));
+        for (let i = 0; i < bytes.length; i++) bytes[i] = parseInt(hex.substr(i * 2, 2), 16);
+        return bytes;
+      };
+
+      try {
+        const signatureBytes = hexToBytes(signature);
+        const isValid = await crypto.subtle.verify(
+          'HMAC',
+          key,
+          signatureBytes,
+          encoder.encode(rawBody)
+        );
+        if (!isValid) {
+          throw new Error('Invalid signature');
+        }
+      } catch (e) {
+        console.error('Signature validation failed');
+        return new Response(JSON.stringify({ status: 'error', message: 'Invalid signature' }), {
+          status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+    } else if (secretKey && !signature) {
+      console.error('Missing signature');
+      return new Response(JSON.stringify({ status: 'error', message: 'Missing signature' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
     const callback = JSON.parse(rawBody);
     console.log('Lipana Webhook payload:', JSON.stringify(callback, null, 2));
 

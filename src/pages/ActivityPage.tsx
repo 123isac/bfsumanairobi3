@@ -20,7 +20,9 @@ interface LogEntry {
 
 const ActivityPage = () => {
   const { role } = useStaffAuth();
-  const canViewAll = usePermission("view_activity_all") || role === "admin" || usePermission("view_activity_shop");
+  const viewAllPermission = usePermission("view_activity_all");
+  const viewShopPermission = usePermission("view_activity_shop");
+  const canViewAll = viewAllPermission || role === "admin" || viewShopPermission;
 
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [loading, setLoading] = useState(true);

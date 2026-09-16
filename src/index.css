@@ -222,10 +222,18 @@ All colors MUST be HSL.
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hero-float,
-  .animated-bg::before,
-  .animated-bg-secondary::after {
-    animation: none !important;
-    transform: none !important;
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  input, select, textarea {
+    font-size: 16px !important;
   }
 }

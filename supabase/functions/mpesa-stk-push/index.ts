@@ -41,16 +41,6 @@ serve(async (req: Request) => {
     );
 
     let secretKey = Deno.env.get('LIPANA_SECRET_KEY');
-    if (!secretKey) {
-      const { data: settingRow } = await supabase
-        .from('store_settings')
-        .select('value')
-        .eq('key', 'lipana_secret_key')
-        .maybeSingle();
-      if (settingRow?.value) {
-        secretKey = typeof settingRow.value === 'string' ? settingRow.value : String(settingRow.value);
-      }
-    }
 
     if (!secretKey) {
       return new Response(

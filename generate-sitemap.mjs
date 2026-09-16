@@ -17,11 +17,11 @@ config(); // Load .env
 
 const SITE_URL = "https://bfsumanairobi3.com";
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseKey) {
-    console.error("Missing VITE_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY in .env");
-    process.exit(1);
+    console.warn("⚠️ Missing VITE_SUPABASE_URL or Supabase Key in env. Skipping dynamic product sitemap generation.");
+    process.exit(0);
 }
 
 const supabase = createClient(supabaseUrl, supabaseKey);
@@ -99,8 +99,8 @@ async function generateSitemap() {
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${entries.join("")}
 </urlset>`;
 
-    writeFileSync("./public/sitemap.xml", xml, "utf-8");
-    console.log(`✅ sitemap.xml written with ${entries.length} URLs`);
+    writeFileSync("./dist/sitemap.xml", xml, "utf-8");
+    console.log(`✅ sitemap.xml written to dist with ${entries.length} URLs`);
 }
 
 generateSitemap().catch((e) => {

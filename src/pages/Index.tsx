@@ -9,7 +9,6 @@ import { Input } from "@/components/ui/input";
 import { Sparkles, Heart, Shield, ShieldCheck, Leaf, Bone, ArrowRight, Activity, Sun, Baby, Home, Star, Truck, Lock } from "lucide-react";
 
 import { Link } from "react-router-dom";
-import heroBanner from "@/assets/hero-banner.jpg";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { setReferralCode } from "@/utils/referral";

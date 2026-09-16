@@ -207,27 +207,23 @@ const Checkout = () => {
         shipping_building: kenyaAddress.building,
         shipping_landmark: kenyaAddress.landmark || null,
         payment_method: paymentMethod,
-        total_amount: finalTotal,
         referral_code: referralCode,
       };
 
-      const { data: order, error: orderError } = await supabase
-        .from("orders")
-        .insert(orderData)
-        .select()
-        .single();
+      const { data: createOrderResponse, error: createOrderError } = await supabase.functions.invoke('create-order', {
+        body: {
+          items,
+          promoCode: appliedPromo?.code,
+          orderData,
+          phone,
+        }
+      });
 
-      if (orderError) throw orderError;
+      if (createOrderError || !createOrderResponse?.success) {
+        throw new Error(createOrderResponse?.error || createOrderError?.message || 'Failed to create order');
+      }
 
-      const orderItems = items.map(item => ({
-        order_id: order.id,
-        product_id: item.id,
-        quantity: item.quantity,
-        price: item.price,
-      }));
-
-      const { error: itemsError } = await supabase.from("order_items").insert(orderItems);
-      if (itemsError) throw itemsError;
+      const order = createOrderResponse.order;
 
       // ── Auto-Save address to profile (fire-and-forget — does NOT block STK push) ──
       (supabase.from("profiles").update({ 
@@ -242,7 +238,7 @@ const Checkout = () => {
         customerName: fullName,
         orderId: order.id,
         items: items.map(i => ({ name: i.name, quantity: i.quantity, price: i.price })),
-        totalAmount: finalTotal,
+        totalAmount: order.total_amount,
         shippingAddress: `${kenyaAddress.building}, ${kenyaAddress.street}, ${kenyaAddress.area}`,
         shippingCity: kenyaAddress.county,
         paymentMethod: paymentMethod === 'mpesa' ? 'M-Pesa STK' : 'M-Pesa',
@@ -250,7 +246,13 @@ const Checkout = () => {
       }).catch(err => console.warn("Email dispatch error:", err));
 
       if (paymentMethod === 'mpesa') {
-        await initiateSTKPush(order.id);
+        const paymentResponse = createOrderResponse.paymentResponse;
+        if (paymentResponse?.success) {
+          toast.success('M-PESA prompt sent! Enter your PIN on your phone.');
+        } else {
+          const errorMsg = paymentResponse?.error || 'M-PESA STK gateway connecting. You can pay via Paybill.';
+          toast.info(errorMsg);
+        }
         clearCart();
         navigate(`/order-confirmation/${order.id}`);
       } else {
@@ -398,10 +400,14 @@ const Checkout = () => {
                     </div>
                   </div>
                   
+                  <div className="text-xs text-muted-foreground mt-4 space-y-1">
+                    <p><strong>Returns Policy:</strong> Wellness products can only be returned within 7 days if sealed and unused.</p>
+                    <p><strong>Delivery:</strong> Orders are processed within 24 hours. Delivery times vary by location.</p>
+                  </div>
                   <Button
                     type="submit"
                     size="lg"
-                    className="gradient-primary w-full rounded-full h-12 text-lg mt-2"
+                    className="gradient-primary w-full rounded-full h-12 text-lg mt-4"
                     disabled={isSubmitting}
                   >
                     {isSubmitting ? 'Initiating M-PESA...' : 'Pay with M-PESA'}
