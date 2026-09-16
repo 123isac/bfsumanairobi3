@@ -105,7 +105,7 @@ const ShopManagerDashboard = () => {
       const [ordersRes, productsRes, workersRes] = await Promise.all([
         supabase.from("orders").select("total_amount, status").gte("created_at", today),
         supabase.from("products").select("id", { count: "exact", head: true }),
-        supabase.from("workers").select("id", { count: "exact", head: true }),
+        supabase.from("workers" as any).select("id", { count: "exact", head: true }),
       ]);
       setStats({
         sales:     ordersRes.data?.filter(o => o.status === "completed").reduce((s, o) => s + (o.total_amount ?? 0), 0) ?? 0,

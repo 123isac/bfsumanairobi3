@@ -26,7 +26,7 @@ const AdminAuth = () => {
                     const userId = session.user.id;
 
                     // 1. Try RPC function first
-                    const { data: rpcRole } = await supabase.rpc('get_current_user_role');
+                    const { data: rpcRole } = await (supabase as any).rpc('get_current_user_role');
                     let userRole = rpcRole as string | null;
 
                     // 2. Fallback: Check user_roles
@@ -42,7 +42,7 @@ const AdminAuth = () => {
 
                     // 3. Fallback: Check workers table
                     if (!userRole || userRole === 'customer') {
-                        const { data: workerData } = await supabase
+                        const { data: workerData } = await (supabase as any)
                             .from('workers')
                             .select('role, status')
                             .eq('user_id', userId)
@@ -92,7 +92,7 @@ const AdminAuth = () => {
                 const userId = authData.user.id;
 
                 // 1. Try RPC function first (bypasses any RLS restrictions)
-                const { data: rpcRole, error: rpcError } = await supabase.rpc('get_current_user_role');
+                const { data: rpcRole, error: rpcError } = await (supabase as any).rpc('get_current_user_role');
                 let userRole = rpcRole as string | null;
 
                 // 2. Fallback check user_roles
@@ -108,7 +108,7 @@ const AdminAuth = () => {
 
                 // 3. Fallback check workers table
                 if (!userRole || userRole === 'customer') {
-                    const { data: workerData } = await supabase
+                    const { data: workerData } = await (supabase as any)
                         .from('workers')
                         .select('role, status')
                         .eq('user_id', userId)

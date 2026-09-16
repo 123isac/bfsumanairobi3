@@ -72,7 +72,7 @@ export const StaffAuthProvider = ({ children }: { children: ReactNode }) => {
       const userId = session.user.id;
 
       // 1. Try RPC function first
-      const { data: rpcRole } = await supabase.rpc('get_current_user_role');
+      const { data: rpcRole } = await (supabase as any).rpc('get_current_user_role');
       let userRole = (rpcRole as AppRole) ?? null;
 
       // 2. Fallback: Load role from user_roles
@@ -88,11 +88,13 @@ export const StaffAuthProvider = ({ children }: { children: ReactNode }) => {
 
       // 3. Fallback: check workers table if user_roles is missing or customer
       if (!userRole || userRole === "customer") {
-        const { data: workerRow } = await supabase
+        const { data } = await (supabase as any)
           .from("workers")
           .select("*")
           .eq("user_id", userId)
           .maybeSingle();
+          
+        const workerRow = data as any;
 
         if (workerRow && workerRow.status === "active" && workerRow.role && STAFF_ROLES.includes(workerRow.role as AppRole)) {
           userRole = workerRow.role as AppRole;
@@ -112,22 +114,22 @@ export const StaffAuthProvider = ({ children }: { children: ReactNode }) => {
       if (userRole && STAFF_ROLES.includes(userRole)) {
         // Load worker profile if not already loaded
         if (!workerProfile) {
-          const { data: profile } = await supabase
+          const { data: profile } = await (supabase as any)
             .from("workers")
             .select("*")
             .eq("user_id", userId)
             .maybeSingle();
 
-          setWorkerProfile(profile ?? null);
+          setWorkerProfile((profile as any) ?? null);
         }
 
         // Load permissions for this role
-        const { data: perms } = await supabase
+        const { data: perms } = await (supabase as any)
           .from("role_permissions")
           .select("permission_key")
           .eq("role", userRole);
 
-        setPermissions(perms?.map((p) => p.permission_key) ?? []);
+        setPermissions((perms as any[])?.map((p) => p.permission_key) ?? []);
       }
     } catch (err) {
       console.error("StaffAuthContext error:", err);

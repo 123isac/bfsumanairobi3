@@ -49,6 +49,7 @@ const LogisticsPage = () => {
             )
           )
         `)
+        .in("status", ["packed", "dispatched", "out_for_delivery", "delivered", "delivery_failed", "returned"])
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -77,7 +78,7 @@ const LogisticsPage = () => {
 
       // Log activity
       const { data: userData } = await supabase.auth.getUser();
-      await supabase.from("activity_logs").insert({
+      await (supabase as any).from("activity_logs").insert({
         user_id: userData.user?.id,
         action: "update_delivery_status",
         target_table: "orders",
@@ -104,14 +105,23 @@ const LogisticsPage = () => {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
+      case "packed":
+        return <Badge className="bg-blue-100 text-blue-800">Packed</Badge>;
+      case "dispatched":
+        return <Badge className="bg-indigo-100 text-indigo-800">Dispatched</Badge>;
+      case "out_for_delivery":
+        return <Badge className="bg-orange-100 text-orange-800">Out for Delivery</Badge>;
+      case "delivered":
       case "completed":
         return <Badge className="bg-green-100 text-green-800">Delivered</Badge>;
-      case "processing":
-        return <Badge className="bg-blue-100 text-blue-800">In Transit</Badge>;
+      case "delivery_failed":
+        return <Badge className="bg-red-100 text-red-800">Failed</Badge>;
+      case "returned":
+        return <Badge className="bg-purple-100 text-purple-800">Returned</Badge>;
       case "cancelled":
-        return <Badge variant="destructive">Cancelled</Badge>;
+        return <Badge className="bg-gray-100 text-gray-800">Cancelled</Badge>;
       default:
-        return <Badge className="bg-yellow-100 text-yellow-800">Pending Dispatch</Badge>;
+        return <Badge className="bg-gray-100 text-gray-800">Pending</Badge>;
     }
   };
 
@@ -235,9 +245,12 @@ const LogisticsPage = () => {
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="pending">Pending Dispatch</SelectItem>
-                      <SelectItem value="processing">In Transit</SelectItem>
-                      <SelectItem value="completed">Delivered (Completed)</SelectItem>
+                      <SelectItem value="packed">Packed</SelectItem>
+                      <SelectItem value="dispatched">Dispatched</SelectItem>
+                      <SelectItem value="out_for_delivery">Out for Delivery</SelectItem>
+                      <SelectItem value="delivered">Delivered</SelectItem>
+                      <SelectItem value="delivery_failed">Delivery Failed</SelectItem>
+                      <SelectItem value="returned">Returned</SelectItem>
                       <SelectItem value="cancelled">Cancelled</SelectItem>
                     </SelectContent>
                   </Select>

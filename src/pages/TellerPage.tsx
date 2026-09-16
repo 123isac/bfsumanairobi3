@@ -64,7 +64,7 @@ const TellerPage = () => {
     try {
       const { data: userData } = await supabase.auth.getUser();
 
-      const { error } = await supabase.from("approval_requests").insert({
+      const { error } = await (supabase as any).from("approval_requests").insert({
         requested_by: userData.user?.id,
         type: "transaction_correction",
         status: "pending",
@@ -217,7 +217,38 @@ const TellerPage = () => {
                         <Badge className="bg-yellow-100 text-yellow-800">Pending</Badge>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-right">
+                    <td className="px-4 py-3 text-right flex gap-2 justify-end">
+                      {order.payment_status === 'pending' && (
+                        <Button
+                          size="sm"
+                          disabled={!canRecord}
+                          onClick={async () => {
+                            try {
+                              const { error } = await supabase
+                                .from('orders')
+                                .update({ payment_status: 'paid', status: 'paid' })
+                                .eq('id', order.id);
+                              if (error) throw error;
+
+                              const { data: userData } = await supabase.auth.getUser();
+                              await (supabase as any).from('activity_logs').insert({
+                                user_id: userData.user?.id,
+                                action: 'payment_confirmed',
+                                entity_type: 'order',
+                                entity_id: order.id,
+                                details: { previous_status: 'pending' }
+                              });
+
+                              toast.success(`Payment confirmed for Order #${order.id.slice(0, 8).toUpperCase()}`);
+                              fetchTellerData();
+                            } catch (err: any) {
+                              toast.error('Failed to confirm payment: ' + err.message);
+                            }
+                          }}
+                        >
+                          Confirm Payment
+                        </Button>
+                      )}
                       <Button
                         size="sm"
                         variant="ghost"

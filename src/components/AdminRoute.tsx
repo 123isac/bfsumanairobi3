@@ -30,7 +30,7 @@ export function AdminRoute({ children }: { children: React.ReactNode }) {
                 let currentRole = roleData?.role;
 
                 if (!currentRole || currentRole === 'customer') {
-                    const { data: workerData } = await supabase
+                    const { data: workerData } = await (supabase as any)
                         .from('workers')
                         .select('role, status')
                         .eq('user_id', session.user.id)

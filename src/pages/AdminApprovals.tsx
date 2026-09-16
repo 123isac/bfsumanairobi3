@@ -38,13 +38,13 @@ const AdminApprovals = () => {
   const fetchRequests = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("approval_requests")
         .select("*")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setRequests(data || []);
+      setRequests((data as any) || []);
     } catch (err: any) {
       toast.error("Failed to load approval requests: " + err.message);
     } finally {
@@ -61,7 +61,7 @@ const AdminApprovals = () => {
     try {
       const { data: userData } = await supabase.auth.getUser();
 
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from("approval_requests")
         .update({
           status: "approved",
@@ -87,7 +87,7 @@ const AdminApprovals = () => {
     try {
       const { data: userData } = await supabase.auth.getUser();
 
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from("approval_requests")
         .update({
           status: "rejected",

@@ -173,10 +173,44 @@ const AdminProducts = () => {
                                             {product.name}
                                         </h3>
 
-                                        <div className="mt-auto pt-3 flex items-center justify-between border-t border-border/50">
-                                            <div className="font-bold text-lg">
-                                                KSh {Number(product.price).toLocaleString()}
+                                        {/* Pricing Info */}
+                                        <div className="text-xs space-y-1 mb-3">
+                                            <div className="flex justify-between">
+                                                <span className="text-muted-foreground">Selling Price</span>
+                                                <span className="font-semibold">KSh {Number(product.price).toLocaleString()}</span>
                                             </div>
+                                            <div className="flex justify-between items-center gap-2">
+                                                <span className="text-muted-foreground shrink-0">Cost Price</span>
+                                                <input
+                                                    type="number"
+                                                    defaultValue={product.cost_price as number ?? ""}
+                                                    placeholder="Set buying price"
+                                                    className="w-28 text-right text-xs border border-border rounded px-2 py-0.5 bg-background focus:outline-none focus:ring-1 focus:ring-primary"
+                                                    onBlur={async (e) => {
+                                                        const val = parseFloat(e.target.value);
+                                                        if (!isNaN(val) && val !== product.cost_price) {
+                                                            const { error } = await supabase
+                                                                .from("products")
+                                                                .update({ cost_price: val } as any)
+                                                                .eq("id", product.id);
+                                                            if (error) toast.error("Failed to update cost price");
+                                                            else {
+                                                                toast.success(`Cost price updated for ${product.name}`);
+                                                                fetchProducts();
+                                                            }
+                                                        }
+                                                    }}
+                                                />
+                                            </div>
+                                            {product.cost_price != null && (
+                                                <div className="flex justify-between text-green-700 font-medium">
+                                                    <span>Reseller Margin</span>
+                                                    <span>KSh {(Number(product.price) - Number(product.cost_price)).toLocaleString()}</span>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <div className="mt-auto pt-3 flex items-center justify-end border-t border-border/50">
                                             <Button
                                                 variant="outline"
                                                 size="sm"
@@ -186,6 +220,7 @@ const AdminProducts = () => {
                                                 <Edit2 className="h-3.5 w-3.5 mr-1" /> Edit
                                             </Button>
                                         </div>
+
                                     </div>
 
                                 </div>

@@ -23,6 +23,7 @@ interface ProductData {
     benefits?: string;
     ingredients?: string;
     price?: number | string;
+    cost_price?: number | string | null;
     compare_price?: number | string | null;
     badge?: string | null;
     image_url?: string | null;
@@ -47,6 +48,7 @@ export function AdminProductModal({ isOpen, onClose, product, onSaved }: AdminPr
     const [benefits, setBenefits] = useState("");
     const [ingredients, setIngredients] = useState("");
     const [price, setPrice] = useState("");
+    const [costPrice, setCostPrice] = useState("");
     const [comparePrice, setComparePrice] = useState("");
     const [badge, setBadge] = useState("none");
     const [imageUrl, setImageUrl] = useState("");
@@ -73,6 +75,7 @@ export function AdminProductModal({ isOpen, onClose, product, onSaved }: AdminPr
                 setBenefits(product.benefits || "");
                 setIngredients(product.ingredients || "");
                 setPrice(product.price ? product.price.toString() : "");
+                setCostPrice(product.cost_price ? product.cost_price.toString() : "");
                 setComparePrice(product.compare_price ? product.compare_price.toString() : "");
                 setBadge(product.badge || "none");
                 setImageUrl(product.image_url || "");
@@ -92,6 +95,7 @@ export function AdminProductModal({ isOpen, onClose, product, onSaved }: AdminPr
         setBenefits("");
         setIngredients("");
         setPrice("");
+        setCostPrice("");
         setComparePrice("");
         setBadge("none");
         setImageUrl("");
@@ -155,6 +159,7 @@ export function AdminProductModal({ isOpen, onClose, product, onSaved }: AdminPr
                 category_id: categoryId,
                 description,
                 price: Number(price),
+                cost_price: costPrice ? Number(costPrice) : null,
                 stock_quantity: 100, // Default for now
                 image_url: finalImageUrl,
                 is_active: isActive,
@@ -241,16 +246,21 @@ export function AdminProductModal({ isOpen, onClose, product, onSaved }: AdminPr
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <Label htmlFor="price">Price (KSh) *</Label>
-                                    <Input id="price" type="number" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="0.00" />
+                                    <Label htmlFor="price">Selling Price (KSh) *</Label>
+                                    <Input id="price" type="number" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="e.g. 10000" />
                                 </div>
                                 <div>
-                                    <Label htmlFor="comparePrice">Compare-At Price (Optional)</Label>
-                                    <Input id="comparePrice" type="number" value={comparePrice} onChange={(e) => setComparePrice(e.target.value)} placeholder="Higher crossed-out price" />
+                                    <Label htmlFor="costPrice">Cost / Buying Price (KSh)</Label>
+                                    <Input id="costPrice" type="number" value={costPrice} onChange={(e) => setCostPrice(e.target.value)} placeholder="e.g. 8000" />
+                                    <p className="text-xs text-muted-foreground mt-1">Reseller commission = Selling − Cost</p>
                                 </div>
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <Label htmlFor="comparePrice">Compare-At Price (Optional)</Label>
+                                    <Input id="comparePrice" type="number" value={comparePrice} onChange={(e) => setComparePrice(e.target.value)} placeholder="Higher crossed-out price" />
+                                </div>
                                 <div>
                                     <Label htmlFor="category">Category *</Label>
                                     <Select value={categoryId} onValueChange={setCategoryId}>
@@ -264,21 +274,22 @@ export function AdminProductModal({ isOpen, onClose, product, onSaved }: AdminPr
                                         </SelectContent>
                                     </Select>
                                 </div>
-                                <div>
-                                    <Label htmlFor="badge">Display Badge</Label>
-                                    <Select value={badge} onValueChange={setBadge}>
-                                        <SelectTrigger id="badge">
-                                            <SelectValue placeholder="No Badge" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="none">No Badge</SelectItem>
-                                            <SelectItem value="BEST SELLER">BEST SELLER</SelectItem>
-                                            <SelectItem value="HOT">HOT</SelectItem>
-                                            <SelectItem value="TRENDING">TRENDING</SelectItem>
-                                            <SelectItem value="NEW">NEW</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
+                            </div>
+
+                            <div>
+                                <Label htmlFor="badge">Display Badge</Label>
+                                <Select value={badge} onValueChange={setBadge}>
+                                    <SelectTrigger id="badge">
+                                        <SelectValue placeholder="No Badge" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="none">No Badge</SelectItem>
+                                        <SelectItem value="BEST SELLER">BEST SELLER</SelectItem>
+                                        <SelectItem value="HOT">HOT</SelectItem>
+                                        <SelectItem value="TRENDING">TRENDING</SelectItem>
+                                        <SelectItem value="NEW">NEW</SelectItem>
+                                    </SelectContent>
+                                </Select>
                             </div>
                         </div>
                     </div>

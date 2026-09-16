@@ -11,17 +11,41 @@ const AdminDashboard = () => {
     customers: 0
   });
 
+  const [pipeline, setPipeline] = useState({
+    paymentPending: 0,
+    paid: 0,
+    packed: 0,
+    inTransit: 0,
+    delivered: 0,
+    failedReturned: 0
+  });
+
+  const [commissionStats, setCommissionStats] = useState({
+    totalGenerated: 0,
+    platformFees: 0,
+    netPaid: 0,
+    pending: 0
+  });
+
+  const [topResellers, setTopResellers] = useState<any[]>([]);
+
   useEffect(() => {
     const fetchStats = async () => {
       try {
         const [
           { data: ordersData },
           { count: visitsCount },
-          { count: usersCount }
+          { count: usersCount },
+          { data: allOrdersData },
+          { data: commData },
+          { data: resellersData }
         ] = await Promise.all([
-          supabase.from("orders").select("total_amount").eq("status", "completed"),
+          supabase.from("orders").select("total_amount").eq("status", "delivered"),
           supabase.from("page_visits").select("*", { count: 'exact', head: true }),
-          supabase.from("user_roles").select("*", { count: 'exact', head: true }).eq("role", "customer")
+          supabase.from("user_roles").select("*", { count: 'exact', head: true }).eq("role", "customer"),
+          supabase.from("orders").select("status"),
+          supabase.from("commissions").select("*"),
+          supabase.from("orders").select("reseller_id, commissions(amount), spas(name)").not("reseller_id", "is", null)
         ]);
 
         const totalRevenue = ordersData?.reduce((sum, order) => sum + (order.total_amount || 0), 0) || 0;
@@ -32,6 +56,41 @@ const AdminDashboard = () => {
           visits: visitsCount || 0,
           customers: usersCount || 0
         });
+
+        const pStats = { paymentPending: 0, paid: 0, packed: 0, inTransit: 0, delivered: 0, failedReturned: 0 };
+        allOrdersData?.forEach(o => {
+          if (o.status === 'payment_pending' || o.status === 'pending') pStats.paymentPending++;
+          if (o.status === 'paid') pStats.paid++;
+          if (o.status === 'packed') pStats.packed++;
+          if (o.status === 'dispatched' || o.status === 'out_for_delivery') pStats.inTransit++;
+          if (o.status === 'delivered') pStats.delivered++;
+          if (o.status === 'delivery_failed' || o.status === 'returned') pStats.failedReturned++;
+        });
+        setPipeline(pStats);
+
+        let tGen = 0, pFees = 0, nPaid = 0, pPending = 0;
+        commData?.forEach((c: any) => {
+          tGen += Number(c.amount || 0);
+          pFees += Number(c.platform_fee_amount || 0);
+          if (c.status === 'paid') nPaid += Number(c.net_commission || 0);
+          if (c.status === 'pending') pPending += Number(c.net_commission || 0);
+        });
+        setCommissionStats({ totalGenerated: tGen, platformFees: pFees, netPaid: nPaid, pending: pPending });
+
+        // Calculate top resellers
+        const rMap: Record<string, {name: string, count: number, totalComm: number}> = {};
+        resellersData?.forEach((o: any) => {
+          if (!o.reseller_id || !o.spas) return;
+          const rId = o.reseller_id;
+          if (!rMap[rId]) rMap[rId] = { name: o.spas.name, count: 0, totalComm: 0 };
+          rMap[rId].count++;
+          const orderComms = o.commissions || [];
+          orderComms.forEach((c: any) => rMap[rId].totalComm += Number(c.amount || 0));
+        });
+        
+        const topList = Object.values(rMap).sort((a, b) => b.count - a.count).slice(0, 5);
+        setTopResellers(topList);
+
       } catch (err) {
         console.error("Failed to load dashboard stats", err);
       }
@@ -94,9 +153,94 @@ const AdminDashboard = () => {
       </div>
 
       <div className="bg-white p-6 rounded-xl border border-border shadow-sm">
-        <h2 className="text-xl font-semibold mb-4">Low Stock Alerts</h2>
-        <div className="text-center py-8 text-muted-foreground">
-          No low stock alerts at the moment.
+        <h2 className="text-xl font-semibold mb-4">Order Pipeline Stats</h2>
+        <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
+          <Card>
+            <CardContent className="p-4">
+              <div className="text-xl font-bold">{pipeline.paymentPending}</div>
+              <p className="text-xs text-muted-foreground">Payment Pending</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="text-xl font-bold text-blue-600">{pipeline.paid}</div>
+              <p className="text-xs text-muted-foreground">Paid (Await Packing)</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="text-xl font-bold text-indigo-600">{pipeline.packed}</div>
+              <p className="text-xs text-muted-foreground">Packed (Await Dispatch)</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="text-xl font-bold text-orange-600">{pipeline.inTransit}</div>
+              <p className="text-xs text-muted-foreground">In Transit</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="text-xl font-bold text-green-600">{pipeline.delivered}</div>
+              <p className="text-xs text-muted-foreground">Delivered</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="text-xl font-bold text-red-600">{pipeline.failedReturned}</div>
+              <p className="text-xs text-muted-foreground">Failed / Returned</p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      <div className="grid gap-6 md:grid-cols-2">
+        <div className="bg-white p-6 rounded-xl border border-border shadow-sm">
+          <h2 className="text-xl font-semibold mb-4">Commission Analytics</h2>
+          <div className="space-y-4">
+            <div className="flex justify-between border-b pb-2">
+              <span className="text-muted-foreground">Total Commissions Generated</span>
+              <span className="font-bold">KSh {commissionStats.totalGenerated.toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between border-b pb-2">
+              <span className="text-muted-foreground">Platform Fees Collected</span>
+              <span className="font-bold">KSh {commissionStats.platformFees.toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between border-b pb-2">
+              <span className="text-muted-foreground">Net Commissions Paid</span>
+              <span className="font-bold text-green-600">KSh {commissionStats.netPaid.toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between border-b pb-2">
+              <span className="text-muted-foreground">Pending Commissions</span>
+              <span className="font-bold text-yellow-600">KSh {commissionStats.pending.toLocaleString()}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-xl border border-border shadow-sm">
+          <h2 className="text-xl font-semibold mb-4">Top 5 Resellers</h2>
+          {topResellers.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">No reseller data available.</div>
+          ) : (
+            <table className="w-full text-sm">
+              <thead className="bg-muted/40">
+                <tr>
+                  <th className="text-left px-4 py-2">Reseller</th>
+                  <th className="text-center px-4 py-2">Orders</th>
+                  <th className="text-right px-4 py-2">Total Comm.</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {topResellers.map((r, i) => (
+                  <tr key={i} className="hover:bg-muted/20">
+                    <td className="px-4 py-2 font-medium">{r.name}</td>
+                    <td className="px-4 py-2 text-center">{r.count}</td>
+                    <td className="px-4 py-2 text-right">KSh {r.totalComm.toLocaleString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
     </div>

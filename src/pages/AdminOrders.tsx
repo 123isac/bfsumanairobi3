@@ -205,37 +205,39 @@ const AdminOrders = () => {
                       </Badge>
                     </td>
                     <td className="px-6 py-4">
-                      <Badge variant={order.status === "delivered" ? "default" : "secondary"}>
-                        {order.status}
+                      <Badge variant={
+                        ['delivered', 'paid'].includes(order.status) ? "default" :
+                        ['delivery_failed', 'returned', 'cancelled'].includes(order.status) ? "destructive" : "secondary"
+                      } className={
+                        order.status === 'packed' ? 'bg-blue-100 text-blue-800' :
+                        order.status === 'dispatched' ? 'bg-indigo-100 text-indigo-800' :
+                        order.status === 'out_for_delivery' ? 'bg-orange-100 text-orange-800' : ''
+                      }>
+                        {order.status.replace(/_/g, ' ')}
                       </Badge>
                     </td>
-                    <td className="px-6 py-4 text-right flex items-center justify-end gap-2">
+                    <td className="px-6 py-4 text-right flex flex-col sm:flex-row items-center justify-end gap-2">
                       <Button size="sm" variant="secondary" onClick={() => setSelectedOrder(order)}>
                          <Eye className="h-4 w-4 mr-2" /> View
                       </Button>
-                      {order.status === "pending" && (
-                        <Button size="sm" onClick={() => updateOrderStatus(order.id, "processing")}>
-                          <Clock className="h-4 w-4 mr-2" /> Mark Processing
-                        </Button>
-                      )}
-                      {order.status === "pending" && order.payment_method === "mpesa" && order.payment_status === "pending" && (
-                        <>
-                          <Button size="sm" variant="outline" className="text-green-600 border-green-600 hover:bg-green-50" onClick={() => updatePaymentStatus(order.id, "paid")}>
-                            <CheckCircle className="h-4 w-4 mr-2" /> Mark Paid
-                          </Button>
-                          <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700" onClick={() => handleRetryMpesa(order.id, order.customer_phone, order.total_amount)}>
-                            <HandCoins className="h-4 w-4 mr-2" /> Retry M-PESA
-                          </Button>
-                        </>
-                      )}
-                      {order.status === "processing" && (
-                        <Button size="sm" variant="outline" onClick={() => updateOrderStatus(order.id, "shipped")}>
-                          Mark Shipped
-                        </Button>
-                      )}
-                      {order.status === "shipped" && (
-                        <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => updateOrderStatus(order.id, "delivered")}>
-                          <CheckCircle className="h-4 w-4 mr-2" /> Mark Delivered
+                      <select 
+                        className="text-sm p-1 border rounded bg-background"
+                        value={order.status}
+                        onChange={(e) => updateOrderStatus(order.id, e.target.value)}
+                      >
+                        <option value="payment_pending">Payment Pending</option>
+                        <option value="paid">Paid</option>
+                        <option value="packed">Packed</option>
+                        <option value="dispatched">Dispatched</option>
+                        <option value="out_for_delivery">Out for Delivery</option>
+                        <option value="delivered">Delivered</option>
+                        <option value="delivery_failed">Delivery Failed</option>
+                        <option value="returned">Returned</option>
+                        <option value="cancelled">Cancelled</option>
+                      </select>
+                      {order.payment_method === "mpesa" && order.payment_status === "pending" && (
+                        <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 ml-2" onClick={() => handleRetryMpesa(order.id, order.customer_phone, order.total_amount)}>
+                          <HandCoins className="h-4 w-4 mr-1" /> Retry STK
                         </Button>
                       )}
                     </td>

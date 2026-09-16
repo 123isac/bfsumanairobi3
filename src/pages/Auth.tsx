@@ -51,12 +51,12 @@ const Auth = () => {
           navigate(from, { replace: true });
         } else {
           // Check if user is an approved partner
-          supabase
+          (supabase
             .from("spas")
             .select("application_status, is_active")
             .ilike("email", (user.email || "").trim())
-            .maybeSingle()
-            .then(({ data }) => {
+            .maybeSingle() as unknown as Promise<any>)
+            .then(({ data }: any) => {
               if (data && (data.application_status === "approved" || data.is_active)) {
                 navigate("/partner/dashboard");
               } else {

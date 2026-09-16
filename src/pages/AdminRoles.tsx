@@ -34,8 +34,8 @@ const AdminRoles = () => {
     setLoading(true);
     try {
       const [permRes, rolePermRes] = await Promise.all([
-        supabase.from("permissions").select("*").order("module"),
-        supabase.from("role_permissions").select("*"),
+        (supabase as any).from("permissions").select("*").order("module"),
+        (supabase as any).from("role_permissions").select("*"),
       ]);
 
       if (permRes.error) throw permRes.error;
@@ -64,7 +64,7 @@ const AdminRoles = () => {
     try {
       if (isCurrentlyGranted) {
         // Delete from role_permissions
-        const { error } = await supabase
+        const { error } = await (supabase as any)
           .from("role_permissions")
           .delete()
           .eq("role", role as any)
@@ -75,7 +75,7 @@ const AdminRoles = () => {
         toast.success(`Removed permission`);
       } else {
         // Insert into role_permissions
-        const { error } = await supabase
+        const { error } = await (supabase as any)
           .from("role_permissions")
           .insert({ role: role as any, permission_key: permKey });
 

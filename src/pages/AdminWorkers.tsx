@@ -53,13 +53,13 @@ const AdminWorkers = () => {
   const fetchWorkers = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("workers")
         .select("*")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setWorkers(data || []);
+      setWorkers((data as any) || []);
     } catch (err: any) {
       toast.error("Failed to load staff list: " + err.message);
     } finally {
@@ -116,12 +116,12 @@ const AdminWorkers = () => {
       });
 
       if (!edgeError && edgeData?.success) {
-        sendWorkerInviteEmail({
+        (sendWorkerInviteEmail({
           email: cleanEmail,
           fullName: cleanName,
           role: ROLE_DISPLAY[role]?.label || role,
           tempPassword: password,
-        }).catch(e => console.warn("Worker invite email error:", e));
+        }) as Promise<any>).catch(e => console.warn("Worker invite email error:", e));
 
         toast.success(edgeData.message || `Staff account for ${cleanName} configured successfully!`);
         setCreateOpen(false);
@@ -130,7 +130,7 @@ const AdminWorkers = () => {
       }
 
       // 2. Secondary Method (Database RPC Fallback for existing customers)
-      const { data: rpcData, error: rpcError } = await supabase.rpc("admin_upsert_worker", {
+      const { data: rpcData, error: rpcError } = await (supabase as any).rpc("admin_upsert_worker", {
         _email: cleanEmail,
         _full_name: cleanName,
         _employee_id: cleanEmpId,
@@ -139,15 +139,15 @@ const AdminWorkers = () => {
         _role: role,
       });
 
-      if (!rpcError && rpcData?.success) {
-        sendWorkerInviteEmail({
+      if (!rpcError && (rpcData as any)?.success) {
+        (sendWorkerInviteEmail({
           email: cleanEmail,
           fullName: cleanName,
           role: ROLE_DISPLAY[role]?.label || role,
           tempPassword: password,
-        }).catch(e => console.warn("Worker invite email error:", e));
+        }) as Promise<any>).catch(e => console.warn("Worker invite email error:", e));
 
-        toast.success(rpcData.message || `Customer (${cleanEmail}) upgraded to ${ROLE_DISPLAY[role]?.label || role}!`);
+        toast.success((rpcData as any)?.message || `Customer (${cleanEmail}) upgraded to ${ROLE_DISPLAY[role]?.label || role}!`);
         setCreateOpen(false);
         fetchWorkers();
         return;
@@ -180,7 +180,7 @@ const AdminWorkers = () => {
         }, { onConflict: 'user_id' });
 
         // Insert worker profile
-        await supabase.from("workers").upsert({
+        await (supabase as any).from("workers").upsert({
           user_id: newUserId,
           employee_id: cleanEmpId,
           full_name: cleanName,
@@ -190,12 +190,12 @@ const AdminWorkers = () => {
           status: "active",
         }, { onConflict: 'user_id' });
 
-        sendWorkerInviteEmail({
+        (sendWorkerInviteEmail({
           email: cleanEmail,
           fullName: cleanName,
           role: ROLE_DISPLAY[role]?.label || role,
           tempPassword: password,
-        }).catch(e => console.warn("Worker invite email error:", e));
+        }) as Promise<any>).catch(e => console.warn("Worker invite email error:", e));
 
         toast.success(`Staff account for ${cleanName} created successfully!`);
         setCreateOpen(false);
@@ -217,7 +217,7 @@ const AdminWorkers = () => {
   const toggleStatus = async (worker: Worker) => {
     const newStatus = worker.status === "active" ? "suspended" : "active";
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from("workers")
         .update({ status: newStatus })
         .eq("id", worker.id);
@@ -235,7 +235,7 @@ const AdminWorkers = () => {
     if (!editWorker) return;
 
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from("workers")
         .update({
           full_name: editWorker.full_name,

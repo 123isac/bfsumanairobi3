@@ -122,7 +122,7 @@ export async function sendEmail(options: SendEmailOptions): Promise<{ success: b
 
   // ── Tier 1: Supabase Database RPC (pg_net directly from PostgreSQL server) ──
   try {
-    const { data: rpcData, error: rpcError } = await supabase.rpc("send_email_resend", {
+    const { data: rpcData, error: rpcError } = await supabase.rpc("send_email_resend" as any, {
       to_email: toList[0],
       subject,
       html_body: html,
@@ -130,7 +130,7 @@ export async function sendEmail(options: SendEmailOptions): Promise<{ success: b
     });
 
     if (!rpcError && (rpcData as any)?.success) {
-      return { success: true, message: "Email dispatched successfully via Supabase!" };
+      return { success: true } as any;
     }
   } catch {
     // Continue to next tier

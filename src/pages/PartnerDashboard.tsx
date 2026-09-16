@@ -3,9 +3,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Copy, Link as LinkIcon, HandCoins, Users, TrendingUp, CheckCircle } from "lucide-react";
+import { Copy, Link as LinkIcon, HandCoins, Users, TrendingUp, CheckCircle, PackagePlus, Info } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface PartnerData {
   id: string;
@@ -22,13 +26,27 @@ interface OrderSummary {
   status: string;
   payment_status: string;
   created_at: string;
+  commissions?: any[];
 }
 
 const PartnerDashboard = () => {
   const { user } = useAuth();
   const [partner, setPartner] = useState<PartnerData | null>(null);
   const [orders, setOrders] = useState<OrderSummary[]>([]);
+  const [products, setProducts] = useState<any[]>([]);
+  const [commissions, setCommissions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  
+  const [orderForm, setOrderForm] = useState({
+    customerName: "",
+    customerPhone: "",
+    address: "",
+    productId: "",
+    quantity: "1",
+    deliveryFee: "",
+    notes: ""
+  });
 
   // Computed totals
   const totalSales = orders
@@ -77,13 +95,32 @@ const PartnerDashboard = () => {
         if (spaData?.referral_code) {
           const { data: orderData, error: orderError } = await supabase
             .from("orders")
-            .select("id, customer_name, total_amount, status, payment_status, created_at")
+            .select(`
+              id, customer_name, total_amount, status, payment_status, created_at,
+              commissions ( amount, platform_fee_amount, net_commission, status )
+            `)
             .eq("referral_code", spaData.referral_code)
             .order("created_at", { ascending: false });
 
           if (!orderError) {
             setOrders(orderData || []);
           }
+
+          const { data: commsData } = await supabase
+            .from("commissions")
+            .select("*")
+            .eq("spa_id", spaData.id);
+          if (commsData) {
+            setCommissions(commsData);
+          }
+        }
+
+        const { data: prodData } = await supabase
+          .from("products")
+          .select("id, name, price, commission_rate")
+          .order("name");
+        if (prodData) {
+          setProducts(prodData);
         }
       } catch (err: any) {
         console.error("Partner sync failed", err);
@@ -93,10 +130,86 @@ const PartnerDashboard = () => {
       }
     };
 
-
-
     fetchPartnerData();
   }, [user]);
+
+  const handleSubmitOrder = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!partner || !orderForm.productId) return;
+    
+    setSubmitting(true);
+    try {
+      const product = products.find(p => p.id === orderForm.productId);
+      if (!product) throw new Error("Product not found");
+
+      const quantity = parseInt(orderForm.quantity);
+      if (isNaN(quantity) || quantity <= 0) throw new Error("Invalid quantity");
+
+      const deliveryFee = parseFloat(orderForm.deliveryFee) || 0;
+
+      // Commission is based on product margin (selling price - cost price)
+      // Delivery fee is charged to the customer but does NOT affect commission
+      const sellingPrice = Number(product.price) || 0;
+      const costPrice = Number(product.cost_price) || 0;
+      const profitPerUnit = sellingPrice - costPrice;
+      const commissionAmount = profitPerUnit * quantity;
+
+      // Customer pays: product total + delivery fee
+      const productTotal = sellingPrice * quantity;
+      const totalAmount = productTotal + deliveryFee;
+
+      // Insert Order
+      const { data: orderData, error: orderError } = await supabase
+        .from("orders")
+        .insert({
+          customer_name: orderForm.customerName,
+          customer_phone: orderForm.customerPhone,
+          customer_email: partner.email,
+          shipping_address: orderForm.address,
+          shipping_city: "",
+          payment_method: 'mpesa',
+          payment_status: 'pending',
+          status: 'payment_pending',
+          reseller_id: partner.id,
+          referral_code: partner.referral_code,
+          total_amount: totalAmount,
+          delivery_fee: deliveryFee,
+          commission_amount: commissionAmount,
+          delivery_notes: orderForm.notes
+        } as any)
+        .select("id")
+        .single();
+
+      if (orderError) throw orderError;
+
+      // Insert Order Item
+      const { error: itemError } = await supabase
+        .from("order_items")
+        .insert({
+          order_id: orderData.id,
+          product_id: product.id,
+          quantity: quantity,
+          price: product.price
+        });
+
+      if (itemError) throw itemError;
+
+      toast.success("Order submitted successfully!");
+      setOrderForm({
+        customerName: "",
+        customerPhone: "",
+        address: "",
+        productId: "",
+        quantity: "1",
+        deliveryFee: "",
+        notes: ""
+      });
+    } catch (err: any) {
+      toast.error("Failed to submit order: " + err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const affiliateLink = typeof window !== 'undefined' && partner 
     ? `${window.location.origin}/?ref=${partner.referral_code}`
@@ -150,10 +263,10 @@ const PartnerDashboard = () => {
       </div>
 
       {/* Analytics Stat Blocks */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Referred Orders (Leads)</CardTitle>
+            <CardTitle className="text-sm font-medium">Referred Orders</CardTitle>
             <Users className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
@@ -164,26 +277,132 @@ const PartnerDashboard = () => {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Verified Sales Volume</CardTitle>
-            <TrendingUp className="h-4 w-4 text-green-600" />
+            <CardTitle className="text-sm font-medium">Pending Commissions</CardTitle>
+            <HandCoins className="h-4 w-4 text-yellow-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-green-600">KSH {totalSales.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground mt-1">Gross paid revenue generated</p>
+            <div className="text-3xl font-bold text-yellow-600">
+              KSH {commissions.filter(c => c.status === 'pending').reduce((sum, c) => sum + Number(c.net_commission || 0), 0).toLocaleString()}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">Awaiting release</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Your Commissions</CardTitle>
-            <HandCoins className="h-4 w-4 text-[#E29A26]" />
+            <CardTitle className="text-sm font-medium">Released Commissions</CardTitle>
+            <HandCoins className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">KSH {(Number(partner.total_earnings) || 0).toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground mt-1">Total approved payouts</p>
+            <div className="text-3xl font-bold text-green-600">
+              KSH {commissions.filter(c => c.status === 'paid').reduce((sum, c) => sum + Number(c.net_commission || 0), 0).toLocaleString()}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">Total approved net payouts</p>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Platform Fees</CardTitle>
+            <Info className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">
+              KSH {commissions.reduce((sum, c) => sum + Number(c.platform_fee_amount || 0), 0).toLocaleString()}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">Total platform fees deducted (15%)</p>
           </CardContent>
         </Card>
       </div>
+
+      {/* Place an Order for a Customer Form */}
+      <Card className="border-border">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2"><PackagePlus className="h-5 w-5" /> Place an Order for a Customer</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmitOrder} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Customer Name</Label>
+                <Input required value={orderForm.customerName} onChange={e => setOrderForm({...orderForm, customerName: e.target.value})} />
+              </div>
+              <div className="space-y-2">
+                <Label>Customer Phone</Label>
+                <Input required type="tel" value={orderForm.customerPhone} onChange={e => setOrderForm({...orderForm, customerPhone: e.target.value})} />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Delivery Address (Include City/Region)</Label>
+              <Input required value={orderForm.address} onChange={e => setOrderForm({...orderForm, address: e.target.value})} />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Product</Label>
+                <Select required value={orderForm.productId} onValueChange={val => setOrderForm({...orderForm, productId: val})}>
+                  <SelectTrigger><SelectValue placeholder="Select Product" /></SelectTrigger>
+                  <SelectContent>
+                    {products.map(p => (
+                      <SelectItem key={p.id} value={p.id}>{p.name} — KSh {Number(p.price).toLocaleString()}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Quantity</Label>
+                <Input required type="number" min="1" value={orderForm.quantity} onChange={e => setOrderForm({...orderForm, quantity: e.target.value})} />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Delivery Fee (KSh) — Charged to customer, not deducted from commission</Label>
+              <Input
+                type="number"
+                min="0"
+                placeholder="e.g. 300"
+                value={orderForm.deliveryFee}
+                onChange={e => setOrderForm({...orderForm, deliveryFee: e.target.value})}
+              />
+            </div>
+
+            {/* Live Cost Breakdown */}
+            {orderForm.productId && (() => {
+              const product = products.find(p => p.id === orderForm.productId);
+              if (!product) return null;
+              const qty = parseInt(orderForm.quantity) || 1;
+              const deliveryFee = parseFloat(orderForm.deliveryFee) || 0;
+              const sellingPrice = Number(product.price) || 0;
+              const costPrice = Number(product.cost_price) || 0;
+              const productTotal = sellingPrice * qty;
+              const customerTotal = productTotal + deliveryFee;
+              const profit = (sellingPrice - costPrice) * qty;
+              const platformFee = profit * 0.15;
+              const resellerNets = profit - platformFee;
+              return (
+                <div className="bg-muted/40 rounded-lg border border-border p-4 space-y-2 text-sm">
+                  <p className="font-semibold text-xs uppercase text-muted-foreground tracking-wide mb-2">Order Breakdown</p>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Product Total ({qty}×)</span><span>KSh {productTotal.toLocaleString()}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Delivery Fee</span><span>KSh {deliveryFee.toLocaleString()}</span></div>
+                  <div className="flex justify-between font-semibold border-t pt-2"><span>Customer Pays</span><span>KSh {customerTotal.toLocaleString()}</span></div>
+                  <div className="border-t pt-2 space-y-1">
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">Your Commission</p>
+                    <div className="flex justify-between"><span className="text-muted-foreground">Gross Profit (margin)</span><span>KSh {profit.toLocaleString()}</span></div>
+                    <div className="flex justify-between text-orange-600"><span>Platform Fee (15%)</span><span>− KSh {platformFee.toLocaleString()}</span></div>
+                    <div className="flex justify-between font-bold text-green-700 border-t pt-1"><span>You Receive</span><span>KSh {resellerNets.toLocaleString()}</span></div>
+                  </div>
+                </div>
+              );
+            })()}
+
+            <div className="space-y-2">
+              <Label>Special Instructions (Optional)</Label>
+              <Textarea value={orderForm.notes} onChange={e => setOrderForm({...orderForm, notes: e.target.value})} />
+            </div>
+            <Button type="submit" disabled={submitting}>
+              {submitting ? "Submitting..." : "Submit Order"}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
 
       {/* Ledger Table */}
       <div className="bg-white rounded-xl shadow-sm border border-border overflow-hidden">
@@ -205,29 +424,43 @@ const PartnerDashboard = () => {
                   <th className="px-6 py-4 font-medium text-muted-foreground">Date</th>
                   <th className="px-6 py-4 font-medium text-muted-foreground">Customer (First Name)</th>
                   <th className="px-6 py-4 font-medium text-muted-foreground text-right">Order Value</th>
+                  <th className="px-6 py-4 font-medium text-muted-foreground text-right">Gross Commission</th>
+                  <th className="px-6 py-4 font-medium text-muted-foreground text-right">Platform Fee (15%)</th>
+                  <th className="px-6 py-4 font-medium text-muted-foreground text-right">Net Commission</th>
                   <th className="px-6 py-4 font-medium text-muted-foreground text-right">Status</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {orders.map((order) => (
-                  <tr key={order.id} className="hover:bg-muted/30 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {new Date(order.created_at).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-4 font-medium">
-                      {/* Privacy shield: Only show first name */}
-                      {order.customer_name.split(' ')[0]}***
-                    </td>
-                    <td className="px-6 py-4 text-right font-medium">
-                      KSH {Number(order.total_amount).toLocaleString()}
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <Badge variant={order.status === 'delivered' ? 'default' : 'secondary'}>
-                        {order.status === 'delivered' ? 'Completed' : 'Pending'}
-                      </Badge>
-                    </td>
-                  </tr>
-                ))}
+                {orders.map((order) => {
+                  const comm = order.commissions && order.commissions.length > 0 ? order.commissions[0] : null;
+                  return (
+                    <tr key={order.id} className="hover:bg-muted/30 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {new Date(order.created_at).toLocaleDateString()}
+                      </td>
+                      <td className="px-6 py-4 font-medium">
+                        {order.customer_name.split(' ')[0]}***
+                      </td>
+                      <td className="px-6 py-4 text-right font-medium">
+                        KSH {Number(order.total_amount).toLocaleString()}
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        {comm ? `KSH ${Number(comm.amount).toLocaleString()}` : '-'}
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        {comm ? `KSH ${Number(comm.platform_fee_amount).toLocaleString()}` : '-'}
+                      </td>
+                      <td className="px-6 py-4 text-right font-medium text-green-600">
+                        {comm ? `KSH ${Number(comm.net_commission).toLocaleString()}` : '-'}
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <Badge variant={order.status === 'delivered' ? 'default' : 'secondary'}>
+                          {order.status === 'delivered' ? 'Completed' : 'Pending'}
+                        </Badge>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

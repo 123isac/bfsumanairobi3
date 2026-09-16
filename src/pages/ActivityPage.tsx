@@ -29,7 +29,7 @@ const ActivityPage = () => {
   const fetchLogs = async () => {
     setLoading(true);
     try {
-      let query = supabase
+      let query: any = (supabase as any)
         .from("activity_logs")
         .select("*")
         .order("created_at", { ascending: false })
@@ -44,7 +44,7 @@ const ActivityPage = () => {
 
       const { data, error } = await query;
       if (error) throw error;
-      setLogs(data || []);
+      setLogs((data as any) || []);
     } catch (err: any) {
       toast.error("Failed to load activity logs: " + err.message);
     } finally {

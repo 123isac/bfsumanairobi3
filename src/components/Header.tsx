@@ -34,12 +34,12 @@ const Header = () => {
       setIsPartner(false);
       return;
     }
-    supabase
-      .from("spas")
-      .select("application_status, is_active")
-      .ilike("email", user.email.trim())
-      .maybeSingle()
-      .then(({ data }) => {
+      (supabase
+        .from("spas")
+        .select("application_status, is_active")
+        .ilike("email", user.email.trim())
+        .maybeSingle() as unknown as Promise<any>)
+      .then(({ data }: any) => {
         if (data && (data.application_status === "approved" || data.is_active)) {
           setIsPartner(true);
         } else {

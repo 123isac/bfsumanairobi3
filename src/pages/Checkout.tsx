@@ -230,9 +230,9 @@ const Checkout = () => {
       if (itemsError) throw itemsError;
 
       // ── Auto-Save address to profile (fire-and-forget — does NOT block STK push) ──
-      supabase.from("profiles").update({ 
+      (supabase.from("profiles").update({ 
         kenya_address: kenyaAddress as any 
-      }).eq("id", user.id).then(() => {}).catch((profileSaveErr: unknown) => {
+      }).eq("id", user.id) as unknown as Promise<any>).then(() => {}).catch((profileSaveErr: unknown) => {
         console.warn("Failed to auto-save address mapping to profile.", profileSaveErr);
       });
 
